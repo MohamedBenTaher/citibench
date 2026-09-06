@@ -348,6 +348,38 @@ def test_generate_endpoint_503_without_groq_key(monkeypatch: pytest.MonkeyPatch)
     assert health.json() == {"status": "ok"}
 
 
+def test_generate_endpoint_401_when_groq_rejects_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_bad")
+    import main as main_mod
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError(
+            "GROQ_API_KEY was rejected by Groq (HTTP 401). Check the key at "
+            "https://console.groq.com/keys"
+        )
+
+    monkeypatch.setattr(main_mod, "generate", boom)
+    response = TestClient(main_mod.app).post("/generate", json={"query": "pods"})
+    assert response.status_code == 401
+    assert "rejected by Groq" in response.json()["detail"]
+
+
+def test_ingest_endpoint_401_when_groq_rejects_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_bad")
+    import main as main_mod
+
+    def boom(*_args, **_kwargs):
+        raise RuntimeError(
+            "GROQ_API_KEY was rejected by Groq (HTTP 401). Check the key at "
+            "https://console.groq.com/keys"
+        )
+
+    monkeypatch.setattr(main_mod, "run_ingest", boom)
+    response = TestClient(main_mod.app).post("/ingest", json={})
+    assert response.status_code == 401
+    assert "rejected by Groq" in response.json()["detail"]
+
+
 def test_generate_endpoint_cite_path_wired(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
     fixture = load_5doc()

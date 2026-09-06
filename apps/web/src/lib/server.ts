@@ -1,5 +1,4 @@
-import { createServerFn } from "@tanstack/react-start";
-import { apiJson } from "./api";
+import { fetchApiJson } from "./fetch-api";
 import type {
   CorpusStats,
   EvalLatest,
@@ -8,24 +7,22 @@ import type {
   TraceList,
 } from "./types";
 
-export const getCorpusStats = createServerFn({ method: "GET" }).handler(
-  async () => apiJson<CorpusStats>("/corpus/stats"),
-);
+export function getCorpusStats() {
+  return fetchApiJson<CorpusStats>("/corpus/stats");
+}
 
-export const getTraces = createServerFn({ method: "GET" }).handler(async () =>
-  apiJson<TraceList>("/traces"),
-);
+export function getTraces() {
+  return fetchApiJson<TraceList>("/traces");
+}
 
-export const getTrace = createServerFn({ method: "GET" })
-  .validator((runId: string) => runId)
-  .handler(async ({ data }) =>
-    apiJson<RunTrace>(`/traces/${encodeURIComponent(data)}`),
-  );
+export function getTrace(runId: string) {
+  return fetchApiJson<RunTrace>(`/traces/${encodeURIComponent(runId)}`);
+}
 
-export const getEvalLatest = createServerFn({ method: "GET" }).handler(
-  async () => apiJson<EvalLatest>("/evals/latest"),
-);
+export function getEvalLatest() {
+  return fetchApiJson<EvalLatest>("/evals/latest");
+}
 
-export const getRedteamLatest = createServerFn({ method: "GET" }).handler(
-  async () => apiJson<RedteamLatest>("/evals/redteam"),
-);
+export function getRedteamLatest() {
+  return fetchApiJson<RedteamLatest>("/evals/redteam");
+}

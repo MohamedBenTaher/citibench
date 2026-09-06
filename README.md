@@ -48,7 +48,7 @@ make start          # api :8000, web :3000, Postgres
 make ingest         # index the 14 MANIFEST URLs
 ```
 
-Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. GET loaders and `/api/*` proxies use server-only `API_URL=http://api:8000`. Browser ask/ingest call FastAPI at `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`) because Nitro aborts POST server-function bodies. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
+Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. Tab loaders call FastAPI directly: Nitro SSR uses `API_URL=http://api:8000`, the browser uses `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`). Do not route those reads through TanStack `createServerFn` — Start's GET RPC returns 401/500 on client navigations (CSRF/origin), which is what made Corpus stats and Traces look broken. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
 
 Local Vite without rebuilding the image:
 
@@ -57,6 +57,16 @@ cd apps/web
 API_URL=http://127.0.0.1:8000 VITE_API_URL=http://localhost:8000 npm run dev
 # http://localhost:3000/  (API must already be up)
 ```
+
+If **Corpus stats** or **Traces** show Internal Server Error / 401 after a pull, rebuild `web` (`make start`). Those tabs now fetch `:8000` the same way ingest already did. Confirm the API itself:
+
+```bash
+curl -sS localhost:8000/health          # {"status":"ok"}
+curl -sS localhost:8000/corpus/stats    # counts; 503 only if Postgres is down
+curl -sS localhost:8000/traces          # {"count":0,"traces":[]} is fine
+```
+
+Ingest **401** from FastAPI means Groq rejected `GROQ_API_KEY` (missing key is **503**). Put a live key in `.env` and recreate the API container (`docker compose up -d --force-recreate api`). Traces stay empty until a Playground ask succeeds; the local store is now a Compose volume (`citebench_traces`).
 
 If the page says **“Gotenberg has no UI, it's an API”**, that is [Gotenberg](https://gotenberg.dev/) (PDF conversion), not Citebench. It also binds **:3000**. Confirm Citebench with `curl -sS localhost:8000/health` → `{"status":"ok"}`. Then either stop Gotenberg (`docker ps | grep -i gotenberg`) or start Citebench on another port:
 

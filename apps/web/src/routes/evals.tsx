@@ -87,8 +87,16 @@ function resultLabel(row: RedteamCase): string {
 
 export const Route = createFileRoute("/evals")({
   loader: async () => {
-    const [latest, redteam] = await Promise.all([getEvalLatest(), getRedteamLatest()]);
-    return { latest, redteam };
+    try {
+      const [latest, redteam] = await Promise.all([getEvalLatest(), getRedteamLatest()]);
+      return { latest, redteam, loadError: null as string | null };
+    } catch (error: unknown) {
+      return {
+        latest: null,
+        redteam: null,
+        loadError: error instanceof Error ? error.message : "failed to load evals",
+      };
+    }
   },
   pendingComponent: () => <RoutePending label="Loading last eval run…" />,
   errorComponent: RouteError,
@@ -97,7 +105,7 @@ export const Route = createFileRoute("/evals")({
 
 function EvalsPage() {
   const router = useRouter();
-  const { latest, redteam } = Route.useLoaderData();
+  const { latest, redteam, loadError } = Route.useLoaderData();
   const metrics = latest?.metrics;
   const hasRun = Boolean(latest?.present && metrics);
   const redteamCases = redteam?.cases ?? [];
@@ -109,6 +117,8 @@ function EvalsPage() {
         title="Evals"
         description="Public scores and traces. There is no login wall on this tab. Demo screenshots should start here (or on a failing RunTrace), not on a Playground chat bubble."
       />
+
+      {loadError ? <ErrorAlert title="Evals" message={loadError} /> : null}
 
       <Card>
         <CardHeader>
