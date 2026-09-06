@@ -17,7 +17,7 @@ help:
 	@echo "Citebench"
 	@echo
 	@echo "  make setup      copy .env.example → .env, create .venv, install deps"
-	@echo "  make start      docker compose up --build (api :8000, web :$(WEB_PORT), db)"
+	@echo "  make start      docker compose up --build (api :8000, TanStack Start web :$(WEB_PORT), db)"
 	@echo "  make ingest     POST /ingest (requires GROQ_API_KEY in .env)"
 	@echo "  make evals      pytest + mock RAGAS + mock redteam (local, before provision)"
 	@echo "  make test       pytest only (uses .venv)"

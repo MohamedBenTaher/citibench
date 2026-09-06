@@ -9,7 +9,8 @@ was rejected. It is not a scorecard.
   `{"status":"ok"}`. No retrieve, no ingest, no chat routes.
 - **Empty Next App Router** in `apps/web` with a boring index at `/` and four
   tab routes: `/corpus`, `/playground`, `/traces`, `/evals`. Playground copy
-  states it is not a chat surface.
+  states it is not a chat surface. (Later: same four tabs on TanStack Start;
+  FastAPI contracts unchanged.)
 - **Compose** services `api`, `web`, `db` (`pgvector/pgvector:pg16`). Langfuse
   is omitted on purpose.
 - **`config.yaml`** binds Groq, nomic-embed-text-v1.5, MiniLM L-12, 512/64,

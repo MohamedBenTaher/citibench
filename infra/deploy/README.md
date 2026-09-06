@@ -58,7 +58,7 @@ az containerapp env create -n citebench-env -g citebench-demo -l eastus
 # Build and push api + web images to a registry you control, then:
 az containerapp create -n citebench-web -g citebench-demo --environment citebench-env \
   --image <registry>/citebench-web:c8 --ingress external --target-port 3000 \
-  --env-vars API_URL=http://citebench-api
+  --env-vars API_URL=http://citebench-api VITE_API_URL=http://citebench-api
 az containerapp create -n citebench-api -g citebench-demo --environment citebench-env \
   --image <registry>/citebench-api:c8 --ingress internal --target-port 8000 \
   --env-vars GROQ_API_KEY=<secret> DATABASE_URL=<postgres> \
