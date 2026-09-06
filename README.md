@@ -41,7 +41,8 @@ See `config.yaml`. Chunking is 512 tokens / 64 overlap with tiktoken
 `cl100k_base`. `faithfulness_threshold: 0.7` is a future CI gate only. This
 repository does not report RAGAS scores.
 
-`emit_trace` remains a stub. `retrieve` is implemented (C3).
+`emit_trace` remains a stub. `retrieve` is implemented (C3). `generate` is
+implemented (C4) as one LangGraph path: retrieve → generate | abstain.
 
 ## Retrieve (C3)
 
@@ -62,3 +63,23 @@ score, the response keeps RRF order and sets `rerank_skipped` on every hit.
 
 Unit tests use the 5-doc fixture at `apps/api/tests/fixtures/retrieve_5doc/`
 and inject embed / search / `RerankFn` stubs (no live Groq).
+
+## Generate (C4)
+
+One LangGraph path. `retrieve()` runs first; then the graph routes to
+**generate** (answer + citations) or **abstain** (`I don't know`). Chat is
+Groq only (`llama-3.1-8b-instant` in `config.yaml`, override `GROQ_CHAT_MODEL`).
+Missing `GROQ_API_KEY` on `POST /generate` is **503**; `/health` stays 200.
+
+```bash
+curl -sS -X POST http://localhost:8000/generate \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"how does the kube-scheduler place pods onto nodes"}'
+```
+
+Playground tab (`/playground`) is the ask UI: answer, citations, abstain
+path, latency, and `citebench.cost.v1` estimated cost. `/` stays an index.
+
+Citations are always a subset of retrieved chunk ids. Empty retrieve, low
+FlashRank confidence, out-of-corpus model abstain, and ungrounded (no valid
+cites) all abstain. Policy is in `apps/api/generate.py` and `DECISIONS.md`.

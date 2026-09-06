@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from db import connect, corpus_stats, ensure_schema
+from generate import GenerateResult, generate
 from pipeline import run_ingest
 from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, load_settings
@@ -28,7 +29,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Citebench API", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Citebench API", version="0.4.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -52,6 +53,10 @@ class RetrieveRequest(BaseModel):
 class RetrieveResponse(BaseModel):
     hits: list[ChunkHit]
     rerank_skipped: bool = False
+
+
+class GenerateRequest(BaseModel):
+    query: str
 
 
 @app.get("/health")
@@ -110,3 +115,23 @@ def post_retrieve(body: RetrieveRequest) -> RetrieveResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     skipped = bool(hits) and all(hit.rerank_skipped for hit in hits)
     return RetrieveResponse(hits=hits, rerank_skipped=skipped)
+
+
+@app.post("/generate")
+def post_generate(body: GenerateRequest) -> GenerateResult:
+    settings = load_settings()
+    if not settings.groq_api_key:
+        raise HTTPException(status_code=503, detail=GROQ_KEY_HELP)
+    try:
+        return generate(
+            body.query or "",
+            settings=settings,
+            config=retrieve_config_from_settings(settings),
+        )
+    except RuntimeError as exc:
+        message = str(exc)
+        if "GROQ_API_KEY" in message:
+            raise HTTPException(status_code=503, detail=message) from exc
+        raise HTTPException(status_code=500, detail=message) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

@@ -103,8 +103,34 @@ button:disabled {
   font-size: 0.9rem;
 }
 
+.muted code,
+.hint code {
+  word-break: break-word;
+}
+
 .error {
   color: #8a1f1f;
+}
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1.25rem 0;
+}
+
+.ask textarea {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  min-height: 6rem;
+  width: 100%;
+}
+
+.answer {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 0.75rem 0.85rem;
+  white-space: pre-wrap;
 }
 
 table {

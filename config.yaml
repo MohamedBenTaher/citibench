@@ -20,4 +20,13 @@ lexical_k: 50
 rerank_pool: 50
 top_k: 8
 faithfulness_threshold: 0.7
-chat_model: ""
+# Groq production chat id (https://console.groq.com/docs/models). Override with GROQ_CHAT_MODEL.
+chat_model: llama-3.1-8b-instant
+# Pre-LLM abstain when FlashRank ran and the top hit score is below this.
+# Skipped when rerank_skipped=true (RRF scores are not on the same scale).
+abstain_min_score: 0.12
+# citebench.cost.v1 estimate table. Not a Groq invoice. Override in env if needed.
+# llama-3.1-8b-instant published developer rates; nomic embed is a local table value.
+chat_prompt_usd_per_1m: 0.05
+chat_completion_usd_per_1m: 0.08
+embed_usd_per_1m: 0.01

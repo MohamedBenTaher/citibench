@@ -117,3 +117,33 @@ return `[]`. Missing `GROQ_API_KEY` on the embed path is HTTP 503.
 LangGraph generate/abstain, Langfuse, eval CI, MCP, Playground ask UI,
 connectors, a second reranker, and a second embed vendor stay out of scope.
 
+## C4 generate binding (2026-09-06)
+
+C4 is one LangGraph path: `retrieve` (the C3 function) → `generate` XOR
+`abstain`. No second provider, no node editor, no chat homepage.
+
+Default chat model is Groq production `llama-3.1-8b-instant`
+(https://console.groq.com/docs/models). Override with `GROQ_CHAT_MODEL`.
+
+Abstain policy (enforced in `apps/api/generate.py`):
+
+1. `empty_retrieve` — no hits, including a blank query. No chat call.
+2. `low_confidence` — FlashRank ran and the top hit score is below
+   `abstain_min_score` (default 0.12). Not applied when `rerank_skipped`
+   (RRF scores are a different scale).
+3. `out_of_corpus` — the model sets `abstain: true` or answers "I don't know".
+4. `ungrounded` — the model answered but no `citation_ids` remain after
+   intersecting with retrieved chunk ids. Fabricated ids are dropped; an
+   uncited answer is not served.
+
+Abstain answer is exactly `I don't know`. Citations are `ChunkRef` rows
+(`text_ref` = `doc_id#chunk_id`) and are empty when abstaining.
+
+Cost uses Contract B `CostEstimate`. Method string `citebench.cost.v1` encodes
+the rates and the formula
+`(prompt*prompt_usd_per_1m + completion*completion_usd_per_1m + embed*embed_usd_per_1m)/1e6`.
+`rerank_tokens` is 0 (local FlashRank). Rates live in `config.yaml` so the
+estimate is reproducible without Langfuse (C5).
+
+Playground (`/playground`) is the ask UI. `/` stays an index.
+
