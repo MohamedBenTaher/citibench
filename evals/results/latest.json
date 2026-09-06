@@ -1,0 +1,52 @@
+{
+  "run_id": "eval-a240ffc5ed25",
+  "started_at": "2026-09-06T16:11:19.341118+00:00",
+  "finished_at": "2026-09-06T16:11:19.447841+00:00",
+  "split": "evals/splits/ci.jsonl",
+  "known_bad_split": "evals/splits/known_bad.jsonl",
+  "mode": "mock",
+  "framework": "ragas",
+  "threshold_faithfulness": 0.7,
+  "gate_passed": true,
+  "gate_reason": "ok",
+  "loader_error": null,
+  "metrics": {
+    "faithfulness": 1.0,
+    "context_precision": 0.8333333333333334,
+    "answer_relevancy": 0.7111111111111111
+  },
+  "known_bad": {
+    "clean": true,
+    "rows": [
+      {
+        "id": "bad-001",
+        "run_id": "7b31e93a-a5d7-4dc1-bc63-e36b81cb3e3a",
+        "required_assert_failed": true,
+        "abstained": true
+      },
+      {
+        "id": "bad-002",
+        "run_id": "d7876c4f-d387-4172-93e2-421a7aa7bde0",
+        "required_assert_failed": true,
+        "abstained": true
+      },
+      {
+        "id": "bad-003",
+        "run_id": "2193d649-956f-4619-b850-9daefd4b5d15",
+        "required_assert_failed": true,
+        "abstained": true
+      }
+    ]
+  },
+  "failing_run_ids": [],
+  "previous": {
+    "faithfulness": 1.0,
+    "context_precision": 0.8333333333333334,
+    "answer_relevancy": 0.7111111111111111
+  },
+  "diff": {
+    "faithfulness": 0.0,
+    "context_precision": 0.0,
+    "answer_relevancy": 0.0
+  }
+}

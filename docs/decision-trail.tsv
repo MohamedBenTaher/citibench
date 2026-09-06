@@ -3,3 +3,4 @@ date	action	detail	result
 2026-09-06	c2-ingest	MANIFEST snapshot, 512/64 cl100k_base, Groq nomic-embed-text-v1.5, pgvector, Corpus counts	PASS
 2026-09-06	c3-retrieve	hybrid RRF k=60 + FlashRank MiniLM-L-12, 5-doc fixture tests	PASS
 2026-09-06	c4-generate	LangGraph retrieve→generate|abstain, Groq llama-3.1-8b-instant, Playground ask	PASS
+2026-09-06	c6-evals	RAGAS CI gate 0.7, known_bad fail-closed, Evals tab last-run artifact	PASS

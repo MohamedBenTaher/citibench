@@ -57,15 +57,15 @@ C1 does not run this phase. The file is present so C2 cannot “forget” it.
 
 ## RAGAS and the 0.7 CI gate
 
-Future CI entrypoint (not implemented in C1):
+C6 CI entrypoint:
 
 ```
-python -m citebench.eval --split evals/splits/test.jsonl
+python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad evals/splits/known_bad.jsonl --threshold-faithfulness 0.7
 ```
 
 Gate: mean RAGAS **faithfulness >= 0.7**. That number is a threshold, not a
-published Citebench score. README and the web evals tab must not display a
-fabricated 0.7 result.
+published Citebench score. README must not display a fabricated 0.7 result.
+The Evals tab may show the last real CI artifact.
 
 Companion metrics may be logged; they do not gate CI. Faithfulness is
 computed only on non-abstain rows. Known-bad rows use the abstain rule.

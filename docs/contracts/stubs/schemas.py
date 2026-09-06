@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -124,7 +126,26 @@ class ChunkHit(BaseModel):
     text: str | None = None
 
 def load_eval_jsonl(path: str) -> list[EvalRow]:
-    raise NotImplementedError("C1 stub: load_eval_jsonl")
+    """Read Contract A JSONL. Invalid or duplicate rows fail the load."""
+    text = Path(path).read_text(encoding="utf-8")
+    rows: list[EvalRow] = []
+    seen: set[str] = set()
+    for line_no, raw in enumerate(text.splitlines(), start=1):
+        line = raw.strip()
+        if not line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+        row = EvalRow.model_validate(payload)
+        if row.id in seen:
+            raise ValueError(f"{path}:{line_no}: duplicate id {row.id}")
+        seen.add(row.id)
+        rows.append(row)
+    if not rows:
+        raise ValueError(f"{path}: no eval rows")
+    return rows
 
 def retrieve(query: str, config: RetrieveConfig | None = None) -> list[ChunkHit]:
     raise NotImplementedError("C1 stub: retrieve")

@@ -1,0 +1,46 @@
+name: eval-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install -U pip
+          pip install -r apps/api/requirements.txt pytest
+
+      - name: Pytest
+        working-directory: apps/api
+        run: pytest
+
+      - name: RAGAS CI gate
+        env:
+          CITEBENCH_EVAL_MOCK: "1"
+          EVAL_STORE_DIR: ${{ github.workspace }}/evals/results
+          TRACE_STORE_DIR: ${{ runner.temp }}/citebench-traces
+        run: |
+          python -m citebench.eval.ci \
+            --split evals/splits/ci.jsonl \
+            --known-bad evals/splits/known_bad.jsonl \
+            --threshold-faithfulness 0.7 \
+            --mock \
+            --store-dir evals/results
+
+      - name: Upload last eval artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-latest
+          path: evals/results/latest.json
+          if-no-files-found: warn

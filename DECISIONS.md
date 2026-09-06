@@ -169,3 +169,24 @@ leaves `langfuse_trace_id` null so `/traces` still works.
 Eval CI, `/metrics` README numbers, MCP, connectors, a chat homepage, and
 an analytics product stay out of scope.
 
+## C6 eval CI binding (2026-09-06)
+
+C6 is RAGAS only (not DeepEval). Entrypoint:
+
+`python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad evals/splits/known_bad.jsonl --threshold-faithfulness 0.7`
+
+Order is fail-closed: load JSONL (Contract A, no skipped invalid rows) →
+execute `known_bad.jsonl` in full → RAGAS on non-abstain CI rows. The job
+fails if the loader errors, if a known_bad row *passes* the naive success
+assert (concrete answer / fabricated cite / generate without abstain), or if
+mean faithfulness is below 0.7. Known-bad asserts stay real even when CI
+uses the fixture judge because Groq is unavailable.
+
+Companion metrics (context precision, answer relevancy) are written to
+`evals/results/latest.json` and shown on the Evals tab with a diff vs
+`previous.json`. They do not gate CI. README must not publish a fake
+metrics table (C7). Failing rows call C5 `emit_trace` into the local store.
+
+Live mode (`--live` / `GROQ_API_KEY`) may call `generate` plus the ragas
+library. MCP, redteam deploy, and dual eval frameworks stay out of scope.
+
