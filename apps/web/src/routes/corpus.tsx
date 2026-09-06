@@ -1,8 +1,22 @@
 import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { RouteError, RoutePending } from "../components/status";
-import { getCorpusStats, postIngest, type IngestBody } from "../lib/server";
-import type { CorpusStats } from "../lib/types";
+import { toast } from "sonner";
+import { ErrorAlert } from "@/components/error-alert";
+import { PageHeader } from "@/components/page-header";
+import { StatCards } from "@/components/stat-cards";
+import { RouteError, RoutePending } from "@/components/status";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getCorpusStats, postIngest, type IngestBody } from "@/lib/server";
+import type { CorpusStats } from "@/lib/types";
 
 const EMPTY: CorpusStats = {
   doc_count: 0,
@@ -41,10 +55,15 @@ function CorpusPage() {
       const outcome = await postIngest({ data: body });
       if (!outcome.ok) {
         setActionError(outcome.error);
+        toast.error(outcome.error);
+      } else {
+        toast.success("Ingest finished");
       }
       await router.invalidate();
     } catch (error: unknown) {
-      setActionError(error instanceof Error ? error.message : "ingest failed");
+      const message = error instanceof Error ? error.message : "ingest failed";
+      setActionError(message);
+      toast.error(message);
       await router.invalidate();
     } finally {
       setBusy(false);
@@ -53,84 +72,75 @@ function CorpusPage() {
 
   return (
     <>
-      <h1>Corpus</h1>
-      <p>
-        Frozen Kubernetes and Azure set from <code>corpus/MANIFEST.md</code>{" "}
-        (2026-09-05, 14 URLs). Ingest snapshots only those rows.
-      </p>
+      <PageHeader
+        title="Corpus"
+        description="Frozen Kubernetes and Azure set from corpus/MANIFEST.md (2026-09-05, 14 URLs). Ingest snapshots only those rows."
+      />
 
-      <StatsGrid stats={stats} />
+      <StatCards
+        items={[
+          { label: "Documents", value: String(stats.doc_count) },
+          { label: "Pages", value: String(stats.page_count) },
+          { label: "Chunks", value: String(stats.chunk_count) },
+          { label: "Last index", value: stats.last_index_time ?? "—" },
+        ]}
+      />
 
-      <p className="actions">
-        <button type="button" disabled={busy} onClick={() => void runIngest({})}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" disabled={busy} onClick={() => void runIngest({})}>
           {busy ? "Indexing…" : "Ingest / Re-index"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
           disabled={busy}
           onClick={() => void runIngest({ simulate_failure_id: "k8s-pods" })}
         >
           Re-index with one failure
-        </button>
-      </p>
-      <p className="hint">
+        </Button>
+      </div>
+      <p className="text-sm text-muted-foreground">
         Re-index is idempotent (replace per MANIFEST id).{" "}
-        <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes
-        documents and chunks first.
+        <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes documents
+        and chunks first.
       </p>
 
-      {loadError ? <p className="error">{loadError}</p> : null}
-      {actionError ? <p className="error">{actionError}</p> : null}
+      {loadError ? <ErrorAlert title="Corpus stats" message={loadError} /> : null}
+      {actionError ? <ErrorAlert title="Ingest" message={actionError} /> : null}
 
-      <h2>Failures</h2>
-      {stats.failures.length === 0 ? (
-        <p>None.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>id</th>
-              <th>error</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.failures.map((row) => (
-              <tr key={row.id}>
-                <td>
-                  <code>{row.id}</code>
-                </td>
-                <td>
-                  {row.error}
-                  <div className="muted">{row.source_url}</div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Failures</CardTitle>
+          <CardDescription>Snapshot rows that did not land in the index.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {stats.failures.length === 0 ? (
+            <p className="text-sm text-muted-foreground">None.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>id</TableHead>
+                  <TableHead>error</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {stats.failures.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <code>{row.id}</code>
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      {row.error}
+                      <div className="text-xs text-muted-foreground">{row.source_url}</div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </>
-  );
-}
-
-function StatsGrid({ stats }: { stats: CorpusStats }) {
-  return (
-    <dl className="stats">
-      <div>
-        <dt>Documents</dt>
-        <dd>{stats.doc_count}</dd>
-      </div>
-      <div>
-        <dt>Pages</dt>
-        <dd>{stats.page_count}</dd>
-      </div>
-      <div>
-        <dt>Chunks</dt>
-        <dd>{stats.chunk_count}</dd>
-      </div>
-      <div>
-        <dt>Last index</dt>
-        <dd>{stats.last_index_time ?? "—"}</dd>
-      </div>
-    </dl>
   );
 }
