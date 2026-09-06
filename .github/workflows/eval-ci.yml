@@ -37,6 +37,16 @@ jobs:
             --mock \
             --store-dir evals/results
 
+      - name: Redteam (C8)
+        env:
+          EVAL_STORE_DIR: ${{ github.workspace }}/evals/results
+          TRACE_STORE_DIR: ${{ runner.temp }}/citebench-traces
+        run: |
+          python -m citebench.eval.redteam \
+            --split evals/redteam.jsonl \
+            --mock \
+            --store-dir evals/results
+
       - name: Upload last eval artifact
         if: always()
         uses: actions/upload-artifact@v4

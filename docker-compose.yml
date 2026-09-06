@@ -30,6 +30,9 @@ services:
       CORPUS_DIR: /app/corpus
       TRACE_STORE_DIR: /tmp/citebench-traces
       EVAL_STORE_DIR: /app/evals/results
+      REDTEAM_JSONL: /app/evals/redteam.jsonl
+      PYTHONPATH: /repo
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-}
@@ -37,6 +40,7 @@ services:
       - ./config.yaml:/app/config.yaml:ro
       - ./corpus:/app/corpus
       - ./evals:/app/evals
+      - .:/repo:ro
     depends_on:
       db:
         condition: service_healthy

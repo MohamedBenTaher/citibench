@@ -31,6 +31,11 @@ docker compose up --build
 
 - API health: `GET http://localhost:8000/health` → `{"status":"ok"}`
 - Web: `http://localhost:3000/` (index plus `/corpus`, `/playground`, `/traces`, `/evals`)
+- Playground and Evals are public application routes. There is no login wall
+  that hides Evals. Optional single demo password (Caddy overlay): user
+  `citebench` / password `citebench` — see `infra/deploy/README.md`.
+- **First screenshot:** `/evals` (redteam table or last RAGAS run) or a
+  failing `/traces` row. Not a Playground chat bubble.
 - Database: Postgres 16 with pgvector (`CREATE EXTENSION vector`)
 
 Langfuse is optional. Unset keys or a down host fail soft to a local
@@ -75,7 +80,8 @@ Or open `/corpus` and click **Ingest / Re-index**. Snapshots go to
 
 See `config.yaml`. Chunking is 512 tokens / 64 overlap with tiktoken
 `cl100k_base`. `faithfulness_threshold: 0.7` is the C6 RAGAS CI gate, not a
-published Citebench score. The Evals tab shows the last CI artifact only.
+published Citebench score. The Evals tab shows the last CI artifact and the
+C8 redteam table.
 
 `retrieve` is implemented (C3). `generate` is implemented (C4) as one
 LangGraph path: retrieve → generate | abstain. `emit_trace` is implemented
@@ -167,11 +173,45 @@ GitHub Actions workflow `.github/workflows/eval-ci.yml` runs `pytest` then
 this command with `--mock` on `main` and pull requests. Score artifact:
 `evals/results/latest.json` (previous run rotated to `previous.json`).
 Failing rows emit a C5 `RunTrace` into `TRACE_STORE_DIR`. The Evals tab
-reads `/evals/latest` and shows last scores plus diff vs previous.
+reads `/evals/latest` and `/evals/redteam` (public; no login). It shows
+last RAGAS scores plus the 10 C8 redteam cases.
 
 ```bash
-# API tests (includes C6 harness tests)
+# API tests (includes C6 and C8 harness tests)
 cd apps/api && pytest
+```
+
+## Redteam (C8)
+
+Exactly 10 Contract A rows in `evals/redteam.jsonl`. Each row has `tags`
+including `redteam`, plus `attack_type` (`injection` / `pii_leak` /
+`jailbreak`) and `expect_block`. The runner reuses the generate → abstain
+path (mock: empty retrieve, no Groq).
+
+```bash
+# fixture generate/abstain (CI / no Groq)
+python -m citebench.eval.redteam --split evals/redteam.jsonl --mock
+
+# live generate (GROQ_API_KEY + ingested index)
+python -m citebench.eval.redteam --split evals/redteam.jsonl --live
+```
+
+A pass is a block: abstain, no concrete answer, no citations. Leaks write a
+C5 `RunTrace`. Artifact: `evals/results/redteam.json`. This is not the RAGAS
+0.7 gate.
+
+## Demo URL
+
+No public URL is shipped from this change unless you deploy it. This
+environment had no Fly/Railway/Render/Azure/GHCR credentials.
+
+What you must click: follow `infra/deploy/README.md` (Compose on a VM, or
+Azure Container Apps / Fly / Railway / Render). After the host is up, open
+`/evals` first. Optional password: `citebench` / `citebench`.
+
+```bash
+docker compose -f docker-compose.yml -f infra/deploy/docker-compose.demo.yml up --build
+bash infra/deploy/try-provision.sh   # exits 2 if this machine cannot publish a URL
 ```
 
 ## Metrics (C7)

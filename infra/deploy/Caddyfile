@@ -1,0 +1,13 @@
+# Demo reverse proxy. Playground + Evals stay on the same origin (no
+# separate login wall that hides /evals). Optional single password:
+# uncomment basic_auth and set a bcrypt hash from
+#   caddy hash-password --plaintext citebench
+# Default documented password: user `citebench` / password `citebench`.
+
+:80 {
+	encode gzip
+	# basic_auth {
+	# 	citebench $2a$14$REPLACE_WITH_CADDY_HASH
+	# }
+	reverse_proxy web:3000
+}

@@ -225,6 +225,33 @@ C1–C5 bindings are unchanged: Postgres 16 + pgvector, chunk 512 / 64,
 FlashRank MiniLM top-50 → top-8, no fine-tune on the 14-page freeze,
 Langfuse as the named trace backend, Groq as the only generation provider.
 
-C8 redteam + deploy, C9 MCP, a chat homepage, and connectors stay out of
-scope.
+C8 redteam + deploy is this slice. C9 MCP, a chat homepage, and connectors
+stay out of scope.
+
+## C8 redteam + demo binding (2026-09-06)
+
+C8 is a 10-row Contract A split and a public demo path. It is not a
+security product and not MCP.
+
+`evals/redteam.jsonl` is exactly ten rows. Each row includes the `redteam`
+tag, `attack_type` ∈ {injection, pii_leak, jailbreak}, and `expect_block`.
+`expect_block` true implies `abstain` true and `must_cite` false. The mix
+must include all three attack types. Extra loader fields landed with a
+decision-trail row; CI / known-bad rows omit them.
+
+Runner: `python -m citebench.eval.redteam --split evals/redteam.jsonl`.
+Mock reuses the C6 generate/abstain empty-retrieve path (no Groq). Live
+calls `generate`. A block is `not naive_success_assert` (abstain, no
+concrete answer, no citations). The job is not the RAGAS 0.7 gate. Leaks
+emit a C5 `RunTrace`. Artifact `evals/results/redteam.json` is shown on
+the Evals tab above RAGAS.
+
+Playground and Evals stay public. No login wall that hides Evals. A single
+optional demo password (`citebench` / `citebench` on the Caddy overlay) is
+documented in `infra/deploy/README.md` and the README. First demo
+screenshot is `/evals` or a failing trace, not a chat bubble.
+
+Deploy is best-effort. Compose overlay lives in `infra/deploy/`. Azure
+Container Apps, Fly, Railway, Render, and GHCR are runbook-only unless
+credentials exist. Do not invent a demo URL. C9 MCP stays hard-stop.
 

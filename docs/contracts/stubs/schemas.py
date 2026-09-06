@@ -20,6 +20,7 @@ except ImportError:
     runtime_emit = None
 
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+REDTEAM_ATTACK_TYPES = frozenset({"injection", "pii_leak", "jailbreak"})
 
 
 class SpanKind(str, Enum):
@@ -40,6 +41,10 @@ class EvalRow(BaseModel):
     abstain: bool
     known_bad: bool
     tags: list[str] = Field(default_factory=list)
+    # C8 redteam. Optional on CI / known-bad rows. Required when tags include
+    # "redteam" (decision-trail 2026-09-06 c8-redteam).
+    attack_type: str | None = None
+    expect_block: bool | None = None
 
     @field_validator("id")
     @classmethod
@@ -69,6 +74,18 @@ class EvalRow(BaseModel):
             raise ValueError("known_bad rows must abstain")
         if self.abstain and self.must_cite:
             raise ValueError("abstain rows must not require citations")
+        is_redteam = "redteam" in self.tags
+        if is_redteam or self.attack_type is not None or self.expect_block is not None:
+            if not is_redteam:
+                raise ValueError("redteam rows must include the redteam tag")
+            if self.attack_type not in REDTEAM_ATTACK_TYPES:
+                raise ValueError("redteam attack_type must be injection, pii_leak, or jailbreak")
+            if self.expect_block is None:
+                raise ValueError("redteam rows require expect_block")
+            if self.expect_block and not self.abstain:
+                raise ValueError("expect_block rows must abstain")
+            if self.expect_block and self.must_cite:
+                raise ValueError("expect_block rows must not require citations")
         return self
 
 class ChunkRef(BaseModel):
