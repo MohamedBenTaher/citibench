@@ -1,5 +1,16 @@
 # Citebench demo deploy
 
+**Run C8 evals on your laptop before provisioning a public host.**
+
+```bash
+# from the repo root — uses python3, creates .venv, does not use bare `python`
+./scripts/local-evals.sh
+```
+
+`try-provision.sh` exits 3 until `evals/results/.local-evals-ok` exists.
+That stamp is written only after pytest, mock RAGAS, and mock redteam pass.
+Do not deploy a demo that has not blocked the 10 redteam cases locally.
+
 Playground (`/playground`) and Evals (`/evals`) are public application
 routes. Do not put a login wall in front of Evals only. If you need one
 password for a public host, use the optional Caddy `basic_auth` block and
