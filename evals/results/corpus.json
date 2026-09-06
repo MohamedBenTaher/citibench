@@ -1,0 +1,143 @@
+{
+  "measured_at": "2026-09-06T16:20:37.319097+00:00",
+  "measured_under": "live-html-fetch-2026-09-06",
+  "method": {
+    "docs": "count of pinned URLs in corpus/MANIFEST.md",
+    "pages": "HTML snapshot = 1 page; PDF = PdfReader page count",
+    "chunks": "tiktoken cl100k_base windows of 512/64"
+  },
+  "freeze_date": "2026-09-05",
+  "docs": 14,
+  "pages": 14,
+  "chunks": 148,
+  "fetched": 14,
+  "missing": [],
+  "per_doc": [
+    {
+      "id": "k8s-deployments",
+      "error": null,
+      "pages": 1,
+      "chunks": 29,
+      "tokens": 14428,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-pods",
+      "error": null,
+      "pages": 1,
+      "chunks": 11,
+      "tokens": 5582,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-services",
+      "error": null,
+      "pages": 1,
+      "chunks": 21,
+      "tokens": 10725,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-configmaps",
+      "error": null,
+      "pages": 1,
+      "chunks": 7,
+      "tokens": 3478,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-secrets",
+      "error": null,
+      "pages": 1,
+      "chunks": 16,
+      "tokens": 7894,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-ingress",
+      "error": null,
+      "pages": 1,
+      "chunks": 14,
+      "tokens": 7097,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-scheduler",
+      "error": null,
+      "pages": 1,
+      "chunks": 2,
+      "tokens": 970,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "k8s-storage",
+      "error": null,
+      "pages": 1,
+      "chunks": 23,
+      "tokens": 11752,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "az-aks-intro",
+      "error": null,
+      "pages": 1,
+      "chunks": 5,
+      "tokens": 2418,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "az-aks-concepts",
+      "error": null,
+      "pages": 1,
+      "chunks": 6,
+      "tokens": 3053,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "az-aks-network",
+      "error": null,
+      "pages": 1,
+      "chunks": 5,
+      "tokens": 2341,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "az-blob-overview",
+      "error": null,
+      "pages": 1,
+      "chunks": 1,
+      "tokens": 477,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "az-identity",
+      "error": null,
+      "pages": 1,
+      "chunks": 4,
+      "tokens": 1952,
+      "fetched": true,
+      "content_type": "text/html"
+    },
+    {
+      "id": "az-monitor",
+      "error": null,
+      "pages": 1,
+      "chunks": 4,
+      "tokens": 1719,
+      "fetched": true,
+      "content_type": "text/html"
+    }
+  ]
+}

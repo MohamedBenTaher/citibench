@@ -20,6 +20,7 @@ lexical_k: 50
 rerank_pool: 50
 top_k: 8
 # C6 RAGAS CI gate (python -m citebench.eval.ci). Not a published score.
+# C7 /metrics quotes the last eval artifact and records its mode (mock|live).
 faithfulness_threshold: 0.7
 # Groq production chat id (https://console.groq.com/docs/models). Override with GROQ_CHAT_MODEL.
 chat_model: llama-3.1-8b-instant

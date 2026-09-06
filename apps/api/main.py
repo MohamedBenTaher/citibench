@@ -7,12 +7,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 from db import connect, corpus_stats, ensure_schema
 from generate import GenerateResult, generate
+from metrics import MetricsSnapshot, collect_metrics, render_prometheus
 from pipeline import run_ingest
 from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, load_settings
@@ -33,7 +35,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Citebench API", version="0.6.0", lifespan=lifespan)
+app = FastAPI(title="Citebench API", version="0.7.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -170,6 +172,22 @@ def get_traces() -> dict[str, Any]:
             for item in traces
         ],
     }
+
+
+@app.get("/metrics", response_model=None)
+def get_metrics(
+    format: str | None = Query(default=None, description="json (default) or prometheus"),
+):
+    snapshot = collect_metrics()
+    fmt = (format or "json").strip().lower()
+    if fmt in {"prom", "prometheus", "text"}:
+        return PlainTextResponse(
+            render_prometheus(snapshot),
+            media_type="text/plain; version=0.0.4; charset=utf-8",
+        )
+    if fmt not in {"", "json"}:
+        raise HTTPException(status_code=400, detail="format must be json or prometheus")
+    return snapshot
 
 
 @app.get("/evals/latest")

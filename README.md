@@ -2,6 +2,26 @@
 
 Citebench measures citation-grounded retrieval on a frozen public Kubernetes and Azure corpus.
 
+## Numbers
+
+Counted from this repo, or tagged with the measurement. An em dash means
+we did not measure it here — not that the value is zero.
+
+| Metric | Value | Method |
+| --- | --- | --- |
+| Corpus docs | 14 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-05). |
+| Corpus pages | 14 | One HTML snapshot is one page (`parse_doc`). All 14 URLs are HTML. |
+| Corpus chunks | 148 | `measured-under-live-html-fetch-2026-09-06`. tiktoken `cl100k_base` 512/64 on pages fetched that day, recorded in `evals/results/corpus.json`. Not the frozen 2026-09-05 sha256 snapshots (those are not in git). Counts move if the public pages change. After ingest, prefer `GET /corpus/stats`. |
+| Faithfulness | 1.000 | `measured-under-mock-ragas-judge`. Mean on `evals/splits/ci.jsonl` (3 rows) from `evals/results/latest.json` (`mode=mock`). Fixture judge, not a live ragas/Groq run. The CI gate is 0.7; this is not a published product score. |
+| Context precision | 0.833 | Same mock artifact as faithfulness. Exact value in `latest.json` is `0.8333…`. |
+| p95 latency | — | Unmeasured. No live Groq generate sample in this environment. `GET /metrics` returns `null` until traces with `latency_ms > 0` exist. |
+| Cost / 1k queries | — | Unmeasured. Same reason. When traces exist: mean `citebench.cost.v1` USD × 1000. Rates are in `config.yaml`. |
+
+```bash
+curl -sS http://localhost:8000/metrics
+curl -sS 'http://localhost:8000/metrics?format=prometheus'
+```
+
 ## Run
 
 ```bash
@@ -60,7 +80,7 @@ published Citebench score. The Evals tab shows the last CI artifact only.
 `retrieve` is implemented (C3). `generate` is implemented (C4) as one
 LangGraph path: retrieve → generate | abstain. `emit_trace` is implemented
 (C5): every generate/ask run writes a `RunTrace` (Langfuse when configured,
-local JSON store otherwise).
+local JSON store otherwise). `GET /metrics` is implemented (C7).
 
 ## Retrieve (C3)
 
@@ -153,3 +173,14 @@ reads `/evals/latest` and shows last scores plus diff vs previous.
 # API tests (includes C6 harness tests)
 cd apps/api && pytest
 ```
+
+## Metrics (C7)
+
+`GET /metrics` is JSON by default. `?format=prometheus` is the text scrape.
+
+- **p50 / p95 latency** — traces with `latency_ms > 0`
+- **cost / 1k** — mean billed `CostEstimate.usd_estimate` × 1000
+- **faithfulness** — last eval artifact, including `mode`
+- **corpus** — pgvector stats if indexed, else `evals/results/corpus.json`, else MANIFEST docs/pages
+
+Null means “not measured yet,” not zero.

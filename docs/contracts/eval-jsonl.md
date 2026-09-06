@@ -64,8 +64,8 @@ python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad evals/spli
 ```
 
 Gate: mean RAGAS **faithfulness >= 0.7**. That number is a threshold, not a
-published Citebench score. README must not display a fabricated 0.7 result.
-The Evals tab may show the last real CI artifact.
+published Citebench score. README may quote the last artifact only with its
+`mode` (C7). The Evals tab shows that same file.
 
 Companion metrics may be logged; they do not gate CI. Faithfulness is
 computed only on non-abstain rows. Known-bad rows use the abstain rule.
