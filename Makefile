@@ -3,10 +3,11 @@
 #   make start   — Compose (api, web, Postgres/pgvector)
 #   make ingest  — index the frozen 14-doc corpus (needs GROQ_API_KEY)
 
-PYTHON ?= python3
+PYTHON  ?= python3
 COMPOSE ?= docker compose
+WEB_PORT ?= 3000
 API     ?= http://127.0.0.1:8000
-WEB     ?= http://127.0.0.1:3000
+WEB     ?= http://127.0.0.1:$(WEB_PORT)
 VENV    := .venv
 PY      := $(VENV)/bin/python
 
@@ -16,7 +17,7 @@ help:
 	@echo "Citebench"
 	@echo
 	@echo "  make setup      copy .env.example → .env, create .venv, install deps"
-	@echo "  make start      docker compose up --build (api :8000, web :3000, db)"
+	@echo "  make start      docker compose up --build (api :8000, web :$(WEB_PORT), db)"
 	@echo "  make ingest     POST /ingest (requires GROQ_API_KEY in .env)"
 	@echo "  make evals      pytest + mock RAGAS + mock redteam (local, before provision)"
 	@echo "  make test       pytest only (uses .venv)"
@@ -46,7 +47,8 @@ $(PY):
 	$(PYTHON) -m venv $(VENV)
 
 start up: .env
-	$(COMPOSE) up --build -d
+	@echo "Citebench web → $(WEB)  (not Gotenberg; that API also uses :3000)"
+	WEB_PORT=$(WEB_PORT) $(COMPOSE) up --build -d
 	@echo "Waiting for API $(API)/health ..."
 	@i=0; \
 	until curl -sf "$(API)/health" >/dev/null; do \

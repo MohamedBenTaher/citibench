@@ -32,7 +32,7 @@ services:
       EVAL_STORE_DIR: /app/evals/results
       REDTEAM_JSONL: /app/evals/redteam.jsonl
       PYTHONPATH: /repo
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${WEB_PORT:-3000},http://127.0.0.1:${WEB_PORT:-3000}}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-}
@@ -48,7 +48,7 @@ services:
   web:
     build: ./apps/web
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     environment:
       NEXT_TELEMETRY_DISABLED: "1"
       API_URL: http://api:8000

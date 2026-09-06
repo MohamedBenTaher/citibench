@@ -50,6 +50,14 @@ make ingest         # index the 14 MANIFEST URLs
 
 Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`.
 
+If the page says **“Gotenberg has no UI, it's an API”**, that is [Gotenberg](https://gotenberg.dev/) (PDF conversion), not Citebench. It also binds **:3000**. Confirm Citebench with `curl -sS localhost:8000/health` → `{"status":"ok"}`. Then either stop Gotenberg (`docker ps | grep -i gotenberg`) or start Citebench on another port:
+
+```bash
+# stop the other container, or:
+WEB_PORT=3100 make start
+# open http://localhost:3100/
+```
+
 Equivalent without Make:
 
 ```bash
@@ -61,7 +69,7 @@ curl -sS -X POST http://localhost:8000/ingest -H 'Content-Type: application/json
 | Make target | What it does |
 | --- | --- |
 | `make setup` | Copy `.env`, create `.venv`, install `apps/api` + pytest |
-| `make start` | `docker compose up --build -d`, wait for `/health` |
+| `make start` | `docker compose up --build -d`, wait for `/health` (`WEB_PORT=3100` if :3000 is taken) |
 | `make ingest` | `POST /ingest` |
 | `make evals` | Local pytest + mock RAGAS + mock redteam (run before provision) |
 | `make test` | Pytest only, via `.venv` |
