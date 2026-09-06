@@ -62,7 +62,12 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
 
 @contextmanager
 def connect(database_url: str) -> Iterator[psycopg.Connection]:
-    conn = psycopg.connect(database_url, row_factory=dict_row, autocommit=False)
+    conn = psycopg.connect(
+        database_url,
+        row_factory=dict_row,
+        autocommit=False,
+        connect_timeout=5,
+    )
     try:
         yield conn
         conn.commit()

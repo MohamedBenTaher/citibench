@@ -9,11 +9,20 @@ from pathlib import Path
 import yaml
 
 DEFAULT_CONFIG_PATH = Path(os.environ.get("CONFIG_PATH", "/app/config.yaml"))
-# Repo-root fallback when running uvicorn from apps/api without Compose mounts.
-_LOCAL_CONFIG = Path(__file__).resolve().parents[2] / "config.yaml"
-
 DEFAULT_CORPUS_DIR = Path(os.environ.get("CORPUS_DIR", "/app/corpus"))
-_LOCAL_CORPUS = Path(__file__).resolve().parents[2] / "corpus"
+
+
+def _repo_root() -> Path | None:
+    """apps/api/settings.py → repo root. None when the image has no extra parents."""
+    parts = Path(__file__).resolve().parents
+    if len(parts) > 2:
+        return parts[2]
+    return None
+
+
+_REPO_ROOT = _repo_root()
+_LOCAL_CONFIG = (_REPO_ROOT / "config.yaml") if _REPO_ROOT else None
+_LOCAL_CORPUS = (_REPO_ROOT / "corpus") if _REPO_ROOT else None
 
 GROQ_KEY_HELP = (
     "GROQ_API_KEY is not set. Citebench C2 embeddings use only Groq's "
@@ -42,7 +51,7 @@ class Settings:
 def _resolve_config_path() -> Path:
     if DEFAULT_CONFIG_PATH.is_file():
         return DEFAULT_CONFIG_PATH
-    if _LOCAL_CONFIG.is_file():
+    if _LOCAL_CONFIG is not None and _LOCAL_CONFIG.is_file():
         return _LOCAL_CONFIG
     raise FileNotFoundError(
         f"config.yaml not found at {DEFAULT_CONFIG_PATH} or {_LOCAL_CONFIG}"
@@ -52,7 +61,7 @@ def _resolve_config_path() -> Path:
 def _resolve_corpus_dir() -> Path:
     if DEFAULT_CORPUS_DIR.is_dir():
         return DEFAULT_CORPUS_DIR
-    if _LOCAL_CORPUS.is_dir():
+    if _LOCAL_CORPUS is not None and _LOCAL_CORPUS.is_dir():
         return _LOCAL_CORPUS
     raise FileNotFoundError(
         f"corpus dir not found at {DEFAULT_CORPUS_DIR} or {_LOCAL_CORPUS}"
@@ -66,9 +75,11 @@ def load_settings() -> Settings:
         provider=str(raw.get("provider", "groq")),
         embed_model=str(raw.get("embed_model", "nomic-embed-text-v1.5")),
         embed_dimensions=int(raw.get("embed_dimensions", 768)),
-        embed_api_base=str(raw.get("embed_api_base", "https://api.groq.com/openai/v1")).rstrip(
-            "/"
-        ),
+        embed_api_base=str(
+            os.environ.get("GROQ_API_BASE")
+            or raw.get("embed_api_base")
+            or "https://api.groq.com/openai/v1"
+        ).rstrip("/"),
         embed_document_prefix=str(raw.get("embed_document_prefix", "search_document: ")),
         chunk_size=int(raw.get("chunk_size", 512)),
         chunk_overlap=int(raw.get("chunk_overlap", 64)),

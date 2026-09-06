@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from settings import GROQ_KEY_HELP, Settings, require_groq_key
+from settings import GROQ_KEY_HELP, Settings, _repo_root, require_groq_key
 
 
 def test_require_groq_key_fails_clearly() -> None:
@@ -24,3 +24,5 @@ def test_require_groq_key_fails_clearly() -> None:
         require_groq_key(settings)
     assert "console.groq.com/keys" in GROQ_KEY_HELP
     assert "second embed provider" in GROQ_KEY_HELP
+    # Import-time repo-root walk must not assume a deep path (Compose image is /app).
+    assert _repo_root() is None or (_repo_root() / "config.yaml").exists()
