@@ -13,7 +13,23 @@ docker compose up --build
 - Web: `http://localhost:3000/` (index plus `/corpus`, `/playground`, `/traces`, `/evals`)
 - Database: Postgres 16 with pgvector (`CREATE EXTENSION vector`)
 
-Langfuse is not part of this Compose stack.
+Langfuse is optional. Unset keys or a down host fail soft to a local
+`RunTrace` store so the Traces tab still works. Cloud:
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com   # or https://us.cloud.langfuse.com
+```
+
+Self-host (optional Compose profile; UI at http://localhost:3001):
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-citebench-dev
+LANGFUSE_SECRET_KEY=sk-lf-citebench-dev
+LANGFUSE_HOST=http://langfuse:3000
+docker compose --profile langfuse up --build
+```
 
 ## Ingest (C2)
 
@@ -41,8 +57,10 @@ See `config.yaml`. Chunking is 512 tokens / 64 overlap with tiktoken
 `cl100k_base`. `faithfulness_threshold: 0.7` is a future CI gate only. This
 repository does not report RAGAS scores.
 
-`emit_trace` remains a stub. `retrieve` is implemented (C3). `generate` is
-implemented (C4) as one LangGraph path: retrieve → generate | abstain.
+`retrieve` is implemented (C3). `generate` is implemented (C4) as one
+LangGraph path: retrieve → generate | abstain. `emit_trace` is implemented
+(C5): every generate/ask run writes a `RunTrace` (Langfuse when configured,
+local JSON store otherwise).
 
 ## Retrieve (C3)
 
@@ -83,3 +101,21 @@ path, latency, and `citebench.cost.v1` estimated cost. `/` stays an index.
 Citations are always a subset of retrieved chunk ids. Empty retrieve, low
 FlashRank confidence, out-of-corpus model abstain, and ungrounded (no valid
 cites) all abstain. Policy is in `apps/api/generate.py` and `DECISIONS.md`.
+
+## Traces (C5)
+
+Every `POST /generate` / Playground ask emits one `RunTrace` via `emit_trace`.
+Span tree is retrieve → rerank → generate|abstain. Citations use `text_ref`
+(`doc_id#chunk_id`), not chunk bodies. Cost is `citebench.cost.v1` (USD +
+method). Langfuse mapping: trace `name=citebench.run`, spans named by
+`span.kind`, citations and cost in metadata, `rerank_skipped` as a score.
+
+```bash
+curl -sS http://localhost:8000/traces
+curl -sS http://localhost:8000/traces/<run_id>
+```
+
+The Traces tab lists one row per run. Click a row for retrieval and
+generation/abstain spans. If Langfuse keys are missing or the host is down,
+the same tab reads the local store (`TRACE_STORE_DIR`, default
+`/tmp/citebench-traces`).

@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
-from typing import Protocol
+from datetime import datetime, timezone
+from typing import Any, Protocol
 
 from pydantic import BaseModel
 
@@ -141,10 +142,13 @@ def retrieve(
     fts_search_fn: FtsSearchFn | None = None,
     rerank_fn: RerankFn | None = None,
     settings: Settings | None = None,
+    stage_sink: list[dict[str, Any]] | None = None,
 ) -> list[ChunkHit]:
     cfg = config or (retrieve_config_from_settings(settings) if settings is not None else RetrieveConfig())
     query_text = (query or "").strip()
+    retrieve_started = datetime.now(timezone.utc)
     if not query_text:
+        _record_empty_stages(stage_sink, retrieve_started, rerank_model=cfg.rerank_model)
         return []
 
     embed_fn = embed_query_fn or _default_embed(settings)
@@ -152,15 +156,41 @@ def retrieve(
     fts_fn = fts_search_fn or _default_fts(settings)
     rank_fn = rerank_fn or flashrank_rerank
 
-    query_vec = embed_fn(query_text)
-    dense = list(vector_fn(query_vec, cfg.dense_k))
-    lexical = list(fts_fn(query_text, cfg.lexical_k))
+    try:
+        query_vec = embed_fn(query_text)
+        dense = list(vector_fn(query_vec, cfg.dense_k))
+        lexical = list(fts_fn(query_text, cfg.lexical_k))
+    except Exception as exc:
+        now = datetime.now(timezone.utc)
+        _append_stage(
+            stage_sink,
+            kind="retrieve",
+            started_at=retrieve_started,
+            finished_at=now,
+            status="error",
+            attributes={"error": str(exc), "hit_count": 0, "chunks": []},
+        )
+        _append_stage(
+            stage_sink,
+            kind="rerank",
+            started_at=now,
+            finished_at=now,
+            status="error",
+            attributes={"rerank_skipped": True, "rerank_model": cfg.rerank_model, "error": str(exc)},
+        )
+        raise
+
     if not dense and not lexical:
+        now = datetime.now(timezone.utc)
+        _record_empty_stages(stage_sink, retrieve_started, rerank_model=cfg.rerank_model)
         return []
 
     fused = rrf_fuse(dense, lexical, k=cfg.rrf_k)
     pool = fused[: cfg.rerank_pool]
+    rerank_started = datetime.now(timezone.utc)
     rerank_skipped = False
+    rerank_status = "ok"
+    rerank_error: str | None = None
     rerank_scores: list[float] | None = None
     try:
         rerank_scores = [float(score) for score in rank_fn(query_text, pool)]
@@ -168,23 +198,118 @@ def retrieve(
             raise RuntimeError("rerank score count does not match the fused pool")
     except Exception as exc:
         rerank_skipped = True
+        rerank_status = "error"
+        rerank_error = str(exc)
         log.warning("FlashRank failed; falling back to RRF order: %s", exc)
 
     if rerank_skipped:
-        return [
+        hits = [
             _to_hit(item, rank=rank, skipped=True, score=item.fused_score, rerank_score=None)
             for rank, item in enumerate(pool[: cfg.top_k], start=1)
         ]
+    else:
+        assert rerank_scores is not None
+        paired = sorted(
+            zip(pool, rerank_scores, strict=True),
+            key=lambda item: (-item[1], item[0].chunk_id),
+        )
+        hits = [
+            _to_hit(item, rank=rank, skipped=False, score=score, rerank_score=score)
+            for rank, (item, score) in enumerate(paired[: cfg.top_k], start=1)
+        ]
 
-    assert rerank_scores is not None
-    paired = sorted(
-        zip(pool, rerank_scores, strict=True),
-        key=lambda item: (-item[1], item[0].chunk_id),
+    retrieve_finished = datetime.now(timezone.utc)
+    _append_stage(
+        stage_sink,
+        kind="retrieve",
+        started_at=retrieve_started,
+        finished_at=retrieve_finished,
+        status="ok",
+        attributes={
+            "hit_count": len(hits),
+            "dense_k": cfg.dense_k,
+            "lexical_k": cfg.lexical_k,
+            "chunks": _chunk_pointers(hits),
+        },
     )
+    rerank_attrs: dict[str, Any] = {
+        "rerank_skipped": rerank_skipped,
+        "rerank_model": cfg.rerank_model,
+        "pool_size": len(pool),
+        "top_k": cfg.top_k,
+        "chunks": _chunk_pointers(hits),
+    }
+    if rerank_error:
+        rerank_attrs["error"] = rerank_error
+    _append_stage(
+        stage_sink,
+        kind="rerank",
+        started_at=rerank_started,
+        finished_at=retrieve_finished,
+        status=rerank_status,
+        attributes=rerank_attrs,
+    )
+    return hits
+
+
+def _chunk_pointers(hits: Sequence[ChunkHit]) -> list[dict[str, Any]]:
     return [
-        _to_hit(item, rank=rank, skipped=False, score=score, rerank_score=score)
-        for rank, (item, score) in enumerate(paired[: cfg.top_k], start=1)
+        {
+            "chunk_id": hit.chunk_id,
+            "doc_id": hit.doc_id,
+            "text_ref": f"{hit.doc_id}#{hit.chunk_id}",
+            "score": hit.score,
+            "rank": hit.rank,
+        }
+        for hit in hits
     ]
+
+
+def _append_stage(
+    sink: list[dict[str, Any]] | None,
+    *,
+    kind: str,
+    started_at: datetime,
+    finished_at: datetime,
+    status: str,
+    attributes: dict[str, Any],
+) -> None:
+    if sink is None:
+        return
+    sink.append(
+        {
+            "kind": kind,
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "status": status,
+            "attributes": attributes,
+        }
+    )
+
+
+def _record_empty_stages(
+    sink: list[dict[str, Any]] | None,
+    started: datetime,
+    *,
+    rerank_model: str,
+) -> None:
+    finished = datetime.now(timezone.utc)
+    _append_stage(
+        sink,
+        kind="retrieve",
+        started_at=started,
+        finished_at=finished,
+        status="ok",
+        attributes={"hit_count": 0, "chunks": []},
+    )
+    _append_stage(
+        sink,
+        kind="rerank",
+        started_at=finished,
+        finished_at=finished,
+        status="ok",
+        attributes={"rerank_skipped": True, "rerank_model": rerank_model, "pool_size": 0},
+    )
 
 
 def _to_hit(

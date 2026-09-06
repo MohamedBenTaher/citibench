@@ -18,7 +18,8 @@ export default function IndexPage() {
           chat surface.
         </li>
         <li>
-          <Link href="/traces">Traces</Link> — future RunTrace viewer.
+          <Link href="/traces">Traces</Link> — RunTrace list (Langfuse + local
+          fallback).
         </li>
         <li>
           <Link href="/evals">Evals</Link> — future RAGAS / known-bad runner.

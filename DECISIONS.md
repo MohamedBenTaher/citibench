@@ -147,3 +147,25 @@ estimate is reproducible without Langfuse (C5).
 
 Playground (`/playground`) is the ask UI. `/` stays an index.
 
+## C5 traces binding (2026-09-06)
+
+C5 implements Contract B `emit_trace`. Langfuse is the named backend. The
+Traces tab is a thin local view, not a second tracer product.
+
+Every generate/ask run builds one `RunTrace` with the required tree
+`retrieve → rerank → generate|abstain`. `text_ref` is `doc_id#chunk_id`.
+Chunk bodies stay in Postgres. Extra run fields required by the job
+(`model`, `tokens_in`/`tokens_out`, `latency_ms`, `cost_method`) sit on
+`RunTrace` next to Contract B `cost`.
+
+Langfuse SDK posts `name=citebench.run`, child spans named by `span.kind`,
+citation `text_ref`s on output metadata, `CostEstimate` + method on
+metadata, and `rerank_skipped` as a score. Configure
+`LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_HOST` (cloud or
+`http://langfuse:3000` for the optional Compose profile). If keys are unset
+or Langfuse errors, `emit_trace` keeps the in-memory/local JSON store and
+leaves `langfuse_trace_id` null so `/traces` still works.
+
+Eval CI, `/metrics` README numbers, MCP, connectors, a chat homepage, and
+an analytics product stay out of scope.
+
