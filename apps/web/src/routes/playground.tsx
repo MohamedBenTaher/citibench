@@ -34,8 +34,13 @@ function PlaygroundPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await postGenerate({ data: { query } });
-      setResult(data);
+      const outcome = await postGenerate({ data: { query } });
+      if (!outcome.ok) {
+        setResult(null);
+        setError(outcome.error);
+        return;
+      }
+      setResult(outcome.data);
     } catch (err: unknown) {
       setResult(null);
       setError(err instanceof Error ? err.message : "generate failed");
