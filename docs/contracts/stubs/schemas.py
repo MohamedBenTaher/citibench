@@ -2,14 +2,25 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+# Optional C5 runtime. The stub lives under docs/ and must import without apps/api.
+try:
+    from trace import RunTrace as RuntimeTrace
+    from trace import emit_trace as runtime_emit
+except ImportError:
+    RuntimeTrace = None
+    runtime_emit = None
+
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+REDTEAM_ATTACK_TYPES = frozenset({"injection", "pii_leak", "jailbreak"})
 
 
 class SpanKind(str, Enum):
@@ -30,6 +41,10 @@ class EvalRow(BaseModel):
     abstain: bool
     known_bad: bool
     tags: list[str] = Field(default_factory=list)
+    # C8 redteam. Optional on CI / known-bad rows. Required when tags include
+    # "redteam" (decision-trail 2026-09-06 c8-redteam).
+    attack_type: str | None = None
+    expect_block: bool | None = None
 
     @field_validator("id")
     @classmethod
@@ -59,6 +74,18 @@ class EvalRow(BaseModel):
             raise ValueError("known_bad rows must abstain")
         if self.abstain and self.must_cite:
             raise ValueError("abstain rows must not require citations")
+        is_redteam = "redteam" in self.tags
+        if is_redteam or self.attack_type is not None or self.expect_block is not None:
+            if not is_redteam:
+                raise ValueError("redteam rows must include the redteam tag")
+            if self.attack_type not in REDTEAM_ATTACK_TYPES:
+                raise ValueError("redteam attack_type must be injection, pii_leak, or jailbreak")
+            if self.expect_block is None:
+                raise ValueError("redteam rows require expect_block")
+            if self.expect_block and not self.abstain:
+                raise ValueError("expect_block rows must abstain")
+            if self.expect_block and self.must_cite:
+                raise ValueError("expect_block rows must not require citations")
         return self
 
 class ChunkRef(BaseModel):
@@ -116,10 +143,54 @@ class ChunkHit(BaseModel):
     text: str | None = None
 
 def load_eval_jsonl(path: str) -> list[EvalRow]:
-    raise NotImplementedError("C1 stub: load_eval_jsonl")
+    """Read Contract A JSONL. Invalid or duplicate rows fail the load."""
+    text = Path(path).read_text(encoding="utf-8")
+    rows: list[EvalRow] = []
+    seen: set[str] = set()
+    for line_no, raw in enumerate(text.splitlines(), start=1):
+        line = raw.strip()
+        if not line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+        row = EvalRow.model_validate(payload)
+        if row.id in seen:
+            raise ValueError(f"{path}:{line_no}: duplicate id {row.id}")
+        seen.add(row.id)
+        rows.append(row)
+    if not rows:
+        raise ValueError(f"{path}: no eval rows")
+    return rows
 
 def retrieve(query: str, config: RetrieveConfig | None = None) -> list[ChunkHit]:
     raise NotImplementedError("C1 stub: retrieve")
 
 def emit_trace(trace: RunTrace) -> None:
-    raise NotImplementedError("C1 stub: emit_trace")
+    """C5: validate the contract tree, then persist via the runtime emitter."""
+    _validate_run_trace(trace)
+    if runtime_emit is None or RuntimeTrace is None:
+        return
+    runtime_emit(RuntimeTrace.model_validate(trace.model_dump()))
+
+
+def _validate_run_trace(trace: RunTrace) -> None:
+    retrieve = [span for span in trace.spans if span.kind == SpanKind.retrieve]
+    rerank = [span for span in trace.spans if span.kind == SpanKind.rerank]
+    generate = [span for span in trace.spans if span.kind == SpanKind.generate]
+    abstain = [span for span in trace.spans if span.kind == SpanKind.abstain]
+    if len(retrieve) != 1 or retrieve[0].parent_id is not None:
+        raise ValueError("exactly one retrieve span with parent_id=null")
+    if len(rerank) != 1 or rerank[0].parent_id != retrieve[0].span_id:
+        raise ValueError("rerank must be the child of retrieve")
+    if "rerank_skipped" not in rerank[0].attributes:
+        raise ValueError("rerank attributes must include rerank_skipped")
+    if trace.abstained:
+        if generate or len(abstain) != 1 or abstain[0].parent_id != rerank[0].span_id:
+            raise ValueError("abstain tree invalid")
+        if trace.citations:
+            raise ValueError("abstained citations must be empty")
+        return
+    if abstain or len(generate) != 1 or generate[0].parent_id != rerank[0].span_id:
+        raise ValueError("generate tree invalid")

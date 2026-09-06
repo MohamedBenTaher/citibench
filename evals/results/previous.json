@@ -1,0 +1,44 @@
+{
+  "run_id": "eval-37fe7c0bda93",
+  "started_at": "2026-09-06T16:11:18.611921+00:00",
+  "finished_at": "2026-09-06T16:11:18.719569+00:00",
+  "split": "evals/splits/ci.jsonl",
+  "known_bad_split": "evals/splits/known_bad.jsonl",
+  "mode": "mock",
+  "framework": "ragas",
+  "threshold_faithfulness": 0.7,
+  "gate_passed": true,
+  "gate_reason": "ok",
+  "loader_error": null,
+  "metrics": {
+    "faithfulness": 1.0,
+    "context_precision": 0.8333333333333334,
+    "answer_relevancy": 0.7111111111111111
+  },
+  "known_bad": {
+    "clean": true,
+    "rows": [
+      {
+        "id": "bad-001",
+        "run_id": "47c7a428-4f49-4f7d-bae5-0cfaa8cad4b9",
+        "required_assert_failed": true,
+        "abstained": true
+      },
+      {
+        "id": "bad-002",
+        "run_id": "f4c6aa5a-8ad2-4073-9977-49731bc34459",
+        "required_assert_failed": true,
+        "abstained": true
+      },
+      {
+        "id": "bad-003",
+        "run_id": "69f1bfeb-1bf2-4915-a97b-23d752a1b4e1",
+        "required_assert_failed": true,
+        "abstained": true
+      }
+    ]
+  },
+  "failing_run_ids": [],
+  "previous": null,
+  "diff": null
+}

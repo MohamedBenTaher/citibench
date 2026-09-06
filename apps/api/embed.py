@@ -16,12 +16,19 @@ class EmbedError(RuntimeError):
     pass
 
 
-def embed_texts(texts: list[str], settings: Settings, *, batch_size: int = 32) -> list[list[float]]:
-    """Embed passages with the document prefix. Empty input returns []."""
+def embed_texts(
+    texts: list[str],
+    settings: Settings,
+    *,
+    batch_size: int = 32,
+    prefix: str | None = None,
+) -> list[list[float]]:
+    """Embed passages. Default prefix is the document prefix. Empty input returns []."""
     if not texts:
         return []
     key = require_groq_key(settings)
-    prefixed = [settings.embed_document_prefix + text for text in texts]
+    used_prefix = settings.embed_document_prefix if prefix is None else prefix
+    prefixed = [used_prefix + text for text in texts]
     vectors: list[list[float]] = []
     with httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
         for start in range(0, len(prefixed), batch_size):
@@ -30,6 +37,14 @@ def embed_texts(texts: list[str], settings: Settings, *, batch_size: int = 32) -
     if len(vectors) != len(texts):
         raise EmbedError(f"expected {len(texts)} embeddings, got {len(vectors)}")
     return vectors
+
+
+def embed_query(query: str, settings: Settings) -> list[float]:
+    """Embed one query with the nomic `search_query:` prefix. Requires GROQ_API_KEY."""
+    vectors = embed_texts([query], settings, prefix=settings.embed_query_prefix)
+    if len(vectors) != 1:
+        raise EmbedError(f"expected 1 query embedding, got {len(vectors)}")
+    return vectors[0]
 
 
 def _embed_batch(

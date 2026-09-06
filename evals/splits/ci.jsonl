@@ -1,0 +1,3 @@
+{"id":"ci-001","question":"How does the kube-scheduler place pods onto nodes?","expected":"Cite Kubernetes scheduler docs: filters and scoring assign unscheduled pods to nodes.","must_cite":true,"abstain":false,"known_bad":false,"tags":["k8s","scheduler"]}
+{"id":"ci-002","question":"What is a Kubernetes Pod?","expected":"Cite Kubernetes pods docs: smallest deployable unit, scheduled onto a node.","must_cite":true,"abstain":false,"known_bad":false,"tags":["k8s","pods"]}
+{"id":"ci-003","question":"What does a Kubernetes Service expose?","expected":"Cite Kubernetes service docs: a Service exposes a set of Pods and does not schedule them.","must_cite":true,"abstain":false,"known_bad":false,"tags":["k8s","services"]}

@@ -8,6 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - ./infra/postgres/00-langfuse.sh:/docker-entrypoint-initdb.d/00-langfuse.sh:ro
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -24,24 +25,72 @@ services:
       DATABASE_URL: postgresql://citebench:citebench@db:5432/citebench
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_API_BASE: ${GROQ_API_BASE:-https://api.groq.com/openai/v1}
+      FLASHRANK_CACHE_DIR: ${FLASHRANK_CACHE_DIR:-/tmp/flashrank}
       CONFIG_PATH: /app/config.yaml
       CORPUS_DIR: /app/corpus
+      TRACE_STORE_DIR: /tmp/citebench-traces
+      EVAL_STORE_DIR: /app/evals/results
+      REDTEAM_JSONL: /app/evals/redteam.jsonl
+      PYTHONPATH: /repo
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${WEB_PORT:-3000},http://127.0.0.1:${WEB_PORT:-3000}}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-}
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./corpus:/app/corpus
+      - ./evals:/app/evals
+      - .:/repo:ro
     depends_on:
       db:
         condition: service_healthy
 
   web:
-    build: ./apps/web
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     environment:
-      NEXT_TELEMETRY_DISABLED: "1"
+      HOST: 0.0.0.0
+      PORT: 3000
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 3000
+      # Server-only FastAPI origin (in-network Compose DNS) for GET loaders.
       API_URL: http://api:8000
+      # Public FastAPI origin baked into the Vite client at build time
+      # (browser ask/ingest). Replaces unused NEXT_PUBLIC_API_URL.
+      VITE_API_URL: http://localhost:8000
     depends_on:
       - api
+
+  # Optional self-hosted Langfuse (v2, Postgres-backed). Cloud keys also work
+  # without this service: set LANGFUSE_PUBLIC_KEY/SECRET_KEY/HOST on `api`.
+  #   docker compose --profile langfuse up --build
+  langfuse:
+    image: langfuse/langfuse:2
+    profiles: ["langfuse"]
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://citebench:citebench@db:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-citebench-nextauth-secret}
+      SALT: ${LANGFUSE_SALT:-citebench-langfuse-salt}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_INIT_ORG_ID: citebench
+      LANGFUSE_INIT_ORG_NAME: Citebench
+      LANGFUSE_INIT_PROJECT_ID: citebench
+      LANGFUSE_INIT_PROJECT_NAME: Citebench
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-pk-lf-citebench-dev}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-sk-lf-citebench-dev}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:-dev@citebench.local}
+      LANGFUSE_INIT_USER_NAME: Citebench
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-citebenchdev}
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:

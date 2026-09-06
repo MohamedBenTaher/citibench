@@ -1,0 +1,59 @@
+{
+  "query": "how does the kube-scheduler place pods onto nodes",
+  "rrf_k": 60,
+  "embed_model": "nomic-embed-text-v1.5",
+  "rerank_model": "ms-marco-MiniLM-L-12-v2",
+  "notes": "Five MANIFEST docs, one chunk each. Vector ranks and FTS ranks disagree so RRF order differs from either pool. Injected FlashRank scores disagree with RRF so rerank order is a third permutation.",
+  "chunks": [
+    {
+      "chunk_id": "k8s-pods:0",
+      "doc_id": "k8s-pods",
+      "text": "A Pod is the smallest deployable unit in Kubernetes. The control plane schedules each Pod onto a node.",
+      "vector_rank": 2,
+      "vector_score": 0.81,
+      "fts_rank": 1,
+      "fts_score": 0.3,
+      "rerank_score": 0.55
+    },
+    {
+      "chunk_id": "k8s-scheduler:0",
+      "doc_id": "k8s-scheduler",
+      "text": "kube-scheduler assigns unscheduled Pods to nodes using filters and scoring plugins.",
+      "vector_rank": 1,
+      "vector_score": 0.92,
+      "fts_rank": 3,
+      "fts_score": 0.18,
+      "rerank_score": 0.4
+    },
+    {
+      "chunk_id": "az-aks-intro:0",
+      "doc_id": "az-aks-intro",
+      "text": "Azure Kubernetes Service runs the same kube-scheduler so pods land on AKS nodes.",
+      "vector_rank": 3,
+      "vector_score": 0.7,
+      "fts_rank": 2,
+      "fts_score": 0.22,
+      "rerank_score": 0.91
+    },
+    {
+      "chunk_id": "k8s-services:0",
+      "doc_id": "k8s-services",
+      "text": "A Service exposes a set of Pods. It does not schedule workloads onto nodes.",
+      "vector_rank": 4,
+      "vector_score": 0.4,
+      "fts_rank": 4,
+      "fts_score": 0.08,
+      "rerank_score": 0.8
+    },
+    {
+      "chunk_id": "k8s-deployments:0",
+      "doc_id": "k8s-deployments",
+      "text": "A Deployment manages ReplicaSets and rolling updates for stateless Pods.",
+      "vector_rank": 5,
+      "vector_score": 0.15,
+      "fts_rank": 5,
+      "fts_score": 0.03,
+      "rerank_score": 0.1
+    }
+  ]
+}

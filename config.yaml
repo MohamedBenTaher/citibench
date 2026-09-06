@@ -5,12 +5,30 @@ embed_dimensions: 768
 embed_api_base: https://api.groq.com/openai/v1
 # nomic-embed-text-v1.5 prefixes (model card). Applied before the Groq call.
 embed_document_prefix: "search_document: "
+embed_query_prefix: "search_query: "
 rerank_model: ms-marco-MiniLM-L-12-v2
 chunk_size: 512
 chunk_overlap: 64
 # Chunk-boundary tokenizer: tiktoken cl100k_base. Deterministic across re-index.
 # Used only to slice passages. Embeddings still go to Groq nomic-embed-text-v1.5.
 tokenizer: cl100k_base
+# Contract C retrieve knobs. Aliases: vector_k=dense_k, fts_k=lexical_k,
+# rerank_input_k=rerank_pool.
+rrf_k: 60
+dense_k: 50
+lexical_k: 50
+rerank_pool: 50
 top_k: 8
+# C6 RAGAS CI gate (python -m citebench.eval.ci). Not a published score.
+# C7 /metrics quotes the last eval artifact and records its mode (mock|live).
 faithfulness_threshold: 0.7
-chat_model: ""
+# Groq production chat id (https://console.groq.com/docs/models). Override with GROQ_CHAT_MODEL.
+chat_model: llama-3.1-8b-instant
+# Pre-LLM abstain when FlashRank ran and the top hit score is below this.
+# Skipped when rerank_skipped=true (RRF scores are not on the same scale).
+abstain_min_score: 0.12
+# citebench.cost.v1 estimate table. Not a Groq invoice. Override in env if needed.
+# llama-3.1-8b-instant published developer rates; nomic embed is a local table value.
+chat_prompt_usd_per_1m: 0.05
+chat_completion_usd_per_1m: 0.08
+embed_usd_per_1m: 0.01

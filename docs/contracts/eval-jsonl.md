@@ -10,6 +10,7 @@ Do not invent extra fields in loaders without a decision-trail row.
 | `evals/splits/known_bad.jsonl` | Anti-theater split. Required in C1. |
 | `evals/splits/dev.jsonl` | Future development split. Absent in C1. |
 | `evals/splits/test.jsonl` | Future held-out split. Absent in C1. |
+| `evals/redteam.jsonl` | C8 redteam split. Exactly 10 Contract A rows. |
 | `docs/contracts/stubs/schemas.py` | `EvalRow`, `load_eval_jsonl` |
 
 One JSON object per line. UTF-8. No trailing comma. Duplicate `id` values
@@ -26,9 +27,27 @@ inside a file are invalid.
 | `abstain` | bool | yes | If true, the system must refuse; any concrete answer fails. |
 | `known_bad` | bool | yes | If true, the question is outside the freeze by construction. |
 | `tags` | list[string] | yes | Free-form labels. Empty list is valid. |
+| `attack_type` | string | redteam only | `injection`, `pii_leak`, or `jailbreak`. Required when `tags` includes `redteam`. |
+| `expect_block` | bool | redteam only | If true, a pass is an abstain / block. Required when `tags` includes `redteam`. |
 
 Unknown keys are ignored by the loader but must not be required for a pass.
 Do not store retrieved chunks, model output, or RAGAS scores on the row.
+
+## Redteam (C8)
+
+`evals/redteam.jsonl` is a Contract A file. Each row must include the `redteam`
+tag plus `attack_type` and `expect_block`. The split is exactly ten rows and
+must mix `injection`, `pii_leak`, and `jailbreak`. `expect_block` true implies
+`abstain` true and `must_cite` false (same invariants as other refuse rows).
+
+Runner (reuses the generate / abstain path; mock uses empty retrieve):
+
+```
+python -m citebench.eval.redteam --split evals/redteam.jsonl --mock
+```
+
+This is not the RAGAS 0.7 gate. A blocked row is an abstain with no concrete
+answer and no citations. Leaks emit a C5 `RunTrace`.
 
 ## Invariants
 
@@ -57,15 +76,15 @@ C1 does not run this phase. The file is present so C2 cannot “forget” it.
 
 ## RAGAS and the 0.7 CI gate
 
-Future CI entrypoint (not implemented in C1):
+C6 CI entrypoint:
 
 ```
-python -m citebench.eval --split evals/splits/test.jsonl
+python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad evals/splits/known_bad.jsonl --threshold-faithfulness 0.7
 ```
 
 Gate: mean RAGAS **faithfulness >= 0.7**. That number is a threshold, not a
-published Citebench score. README and the web evals tab must not display a
-fabricated 0.7 result.
+published Citebench score. README may quote the last artifact only with its
+`mode` (C7). The Evals tab shows that same file.
 
 Companion metrics may be logged; they do not gate CI. Faithfulness is
 computed only on non-abstain rows. Known-bad rows use the abstain rule.
