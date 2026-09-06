@@ -14,8 +14,6 @@ import { Route as CorpusRouteImport } from './routes/corpus'
 import { Route as EvalsRouteImport } from './routes/evals'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as TracesRouteImport } from './routes/traces'
-import { Route as ApiGenerateRouteImport } from './routes/api/generate'
-import { Route as ApiIngestRouteImport } from './routes/api/ingest'
 import { Route as ApiMetricsRouteImport } from './routes/api/metrics'
 import { Route as ApiTracesRouteImport } from './routes/api/traces'
 import { Route as ApiCorpusStatsRouteImport } from './routes/api/corpus/stats'
@@ -46,16 +44,6 @@ const PlaygroundRoute = PlaygroundRouteImport.update({
 const TracesRoute = TracesRouteImport.update({
   id: '/traces',
   path: '/traces',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiGenerateRoute = ApiGenerateRouteImport.update({
-  id: '/api/generate',
-  path: '/api/generate',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiIngestRoute = ApiIngestRouteImport.update({
-  id: '/api/ingest',
-  path: '/api/ingest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMetricsRoute = ApiMetricsRouteImport.update({
@@ -95,8 +83,6 @@ export interface FileRoutesByFullPath {
   '/evals': typeof EvalsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
-  '/api/generate': typeof ApiGenerateRoute
-  '/api/ingest': typeof ApiIngestRoute
   '/api/metrics': typeof ApiMetricsRoute
   '/api/traces': typeof ApiTracesRouteWithChildren
   '/api/corpus/stats': typeof ApiCorpusStatsRoute
@@ -110,8 +96,6 @@ export interface FileRoutesByTo {
   '/evals': typeof EvalsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
-  '/api/generate': typeof ApiGenerateRoute
-  '/api/ingest': typeof ApiIngestRoute
   '/api/metrics': typeof ApiMetricsRoute
   '/api/traces': typeof ApiTracesRouteWithChildren
   '/api/corpus/stats': typeof ApiCorpusStatsRoute
@@ -126,8 +110,6 @@ export interface FileRoutesById {
   '/evals': typeof EvalsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
-  '/api/generate': typeof ApiGenerateRoute
-  '/api/ingest': typeof ApiIngestRoute
   '/api/metrics': typeof ApiMetricsRoute
   '/api/traces': typeof ApiTracesRouteWithChildren
   '/api/corpus/stats': typeof ApiCorpusStatsRoute
@@ -143,8 +125,6 @@ export interface FileRouteTypes {
     | '/evals'
     | '/playground'
     | '/traces'
-    | '/api/generate'
-    | '/api/ingest'
     | '/api/metrics'
     | '/api/traces'
     | '/api/corpus/stats'
@@ -158,8 +138,6 @@ export interface FileRouteTypes {
     | '/evals'
     | '/playground'
     | '/traces'
-    | '/api/generate'
-    | '/api/ingest'
     | '/api/metrics'
     | '/api/traces'
     | '/api/corpus/stats'
@@ -173,8 +151,6 @@ export interface FileRouteTypes {
     | '/evals'
     | '/playground'
     | '/traces'
-    | '/api/generate'
-    | '/api/ingest'
     | '/api/metrics'
     | '/api/traces'
     | '/api/corpus/stats'
@@ -189,8 +165,6 @@ export interface RootRouteChildren {
   EvalsRoute: typeof EvalsRoute
   PlaygroundRoute: typeof PlaygroundRoute
   TracesRoute: typeof TracesRoute
-  ApiGenerateRoute: typeof ApiGenerateRoute
-  ApiIngestRoute: typeof ApiIngestRoute
   ApiMetricsRoute: typeof ApiMetricsRoute
   ApiTracesRoute: typeof ApiTracesRouteWithChildren
   ApiCorpusStatsRoute: typeof ApiCorpusStatsRoute
@@ -233,20 +207,6 @@ declare module '@tanstack/react-router' {
       path: '/traces'
       fullPath: '/traces'
       preLoaderRoute: typeof TracesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/generate': {
-      id: '/api/generate'
-      path: '/api/generate'
-      fullPath: '/api/generate'
-      preLoaderRoute: typeof ApiGenerateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/ingest': {
-      id: '/api/ingest'
-      path: '/api/ingest'
-      fullPath: '/api/ingest'
-      preLoaderRoute: typeof ApiIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/metrics': {
@@ -312,8 +272,6 @@ const rootRouteChildren: RootRouteChildren = {
   EvalsRoute: EvalsRoute,
   PlaygroundRoute: PlaygroundRoute,
   TracesRoute: TracesRoute,
-  ApiGenerateRoute: ApiGenerateRoute,
-  ApiIngestRoute: ApiIngestRoute,
   ApiMetricsRoute: ApiMetricsRoute,
   ApiTracesRoute: ApiTracesRouteWithChildren,
   ApiCorpusStatsRoute: ApiCorpusStatsRoute,

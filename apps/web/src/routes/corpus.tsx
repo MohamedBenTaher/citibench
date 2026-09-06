@@ -4,8 +4,25 @@ import { RouteError, RoutePending } from "../components/status";
 import { getCorpusStats, postIngest, type IngestBody } from "../lib/server";
 import type { CorpusStats } from "../lib/types";
 
+const EMPTY: CorpusStats = {
+  doc_count: 0,
+  page_count: 0,
+  chunk_count: 0,
+  last_index_time: null,
+  failures: [],
+};
+
 export const Route = createFileRoute("/corpus")({
-  loader: () => getCorpusStats(),
+  loader: async () => {
+    try {
+      return { stats: await getCorpusStats(), loadError: null as string | null };
+    } catch (error) {
+      return {
+        stats: EMPTY,
+        loadError: error instanceof Error ? error.message : "failed to load stats",
+      };
+    }
+  },
   pendingComponent: () => <RoutePending label="Loading corpus counts…" />,
   errorComponent: RouteError,
   component: CorpusPage,
@@ -13,7 +30,7 @@ export const Route = createFileRoute("/corpus")({
 
 function CorpusPage() {
   const router = useRouter();
-  const stats = Route.useLoaderData();
+  const { stats, loadError } = Route.useLoaderData();
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -59,6 +76,7 @@ function CorpusPage() {
         documents and chunks first.
       </p>
 
+      {loadError ? <p className="error">{loadError}</p> : null}
       {actionError ? <p className="error">{actionError}</p> : null}
 
       <h2>Failures</h2>
