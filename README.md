@@ -29,7 +29,7 @@ The homepage is an index. The interesting surfaces are **Corpus**, **Playground*
 | Piece | Role |
 | --- | --- |
 | `apps/api` | FastAPI: health, ingest, retrieve, generate, traces, evals, metrics |
-| `apps/web` | Next.js App Router: `/` index plus four tabs |
+| `apps/web` | TanStack Start: `/` index plus four tabs |
 | `db` | `pgvector/pgvector:pg16` — inspectable SQL, not a hosted vector SaaS |
 | `citebench.eval` | RAGAS CI + redteam runners |
 | `citebench.mcp` | Two tools: `search_corpus`, `get_trace` |
@@ -48,7 +48,15 @@ make start          # api :8000, web :3000, Postgres
 make ingest         # index the 14 MANIFEST URLs
 ```
 
-Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`.
+Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. Server functions and `/api/*` proxies use `API_URL=http://api:8000`. `VITE_API_URL` is the public FastAPI origin (replaces unused `NEXT_PUBLIC_API_URL`).
+
+Local Vite without rebuilding the image:
+
+```bash
+cd apps/web
+API_URL=http://127.0.0.1:8000 VITE_API_URL=http://localhost:8000 npm run dev
+# http://localhost:3000/  (API must already be up)
+```
 
 If the page says **“Gotenberg has no UI, it's an API”**, that is [Gotenberg](https://gotenberg.dev/) (PDF conversion), not Citebench. It also binds **:3000**. Confirm Citebench with `curl -sS localhost:8000/health` → `{"status":"ok"}`. Then either stop Gotenberg (`docker ps | grep -i gotenberg`) or start Citebench on another port:
 
@@ -158,7 +166,7 @@ export CITEBENCH_API_URL=http://localhost:8000 PYTHONPATH=.
 
 ```
 apps/api/           FastAPI + ingest/retrieve/generate/trace
-apps/web/           Next.js tabs
+apps/web/           TanStack Start tabs
 citebench/eval/     RAGAS + redteam CLIs
 citebench/mcp/      search_corpus + get_trace
 corpus/MANIFEST.md  Frozen 14-URL list
