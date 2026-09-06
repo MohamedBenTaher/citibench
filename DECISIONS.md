@@ -166,8 +166,8 @@ metadata, and `rerank_skipped` as a score. Configure
 or Langfuse errors, `emit_trace` keeps the in-memory/local JSON store and
 leaves `langfuse_trace_id` null so `/traces` still works.
 
-Eval CI, `/metrics` README numbers, MCP, connectors, a chat homepage, and
-an analytics product stay out of scope.
+Eval CI is C6. `/metrics` README numbers are C7. MCP, connectors, a chat
+homepage, and an analytics product stay out of scope.
 
 ## C6 eval CI binding (2026-09-06)
 
@@ -184,9 +184,47 @@ uses the fixture judge because Groq is unavailable.
 
 Companion metrics (context precision, answer relevancy) are written to
 `evals/results/latest.json` and shown on the Evals tab with a diff vs
-`previous.json`. They do not gate CI. README must not publish a fake
-metrics table (C7). Failing rows call C5 `emit_trace` into the local store.
+`previous.json`. They do not gate CI. C7 may quote that artifact only with
+its `mode` (mock vs live). Failing rows call C5 `emit_trace` into the local
+store.
 
 Live mode (`--live` / `GROQ_API_KEY`) may call `generate` plus the ragas
 library. MCP, redteam deploy, and dual eval frameworks stay out of scope.
+
+## C7 metrics binding (2026-09-06)
+
+C7 is `GET /metrics` and a README table that only prints numbers we can
+reproduce. JSON is the default scrape; `?format=prometheus` is the text
+scrape. Null means unmeasured, not zero.
+
+Latency p50/p95 is linear interpolation over `RunTrace.latency_ms` where
+`latency_ms > 0` (C5 local store + memory). Empty store → `null`.
+TODO(C7): p95 unmeasured — no `GROQ_API_KEY`, no live generate sample.
+
+Cost per 1k queries is `mean(CostEstimate.usd_estimate) * 1000` over traces
+with a billed cost (`usd_estimate > 0` or any token count > 0). Rates are
+`citebench.cost.v1` in `config.yaml` (Groq `llama-3.1-8b-instant`, nomic
+embed table, FlashRank $0). TODO(C7): cost/1k unmeasured for the same
+reason. The method string is still on the scrape.
+
+Faithfulness is `metrics.faithfulness` on the last
+`evals/results/latest.json`, with `mode`. The committed artifact is
+`mode=mock` (fixture RAGAS judge, `evals/splits/ci.jsonl`, 3 rows):
+faithfulness 1.0, context precision 0.833. Tag:
+`measured-under-mock-ragas-judge`. Not a live ragas/Groq number. The CI
+gate stays 0.7. Missing file → `null`.
+
+Corpus: 14 MANIFEST URLs (freeze 2026-09-05). Pages = 1 per HTML snapshot.
+Chunks = tiktoken `cl100k_base` 512 / 64. No frozen `corpus/raw` sha256
+tree and no pgvector ingest in this environment, so chunks were counted
+from a live HTML fetch on 2026-09-06: 148, tagged
+`measured-under-live-html-fetch-2026-09-06` in `evals/results/corpus.json`.
+After ingest, `/metrics` prefers `/corpus/stats`.
+
+C1–C5 bindings are unchanged: Postgres 16 + pgvector, chunk 512 / 64,
+FlashRank MiniLM top-50 → top-8, no fine-tune on the 14-page freeze,
+Langfuse as the named trace backend, Groq as the only generation provider.
+
+C8 redteam + deploy, C9 MCP, a chat homepage, and connectors stay out of
+scope.
 

@@ -25,6 +25,10 @@ export default function IndexPage() {
           <Link href="/evals">Evals</Link> — last RAGAS CI run (faithfulness
           gate 0.7, context precision, answer relevancy).
         </li>
+        <li>
+          Metrics — scrape <code>GET /metrics</code> on the API (p50/p95,
+          cost/1k, last-eval faithfulness). Not a dashboard.
+        </li>
       </ul>
     </>
   );
