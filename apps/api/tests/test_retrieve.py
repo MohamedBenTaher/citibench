@@ -262,22 +262,27 @@ def test_health_still_200() -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_default_embed_path_requires_groq_key(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_retrieve_works_without_groq_key_when_embed_injected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "")
-    with pytest.raises(RuntimeError, match="GROQ_API_KEY"):
-        retrieve(
-            "pods onto nodes",
-            RetrieveConfig(),
-            vector_search_fn=lambda _vec, _k: [],
-            fts_search_fn=lambda _q, _k: [],
-            rerank_fn=lambda _q, _hits: [],
-        )
+    hits = retrieve(
+        "pods onto nodes",
+        RetrieveConfig(),
+        embed_query_fn=lambda _q: [0.0] * 768,
+        vector_search_fn=lambda _vec, _k: [],
+        fts_search_fn=lambda _q, _k: [],
+        rerank_fn=lambda _q, _hits: [],
+    )
+    assert hits == []
 
 
-def test_retrieve_endpoint_503_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_retrieve_endpoint_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "")
-    from main import app
+    import main as main_mod
 
-    response = TestClient(app).post("/retrieve", json={"query": "pods onto nodes"})
-    assert response.status_code == 503
-    assert "GROQ_API_KEY" in response.text
+    monkeypatch.setattr(main_mod, "retrieve", lambda *_args, **_kwargs: [])
+    response = TestClient(main_mod.app).post("/retrieve", json={"query": "pods onto nodes"})
+    assert response.status_code == 200
+    assert response.json()["hits"] == []
+    assert "GROQ_API_KEY" not in response.text

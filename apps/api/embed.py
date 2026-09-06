@@ -1,19 +1,52 @@
-"""Groq OpenAI-compatible embeddings for nomic-embed-text-v1.5 (768-d)."""
+"""nomic-embed-text-v1.5 embeddings (768-d).
+
+Groq hosted this model, then removed it (`model_not_found` on both
+`nomic-embed-text-v1.5` and `nomic-embed-text-v1_5`). Citebench still
+uses those open 768-d weights: try Groq `/embeddings` when a key is
+present, then fall back to local ONNX via fastembed. That is not a
+second billed embed provider. Prefixes stay `search_document:` /
+`search_query:`.
+"""
 
 from __future__ import annotations
 
+import logging
+import os
 import time
+from pathlib import Path
+from threading import Lock
+from typing import Any
 
 import httpx
 
-from settings import Settings, require_groq_key
+from settings import Settings
 
-# Groq lists the same model as nomic-embed-text-v1_5 in some SDK stubs.
+try:
+    from fastembed import TextEmbedding
+except ImportError:  # optional at import time; local fallback raises EmbedError
+    TextEmbedding = None
+
+log = logging.getLogger("citebench.embed")
+
+# Groq SDK stubs used an underscore id for the same weights.
 _MODEL_ALIASES = ("nomic-embed-text-v1.5", "nomic-embed-text-v1_5")
+_LOCAL_NOMIC = "nomic-ai/nomic-embed-text-v1.5"
+_DEFAULT_CACHE = Path("/tmp/nomic-embed")
+
+_lock = Lock()
+_local_model: Any = None
+_groq_model_missing = False
 
 
 class EmbedError(RuntimeError):
     pass
+
+
+def reset_embed_cache() -> None:
+    global _local_model, _groq_model_missing
+    with _lock:
+        _local_model = None
+        _groq_model_missing = False
 
 
 def embed_texts(
@@ -26,25 +59,62 @@ def embed_texts(
     """Embed passages. Default prefix is the document prefix. Empty input returns []."""
     if not texts:
         return []
-    key = require_groq_key(settings)
     used_prefix = settings.embed_document_prefix if prefix is None else prefix
     prefixed = [used_prefix + text for text in texts]
+    if settings.groq_api_key and not _groq_model_missing:
+        try:
+            return _embed_via_groq(prefixed, settings, batch_size=batch_size)
+        except EmbedError as exc:
+            if _should_fallback_local(exc, settings):
+                log.warning(
+                    "Groq no longer hosts %s (%s); using local ONNX %s",
+                    settings.embed_model,
+                    exc,
+                    _LOCAL_NOMIC,
+                )
+                _mark_groq_missing()
+            else:
+                raise
+    return _embed_local(prefixed, settings.embed_dimensions, batch_size=batch_size)
+
+
+def embed_query(query: str, settings: Settings) -> list[float]:
+    """Embed one query with the nomic `search_query:` prefix."""
+    vectors = embed_texts([query], settings, prefix=settings.embed_query_prefix)
+    if len(vectors) != 1:
+        raise EmbedError(f"expected 1 query embedding, got {len(vectors)}")
+    return vectors[0]
+
+
+def _should_fallback_local(exc: EmbedError, settings: Settings) -> bool:
+    if "api.groq.com" not in settings.embed_api_base:
+        return False
+    text = str(exc).lower()
+    return "model_not_found" in text or "does not exist" in text or (
+        "http 404" in text and "model" in text
+    )
+
+
+def _mark_groq_missing() -> None:
+    global _groq_model_missing
+    _groq_model_missing = True
+
+
+def _embed_via_groq(
+    prefixed: list[str],
+    settings: Settings,
+    *,
+    batch_size: int,
+) -> list[list[float]]:
+    key = settings.groq_api_key
     vectors: list[list[float]] = []
     with httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
         for start in range(0, len(prefixed), batch_size):
             batch = prefixed[start : start + batch_size]
             vectors.extend(_embed_batch(client, batch, settings, key))
-    if len(vectors) != len(texts):
-        raise EmbedError(f"expected {len(texts)} embeddings, got {len(vectors)}")
+    if len(vectors) != len(prefixed):
+        raise EmbedError(f"expected {len(prefixed)} embeddings, got {len(vectors)}")
     return vectors
-
-
-def embed_query(query: str, settings: Settings) -> list[float]:
-    """Embed one query with the nomic `search_query:` prefix. Requires GROQ_API_KEY."""
-    vectors = embed_texts([query], settings, prefix=settings.embed_query_prefix)
-    if len(vectors) != 1:
-        raise EmbedError(f"expected 1 query embedding, got {len(vectors)}")
-    return vectors[0]
 
 
 def _embed_batch(
@@ -87,7 +157,7 @@ def _post_embeddings(
     body = {"model": model, "input": batch, "encoding_format": "float"}
     delay = 1.0
     last_exc: Exception | None = None
-    for attempt in range(5):
+    for _attempt in range(5):
         try:
             response = client.post(url, headers=headers, json=body)
         except httpx.HTTPError as exc:
@@ -114,10 +184,49 @@ def _post_embeddings(
     raise EmbedError(f"Groq embeddings failed after retries: {last_exc}")
 
 
+def _cache_dir() -> Path:
+    raw = os.environ.get("NOMIC_CACHE_DIR") or os.environ.get("FASTEMBED_CACHE_PATH") or str(_DEFAULT_CACHE)
+    path = Path(raw)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _load_local_model() -> Any:
+    global _local_model
+    with _lock:
+        if _local_model is not None:
+            return _local_model
+        if TextEmbedding is None:
+            raise EmbedError(
+                "fastembed is required for local nomic-embed-text-v1.5. "
+                "Install apps/api/requirements.txt"
+            )
+        _local_model = TextEmbedding(model_name=_LOCAL_NOMIC, cache_dir=str(_cache_dir()))
+        return _local_model
+
+
+def _embed_local(
+    prefixed: list[str],
+    dimensions: int,
+    *,
+    batch_size: int,
+) -> list[list[float]]:
+    model = _load_local_model()
+    vectors: list[list[float]] = []
+    for item in model.embed(prefixed, batch_size=batch_size):
+        row = [float(x) for x in item]
+        if len(row) != dimensions:
+            raise EmbedError(f"expected {dimensions}-d embedding, got {len(row)}")
+        vectors.append(row)
+    if len(vectors) != len(prefixed):
+        raise EmbedError(f"expected {len(prefixed)} embeddings, got {len(vectors)}")
+    return vectors
+
+
 def _vectors_from_payload(payload: dict, dimensions: int, expected: int) -> list[list[float]]:
     rows = payload.get("data")
     if not isinstance(rows, list) or len(rows) != expected:
-        raise EmbedError(f"Groq embeddings data length {getattr(rows, '__len__', lambda: 'missing')()} != {expected}")
+        raise EmbedError(f"expected {expected} embeddings, got {getattr(rows, '__len__', lambda: 'missing')()}")
     ordered = sorted(rows, key=lambda row: int(row.get("index", 0)))
     vectors: list[list[float]] = []
     for row in ordered:

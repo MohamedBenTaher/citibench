@@ -1,16 +1,18 @@
 provider: groq
 embed_model: nomic-embed-text-v1.5
 embed_dimensions: 768
-# Groq OpenAI-compatible embeddings only. No second embed provider.
+# Same 768-d nomic weights. Groq hosted them, then 404'd (model_not_found).
+# Ingest/retrieve try Groq /embeddings, then local ONNX via fastembed.
+# No second billed embed provider.
 embed_api_base: https://api.groq.com/openai/v1
-# nomic-embed-text-v1.5 prefixes (model card). Applied before the Groq call.
+# nomic-embed-text-v1.5 prefixes (model card). Applied before the embed call.
 embed_document_prefix: "search_document: "
 embed_query_prefix: "search_query: "
 rerank_model: ms-marco-MiniLM-L-12-v2
 chunk_size: 512
 chunk_overlap: 64
 # Chunk-boundary tokenizer: tiktoken cl100k_base. Deterministic across re-index.
-# Used only to slice passages. Embeddings still go to Groq nomic-embed-text-v1.5.
+# Used only to slice passages. Embeddings are nomic-embed-text-v1.5 (local ONNX).
 tokenizer: cl100k_base
 # Contract C retrieve knobs. Aliases: vector_k=dense_k, fts_k=lexical_k,
 # rerank_input_k=rerank_pool.

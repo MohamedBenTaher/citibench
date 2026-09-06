@@ -1,7 +1,7 @@
 """OpenAI-compatible embeddings stand-in for offline ingest verification.
 
-Not a second product embed provider. Production ingest still requires
-GROQ_API_KEY and talks to api.groq.com unless GROQ_API_BASE is pointed here.
+Not a second product embed provider. Production ingest uses local nomic
+unless GROQ_API_BASE is pointed here (or Groq still hosts the model).
 """
 
 from __future__ import annotations
