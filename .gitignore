@@ -11,4 +11,8 @@ dist/
 .env.local
 apps/web/.next/
 apps/web/node_modules/
+apps/web/tsconfig.tsbuildinfo
 pgdata/
+corpus/raw/*
+!corpus/raw/.gitkeep
+

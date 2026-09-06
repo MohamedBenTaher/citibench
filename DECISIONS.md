@@ -84,3 +84,18 @@ run and no metric dashboards. The first executable split is
 is required. This exists so later RAGAS numbers cannot hide retrieval theater.
 
 Loaders, retrieve, and emit_trace remain `NotImplemented` in `docs/contracts/stubs/schemas.py` until C2.
+
+## C2 ingest binding (2026-09-06)
+
+C2 is snapshot → parse → chunk → embed → pgvector only. The 14 MANIFEST URLs
+are the only allowed sources. Each snapshot lands in `corpus/raw/<id>/` with
+`sha256` on the `documents` row and in a companion `sha256` file.
+
+Chunk boundaries use tiktoken `cl100k_base` at 512 / 64 so re-index is stable.
+Embeddings call Groq's OpenAI-compatible `/embeddings` with
+`nomic-embed-text-v1.5` (768-d) and `GROQ_API_KEY`. If the key is missing, ingest
+fails with setup instructions. There is no second embed provider.
+
+`retrieve` and `emit_trace` stay `NotImplemented`. Hybrid retrieve, rerank,
+Langfuse, Playground ask, and eval CI are out of scope for this slice.
+

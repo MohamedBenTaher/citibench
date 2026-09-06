@@ -1,8 +1,16 @@
 provider: groq
 embed_model: nomic-embed-text-v1.5
+embed_dimensions: 768
+# Groq OpenAI-compatible embeddings only. No second embed provider.
+embed_api_base: https://api.groq.com/openai/v1
+# nomic-embed-text-v1.5 prefixes (model card). Applied before the Groq call.
+embed_document_prefix: "search_document: "
 rerank_model: ms-marco-MiniLM-L-12-v2
 chunk_size: 512
 chunk_overlap: 64
+# Chunk-boundary tokenizer: tiktoken cl100k_base. Deterministic across re-index.
+# Used only to slice passages. Embeddings still go to Groq nomic-embed-text-v1.5.
+tokenizer: cl100k_base
 top_k: 8
 faithfulness_threshold: 0.7
 chat_model: ""
