@@ -25,12 +25,13 @@ top_k: 8
 # C7 /metrics quotes the last eval artifact and records its mode (mock|live).
 faithfulness_threshold: 0.7
 # Groq production chat id (https://console.groq.com/docs/models). Override with GROQ_CHAT_MODEL.
-chat_model: llama-3.1-8b-instant
+# llama-3.1-8b-instant is enterprise-only after 2026-08-16; developer keys 404.
+chat_model: openai/gpt-oss-20b
 # Pre-LLM abstain when FlashRank ran and the top hit score is below this.
 # Skipped when rerank_skipped=true (RRF scores are not on the same scale).
 abstain_min_score: 0.12
 # citebench.cost.v1 estimate table. Not a Groq invoice. Override in env if needed.
-# llama-3.1-8b-instant published developer rates; nomic embed is a local table value.
-chat_prompt_usd_per_1m: 0.05
-chat_completion_usd_per_1m: 0.08
+# openai/gpt-oss-20b published developer rates; nomic embed is a local table value.
+chat_prompt_usd_per_1m: 0.075
+chat_completion_usd_per_1m: 0.30
 embed_usd_per_1m: 0.01

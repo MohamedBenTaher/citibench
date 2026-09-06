@@ -46,10 +46,10 @@ def make_settings(**overrides) -> Settings:
         corpus_dir=Path("."),
         manifest_path=Path("MANIFEST.md"),
         groq_api_key="gsk_test",
-        chat_model="llama-3.1-8b-instant",
+        chat_model="openai/gpt-oss-20b",
         abstain_min_score=0.12,
-        chat_prompt_usd_per_1m=0.05,
-        chat_completion_usd_per_1m=0.08,
+        chat_prompt_usd_per_1m=0.075,
+        chat_completion_usd_per_1m=0.30,
         embed_usd_per_1m=0.01,
     )
     values.update(overrides)

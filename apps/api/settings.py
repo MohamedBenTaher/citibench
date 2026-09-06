@@ -54,10 +54,10 @@ class Settings:
     top_k: int = 8
     lexical_k: int = 50
     dense_k: int = 50
-    chat_model: str = "llama-3.1-8b-instant"
+    chat_model: str = "openai/gpt-oss-20b"
     abstain_min_score: float = 0.12
-    chat_prompt_usd_per_1m: float = 0.05
-    chat_completion_usd_per_1m: float = 0.08
+    chat_prompt_usd_per_1m: float = 0.075
+    chat_completion_usd_per_1m: float = 0.30
     embed_usd_per_1m: float = 0.01
     langfuse_public_key: str = ""
     langfuse_secret_key: str = ""
@@ -67,9 +67,9 @@ class Settings:
 
 def _chat_model(raw: dict) -> str:
     configured = str(
-        os.environ.get("GROQ_CHAT_MODEL") or raw.get("chat_model") or "llama-3.1-8b-instant"
+        os.environ.get("GROQ_CHAT_MODEL") or raw.get("chat_model") or "openai/gpt-oss-20b"
     ).strip()
-    return configured or "llama-3.1-8b-instant"
+    return configured or "openai/gpt-oss-20b"
 
 
 def _resolve_config_path() -> Path:
@@ -120,12 +120,12 @@ def load_settings() -> Settings:
             os.environ.get("ABSTAIN_MIN_SCORE") or raw.get("abstain_min_score") or 0.12
         ),
         chat_prompt_usd_per_1m=float(
-            os.environ.get("CHAT_PROMPT_USD_PER_1M") or raw.get("chat_prompt_usd_per_1m") or 0.05
+            os.environ.get("CHAT_PROMPT_USD_PER_1M") or raw.get("chat_prompt_usd_per_1m") or 0.075
         ),
         chat_completion_usd_per_1m=float(
             os.environ.get("CHAT_COMPLETION_USD_PER_1M")
             or raw.get("chat_completion_usd_per_1m")
-            or 0.08
+            or 0.30
         ),
         embed_usd_per_1m=float(
             os.environ.get("EMBED_USD_PER_1M") or raw.get("embed_usd_per_1m") or 0.01

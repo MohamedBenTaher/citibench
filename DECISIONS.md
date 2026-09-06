@@ -127,8 +127,11 @@ connectors, a second reranker, and a second embed vendor stay out of scope.
 C4 is one LangGraph path: `retrieve` (the C3 function) → `generate` XOR
 `abstain`. No second provider, no node editor, no chat homepage.
 
-Default chat model is Groq production `llama-3.1-8b-instant`
-(https://console.groq.com/docs/models). Override with `GROQ_CHAT_MODEL`.
+Default chat model is Groq production `openai/gpt-oss-20b`
+(https://console.groq.com/docs/models). Groq moved `llama-3.1-8b-instant`
+to enterprise-only on 2026-08-16; developer keys get `model_not_found`.
+`groq_chat` still tries the configured id, then falls back to
+`openai/gpt-oss-20b`. Override with `GROQ_CHAT_MODEL`.
 
 Abstain policy (enforced in `apps/api/generate.py`):
 
@@ -208,7 +211,7 @@ TODO(C7): p95 unmeasured — no `GROQ_API_KEY`, no live generate sample.
 
 Cost per 1k queries is `mean(CostEstimate.usd_estimate) * 1000` over traces
 with a billed cost (`usd_estimate > 0` or any token count > 0). Rates are
-`citebench.cost.v1` in `config.yaml` (Groq `llama-3.1-8b-instant`, nomic
+`citebench.cost.v1` in `config.yaml` (Groq `openai/gpt-oss-20b`, nomic
 embed table, FlashRank $0). TODO(C7): cost/1k unmeasured for the same
 reason. The method string is still on the scrape.
 
