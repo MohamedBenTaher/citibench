@@ -19,7 +19,7 @@ The homepage is an index. The interesting surfaces are **Corpus**, **Playground*
          retrieve ──► RRF (k=60) ──► FlashRank top-50 → top-8
                  │
                  ▼
-         generate | abstain   (Groq llama-3.1-8b-instant, LangGraph)
+         generate | abstain   (Groq openai/gpt-oss-20b, LangGraph)
                  │
                  ├── RunTrace (Langfuse or local JSON)
                  ├── /metrics  (p50/p95, cost/1k, last eval)

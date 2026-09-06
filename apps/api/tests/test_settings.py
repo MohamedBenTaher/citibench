@@ -32,7 +32,7 @@ def test_require_groq_key_fails_clearly() -> None:
 def test_load_settings_binds_groq_chat_model() -> None:
     settings = load_settings()
     assert settings.provider == "groq"
-    assert settings.chat_model == "llama-3.1-8b-instant"
+    assert settings.chat_model == "openai/gpt-oss-20b"
     assert settings.abstain_min_score == 0.12
-    assert settings.chat_prompt_usd_per_1m == 0.05
-    assert settings.chat_completion_usd_per_1m == 0.08
+    assert settings.chat_prompt_usd_per_1m == 0.075
+    assert settings.chat_completion_usd_per_1m == 0.30
