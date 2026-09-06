@@ -138,12 +138,13 @@ def test_search_corpus_blank_query(monkeypatch) -> None:
     assert _payload(reply)["hits"] == []
 
 
-def test_search_corpus_503_without_groq(monkeypatch) -> None:
+def test_search_corpus_without_groq_key(monkeypatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "")
+    monkeypatch.setattr(main_mod, "retrieve", lambda *_args, **_kwargs: [])
     api = CitebenchApi(StarletteTransport(TestClient(main_mod.app)))
     reply = _call(api, "search_corpus", {"query": "pods"})
-    assert reply["result"]["isError"] is True
-    assert "GROQ_API_KEY" in reply["result"]["content"][0]["text"]
+    assert reply["result"].get("isError") is not True
+    assert _payload(reply)["hits"] == []
 
 
 def test_get_trace_by_run_id(monkeypatch) -> None:

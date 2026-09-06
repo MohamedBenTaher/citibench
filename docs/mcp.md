@@ -13,7 +13,7 @@ and not a UI.
 From the repo root, with the venv that has `apps/api/requirements.txt`:
 
 ```bash
-cp -n .env.example .env   # set GROQ_API_KEY for live retrieve
+cp -n .env.example .env   # GROQ_API_KEY only needed for Playground generate
 docker compose up --build
 
 # stdio MCP (Cursor / Claude Desktop). Needs PYTHONPATH at repo root.
@@ -40,8 +40,9 @@ Host config (example):
 }
 ```
 
-`search_corpus` needs ingest plus `GROQ_API_KEY` (same as `POST /retrieve`).
-`get_trace` reads `TRACE_STORE_DIR` through the API and works without Groq.
+`search_corpus` needs an ingested index (same as `POST /retrieve`). Embeddings
+are local nomic. `get_trace` reads `TRACE_STORE_DIR` through the API and works
+without Groq.
 
 ## Smoke
 

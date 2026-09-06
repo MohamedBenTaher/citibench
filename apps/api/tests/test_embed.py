@@ -53,3 +53,101 @@ def test_embed_query_uses_search_query_prefix(monkeypatch: pytest.MonkeyPatch) -
     assert captured["texts"] == ["pods onto nodes"]
     assert captured["prefix"] == "search_query: "
     assert len(vector) == 768
+
+
+def _settings(*, groq_api_key: str = "gsk_test", api_base: str = "https://api.groq.com/openai/v1") -> Settings:
+    return Settings(
+        provider="groq",
+        embed_model="nomic-embed-text-v1.5",
+        embed_dimensions=768,
+        embed_api_base=api_base,
+        embed_document_prefix="search_document: ",
+        chunk_size=512,
+        chunk_overlap=64,
+        tokenizer="cl100k_base",
+        database_url="postgresql://citebench:citebench@127.0.0.1:5432/citebench",
+        corpus_dir=Path("."),
+        manifest_path=Path("MANIFEST.md"),
+        groq_api_key=groq_api_key,
+    )
+
+
+class _FakeResponse:
+    def __init__(self, status_code: int, text: str) -> None:
+        self.status_code = status_code
+        self.text = text
+
+    def json(self) -> dict:
+        raise AssertionError("404 responses must not be parsed")
+
+
+class _FakeClient:
+    def __init__(self, response: _FakeResponse) -> None:
+        self._response = response
+        self.posts: list[dict[str, object]] = []
+
+    def __enter__(self) -> "_FakeClient":
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+    def post(self, url: str, headers: dict, json: dict) -> _FakeResponse:
+        self.posts.append({"url": url, "json": json})
+        return self._response
+
+
+def test_model_candidates_include_underscore_alias() -> None:
+    assert embed._model_candidates("nomic-embed-text-v1.5") == [
+        "nomic-embed-text-v1.5",
+        "nomic-embed-text-v1_5",
+    ]
+
+
+def test_groq_model_not_found_falls_back_to_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    embed.reset_embed_cache()
+    fake = _FakeClient(
+        _FakeResponse(
+            404,
+            '{"error":{"message":"The model `nomic-embed-text-v1_5` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}',
+        )
+    )
+    monkeypatch.setattr(embed.httpx, "Client", lambda **_kwargs: fake)
+    monkeypatch.setattr(
+        embed,
+        "_embed_local",
+        lambda texts, dims, batch_size=32: [[0.25] * dims for _ in texts],
+    )
+    vectors = embed.embed_texts(["a pod is a deployable unit"], _settings())
+    assert len(vectors) == 1
+    assert len(vectors[0]) == 768
+    assert fake.posts
+    assert fake.posts[0]["json"]["model"] == "nomic-embed-text-v1.5"
+
+
+def test_custom_embed_host_404_does_not_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    embed.reset_embed_cache()
+    fake = _FakeClient(_FakeResponse(404, '{"error":{"code":"model_not_found"}}'))
+    monkeypatch.setattr(embed.httpx, "Client", lambda **_kwargs: fake)
+
+    def boom(*_args, **_kwargs):
+        raise AssertionError("local fallback must not run for a custom embed host")
+
+    monkeypatch.setattr(embed, "_embed_local", boom)
+    with pytest.raises(EmbedError, match="404"):
+        embed.embed_texts(
+            ["hello"],
+            _settings(api_base="http://127.0.0.1:9/openai/v1"),
+        )
+
+
+def test_no_groq_key_uses_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    embed.reset_embed_cache()
+
+    def fake_local(texts, dims, batch_size=32):
+        assert texts == ["search_document: hello"]
+        return [[0.5] * dims]
+
+    monkeypatch.setattr(embed, "_embed_local", fake_local)
+    vectors = embed.embed_texts(["hello"], _settings(groq_api_key=""))
+    assert vectors[0][0] == 0.5

@@ -26,6 +26,7 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_API_BASE: ${GROQ_API_BASE:-https://api.groq.com/openai/v1}
       FLASHRANK_CACHE_DIR: ${FLASHRANK_CACHE_DIR:-/tmp/flashrank}
+      NOMIC_CACHE_DIR: ${NOMIC_CACHE_DIR:-/tmp/nomic-embed}
       CONFIG_PATH: /app/config.yaml
       CORPUS_DIR: /app/corpus
       TRACE_STORE_DIR: /tmp/citebench-traces
@@ -43,6 +44,7 @@ services:
       - ./evals:/app/evals
       - .:/repo:ro
       - citebench_traces:/tmp/citebench-traces
+      - citebench_nomic:/tmp/nomic-embed
     depends_on:
       db:
         condition: service_healthy
@@ -97,3 +99,4 @@ services:
 volumes:
   pgdata:
   citebench_traces:
+  citebench_nomic:

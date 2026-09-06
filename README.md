@@ -14,7 +14,7 @@ The homepage is an index. The interesting surfaces are **Corpus**, **Playground*
                  ▼
          ingest ──► Postgres 16 + pgvector
                  │     chunks (512 / 64, tiktoken cl100k_base)
-                 │     dense (Groq nomic-embed-text-v1.5) + FTS
+                 │     dense (nomic-embed-text-v1.5) + FTS
                  ▼
          retrieve ──► RRF (k=60) ──► FlashRank top-50 → top-8
                  │
@@ -35,11 +35,11 @@ The homepage is an index. The interesting surfaces are **Corpus**, **Playground*
 | `citebench.mcp` | Two tools: `search_corpus`, `get_trace` |
 | `config.yaml` | Chunking, models, `top_k`, faithfulness threshold |
 
-Groq is the only billed LLM. Embed + chat share `GROQ_API_KEY`. Langfuse is optional; missing keys fall back to a local trace store so `/traces` still works.
+Groq is the only billed LLM (chat / generate). Embeddings are the same open `nomic-embed-text-v1.5` (768-d): Groq used to host it, then returned `model_not_found`, so ingest/retrieve fall back to local ONNX via fastembed. Langfuse is optional; missing keys fall back to a local trace store so `/traces` still works.
 
 ## Quick start
 
-You need Docker (Compose) and Python 3.12+. A Groq key is required for ingest, retrieve, and generate ([console.groq.com/keys](https://console.groq.com/keys)).
+You need Docker (Compose) and Python 3.12+. A Groq key is required for Playground generate ([console.groq.com/keys](https://console.groq.com/keys)). Ingest and retrieve embed locally.
 
 ```bash
 make setup          # .env + .venv + pip install
@@ -107,7 +107,7 @@ Do **not** run bare `pytest` on system Python (`No module named 'fastapi'`). mac
 
 ## Pipeline
 
-**Ingest** fetches the pinned URLs, chunks at 512/64, embeds with `search_document:`, writes pgvector + FTS. Snapshots land in `corpus/raw/<id>/` with sha256.
+**Ingest** fetches the pinned URLs, chunks at 512/64, embeds with `search_document:` using local `nomic-embed-text-v1.5` (tries Groq `/embeddings` first; Groq now 404s that model), writes pgvector + FTS. Snapshots land in `corpus/raw/<id>/` with sha256. First ingest downloads the ONNX weights (~0.5 GB) into `NOMIC_CACHE_DIR`.
 
 **Retrieve** embeds the query with `search_query:`, fuses dense + lexical lists with RRF, then FlashRank (`ms-marco-MiniLM-L-12-v2`) keeps 8 hits. If rerank fails, order stays RRF and `rerank_skipped` is set — never a silent skip.
 

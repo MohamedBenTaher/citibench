@@ -92,9 +92,12 @@ are the only allowed sources. Each snapshot lands in `corpus/raw/<id>/` with
 `sha256` on the `documents` row and in a companion `sha256` file.
 
 Chunk boundaries use tiktoken `cl100k_base` at 512 / 64 so re-index is stable.
-Embeddings call Groq's OpenAI-compatible `/embeddings` with
-`nomic-embed-text-v1.5` (768-d) and `GROQ_API_KEY`. If the key is missing, ingest
-fails with setup instructions. There is no second embed provider.
+Embeddings use `nomic-embed-text-v1.5` (768-d) with the documented prefixes.
+C2 called Groq's OpenAI-compatible `/embeddings`. Groq later removed that
+model (`model_not_found` on both `nomic-embed-text-v1.5` and
+`nomic-embed-text-v1_5`). Ingest and retrieve now try Groq, then fall back
+to the same open weights via local ONNX (fastembed). That is not a second
+billed embed provider. `GROQ_API_KEY` is required for generate/chat only.
 
 `retrieve` and `emit_trace` stay `NotImplemented`. Hybrid retrieve, rerank,
 Langfuse, Playground ask, and eval CI are out of scope for this slice.
@@ -102,7 +105,8 @@ Langfuse, Playground ask, and eval CI are out of scope for this slice.
 ## C3 retrieve binding (2026-09-06)
 
 C3 implements Contract C only. `retrieve(query, config=None)` embeds the query
-with Groq `nomic-embed-text-v1.5` and prefix `search_query:`, pulls private
+with `nomic-embed-text-v1.5` and prefix `search_query:` (local ONNX after Groq
+dropped the hosted model), pulls private
 pgvector (`dense_k` / `vector_k`) and Postgres FTS (`lexical_k` / `fts_k`)
 pools, fuses them with Cormack RRF `k=60`, then FlashRank
 `ms-marco-MiniLM-L-12-v2` scores the top `rerank_pool` / `rerank_input_k` (50)
@@ -112,7 +116,8 @@ and keeps `top_k=8`.
 `fused_score`, and `rerank_score`. Pools are not public. If FlashRank cannot
 load or score, the RRF list is truncated to `top_k` and every hit has
 `rerank_skipped=true` (testable with an injected `RerankFn`). Empty hits
-return `[]`. Missing `GROQ_API_KEY` on the embed path is HTTP 503.
+return `[]`. Embeddings no longer require `GROQ_API_KEY`. Missing key on
+generate/chat is HTTP 503.
 
 LangGraph generate/abstain, Langfuse, eval CI, MCP, Playground ask UI,
 connectors, a second reranker, and a second embed vendor stay out of scope.

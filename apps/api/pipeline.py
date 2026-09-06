@@ -1,4 +1,4 @@
-"""MANIFEST-only ingest: snapshot → parse → chunk → Groq embed → pgvector."""
+"""MANIFEST-only ingest: snapshot → parse → chunk → nomic embed → pgvector."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from db import (
 from embed import EmbedError, embed_texts
 from manifest import ManifestDoc, parse_manifest
 from parse_doc import parse_snapshot
-from settings import Settings, require_groq_key
+from settings import Settings
 from snapshot import SnapshotError, build_http_client, snapshot_url
 
 log = logging.getLogger("citebench.ingest")
@@ -35,7 +35,6 @@ def run_ingest(
     wipe: bool = False,
     simulate_failure_id: str | None = None,
 ) -> dict[str, Any]:
-    require_groq_key(settings)
     docs = parse_manifest(settings.manifest_path)
     raw_root = settings.corpus_dir / "raw"
     raw_root.mkdir(parents=True, exist_ok=True)

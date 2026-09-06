@@ -25,11 +25,11 @@ _LOCAL_CONFIG = (_REPO_ROOT / "config.yaml") if _REPO_ROOT else None
 _LOCAL_CORPUS = (_REPO_ROOT / "corpus") if _REPO_ROOT else None
 
 GROQ_KEY_HELP = (
-    "GROQ_API_KEY is not set. Citebench embeddings (ingest and retrieve) and Groq chat "
-    "generate use only Groq's OpenAI-compatible API (embed: nomic-embed-text-v1.5; "
-    "chat: config chat_model / GROQ_CHAT_MODEL). Export the key "
-    "(https://console.groq.com/keys) or pass it into Compose as GROQ_API_KEY. "
-    "Do not configure a second embed provider or a second chat provider."
+    "GROQ_API_KEY is not set. Citebench chat generate uses only Groq's OpenAI-compatible "
+    "API (chat: config chat_model / GROQ_CHAT_MODEL). Embeddings are local "
+    "nomic-embed-text-v1.5 (768-d ONNX via fastembed) — Groq no longer hosts that "
+    "model. Export the key (https://console.groq.com/keys) or pass it into Compose "
+    "as GROQ_API_KEY. Do not configure a second embed provider or a second chat provider."
 )
 
 

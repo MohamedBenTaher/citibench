@@ -163,8 +163,6 @@ def get_corpus_stats() -> dict[str, Any]:
 def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
     req = body or IngestRequest()
     settings = load_settings()
-    if not settings.groq_api_key:
-        raise HTTPException(status_code=503, detail=GROQ_KEY_HELP)
     try:
         return run_ingest(
             settings,
@@ -180,8 +178,6 @@ def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
 @app.post("/retrieve")
 def post_retrieve(body: RetrieveRequest) -> RetrieveResponse:
     settings = load_settings()
-    if not settings.groq_api_key:
-        raise HTTPException(status_code=503, detail=GROQ_KEY_HELP)
     query = (body.query or "").strip()
     if not query:
         return RetrieveResponse(hits=[], rerank_skipped=False)

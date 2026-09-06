@@ -1,7 +1,7 @@
 # Citebench local environment.
 #   make setup   — .env + Python venv + API/eval deps
 #   make start   — Compose (api, web, Postgres/pgvector)
-#   make ingest  — index the frozen 14-doc corpus (needs GROQ_API_KEY)
+#   make ingest  — index the frozen 14-doc corpus (local nomic-embed-text-v1.5)
 
 PYTHON  ?= python3
 COMPOSE ?= docker compose
@@ -18,7 +18,7 @@ help:
 	@echo
 	@echo "  make setup      copy .env.example → .env, create .venv, install deps"
 	@echo "  make start      docker compose up --build (api :8000, TanStack Start web :$(WEB_PORT), db)"
-	@echo "  make ingest     POST /ingest (requires GROQ_API_KEY in .env)"
+	@echo "  make ingest     POST /ingest (local nomic embeddings; first run downloads ONNX)"
 	@echo "  make evals      pytest + mock RAGAS + mock redteam (local, before provision)"
 	@echo "  make test       pytest only (uses .venv)"
 	@echo "  make status     health + corpus stats"
@@ -34,7 +34,7 @@ setup: .env $(PY)
 	$(PY) -m pip install -q -r apps/api/requirements-dev.txt
 	@echo
 	@echo "Setup done. Next:"
-	@echo "  1. Set GROQ_API_KEY in .env"
+	@echo "  1. Set GROQ_API_KEY in .env (Playground generate)"
 	@echo "  2. make start"
 	@echo "  3. make ingest"
 	@echo "  4. open $(WEB)/  (index)  $(WEB)/evals  (scores, not a chat homepage)"

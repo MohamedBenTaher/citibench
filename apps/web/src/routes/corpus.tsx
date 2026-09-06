@@ -103,8 +103,9 @@ function CorpusPage() {
         Re-index is idempotent (replace per MANIFEST id). Browser calls FastAPI at{" "}
         <code>VITE_API_URL</code> (default <code>http://localhost:8000</code>).{" "}
         <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes documents
-        and chunks first. A Groq 401 means <code>GROQ_API_KEY</code> was rejected —
-        confirm the key in <code>.env</code> and restart Compose.
+        and chunks first. Embeddings are local <code>nomic-embed-text-v1.5</code>{" "}
+        (Groq no longer hosts that model). First ingest downloads the ONNX weights
+        (~0.5&nbsp;GB) into <code>NOMIC_CACHE_DIR</code>.
       </p>
 
       {loadError ? <ErrorAlert title="Corpus stats" message={loadError} /> : null}
