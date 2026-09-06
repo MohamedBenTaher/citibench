@@ -54,8 +54,8 @@ Or open `/corpus` and click **Ingest / Re-index**. Snapshots go to
 ## Config
 
 See `config.yaml`. Chunking is 512 tokens / 64 overlap with tiktoken
-`cl100k_base`. `faithfulness_threshold: 0.7` is a future CI gate only. This
-repository does not report RAGAS scores.
+`cl100k_base`. `faithfulness_threshold: 0.7` is the C6 RAGAS CI gate, not a
+published Citebench score. The Evals tab shows the last CI artifact only.
 
 `retrieve` is implemented (C3). `generate` is implemented (C4) as one
 LangGraph path: retrieve → generate | abstain. `emit_trace` is implemented
@@ -119,3 +119,37 @@ The Traces tab lists one row per run. Click a row for retrieval and
 generation/abstain spans. If Langfuse keys are missing or the host is down,
 the same tab reads the local store (`TRACE_STORE_DIR`, default
 `/tmp/citebench-traces`).
+
+## Evals (C6)
+
+RAGAS CI gate. Known-bad runs first and must fail the naive success assert
+(abstain). Then `evals/splits/ci.jsonl` is scored. The job fails on loader
+errors, an unclean known-bad phase, or mean **faithfulness < 0.7**.
+Context precision and answer relevancy are logged, not gates.
+
+```bash
+# CI default: fixture RAGAS judge + real known-bad fail-closed (no Groq)
+python -m citebench.eval.ci \
+  --split evals/splits/ci.jsonl \
+  --known-bad evals/splits/known_bad.jsonl \
+  --threshold-faithfulness 0.7 \
+  --mock
+
+# Live Groq generate + ragas library (requires GROQ_API_KEY)
+python -m citebench.eval.ci \
+  --split evals/splits/ci.jsonl \
+  --known-bad evals/splits/known_bad.jsonl \
+  --threshold-faithfulness 0.7 \
+  --live
+```
+
+GitHub Actions workflow `.github/workflows/eval-ci.yml` runs `pytest` then
+this command with `--mock` on `main` and pull requests. Score artifact:
+`evals/results/latest.json` (previous run rotated to `previous.json`).
+Failing rows emit a C5 `RunTrace` into `TRACE_STORE_DIR`. The Evals tab
+reads `/evals/latest` and shows last scores plus diff vs previous.
+
+```bash
+# API tests (includes C6 harness tests)
+cd apps/api && pytest
+```

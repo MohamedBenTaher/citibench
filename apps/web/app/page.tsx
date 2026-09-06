@@ -22,7 +22,8 @@ export default function IndexPage() {
           fallback).
         </li>
         <li>
-          <Link href="/evals">Evals</Link> — future RAGAS / known-bad runner.
+          <Link href="/evals">Evals</Link> — last RAGAS CI run (faithfulness
+          gate 0.7, context precision, answer relevancy).
         </li>
       </ul>
     </>

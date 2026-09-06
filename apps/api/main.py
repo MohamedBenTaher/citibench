@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 import logging
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
@@ -30,7 +33,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Citebench API", version="0.5.0", lifespan=lifespan)
+app = FastAPI(title="Citebench API", version="0.6.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -167,6 +170,39 @@ def get_traces() -> dict[str, Any]:
             for item in traces
         ],
     }
+
+
+@app.get("/evals/latest")
+def get_evals_latest() -> dict[str, Any]:
+    path = _eval_store_dir() / "latest.json"
+    if not path.is_file():
+        return {
+            "present": False,
+            "metrics": None,
+            "previous": None,
+            "diff": None,
+            "detail": "no eval run yet",
+        }
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=500, detail=f"eval artifact unreadable: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=500, detail="eval artifact must be an object")
+    payload["present"] = True
+    return payload
+
+
+def _eval_store_dir() -> Path:
+    env = os.environ.get("EVAL_STORE_DIR", "").strip()
+    if env:
+        return Path(env)
+    here = Path(__file__).resolve()
+    if len(here.parents) > 2:
+        candidate = here.parents[2] / "evals" / "results"
+        if candidate.is_dir() or candidate.parent.is_dir():
+            return candidate
+    return Path("/tmp/citebench-evals")
 
 
 @app.get("/traces/{run_id}")
