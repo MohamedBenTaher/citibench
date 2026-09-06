@@ -289,6 +289,12 @@ server-only `API_URL=http://api:8000`; the public env rename is
 `NEXT_PUBLIC_API_URL` → `VITE_API_URL` (browser still talks to Start,
 not to `api` DNS).
 
-Rejected: rewriting the LangGraph pipeline, chat-as-homepage, a design
-system, or inventing demo metrics. C8/C9 bindings stay.
+The four product tabs use **shadcn/ui** on the Start/Vite path
+(`npx shadcn@latest init --template start --preset nova`), not a Next.js
+App Router install. Nova + Tailwind v4 + Base UI primitives: nav buttons,
+cards, tables, form controls, alerts, and Sonner toasts. No login wall.
+`next-themes` is not required.
+
+Rejected: rewriting the LangGraph pipeline, chat-as-homepage, a second
+component library, or inventing demo metrics. C8/C9 bindings stay.
 
