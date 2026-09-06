@@ -25,7 +25,7 @@ _LOCAL_CONFIG = (_REPO_ROOT / "config.yaml") if _REPO_ROOT else None
 _LOCAL_CORPUS = (_REPO_ROOT / "corpus") if _REPO_ROOT else None
 
 GROQ_KEY_HELP = (
-    "GROQ_API_KEY is not set. Citebench C2 embeddings use only Groq's "
+    "GROQ_API_KEY is not set. Citebench embeddings (ingest and retrieve) use only Groq's "
     "OpenAI-compatible API (model nomic-embed-text-v1.5). Export the key "
     "(https://console.groq.com/keys) or pass it into Compose as GROQ_API_KEY. "
     "Do not configure a second embed provider."
@@ -46,6 +46,13 @@ class Settings:
     corpus_dir: Path
     manifest_path: Path
     groq_api_key: str
+    embed_query_prefix: str = "search_query: "
+    rerank_model: str = "ms-marco-MiniLM-L-12-v2"
+    rrf_k: int = 60
+    rerank_pool: int = 50
+    top_k: int = 8
+    lexical_k: int = 50
+    dense_k: int = 50
 
 
 def _resolve_config_path() -> Path:
@@ -81,9 +88,16 @@ def load_settings() -> Settings:
             or "https://api.groq.com/openai/v1"
         ).rstrip("/"),
         embed_document_prefix=str(raw.get("embed_document_prefix", "search_document: ")),
+        embed_query_prefix=str(raw.get("embed_query_prefix", "search_query: ")),
         chunk_size=int(raw.get("chunk_size", 512)),
         chunk_overlap=int(raw.get("chunk_overlap", 64)),
         tokenizer=str(raw.get("tokenizer", "cl100k_base")),
+        rerank_model=str(raw.get("rerank_model", "ms-marco-MiniLM-L-12-v2")),
+        rrf_k=int(raw.get("rrf_k", 60)),
+        rerank_pool=int(raw.get("rerank_pool", raw.get("rerank_input_k", 50))),
+        top_k=int(raw.get("top_k", 8)),
+        lexical_k=int(raw.get("lexical_k", raw.get("fts_k", 50))),
+        dense_k=int(raw.get("dense_k", raw.get("vector_k", 50))),
         database_url=os.environ.get(
             "DATABASE_URL",
             "postgresql://citebench:citebench@127.0.0.1:5432/citebench",

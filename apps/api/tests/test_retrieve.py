@@ -198,6 +198,17 @@ def test_empty_hits_returns_empty_list() -> None:
     assert hits == []
 
 
+def test_rrf_sums_only_lists_that_contain_the_doc() -> None:
+    dense = [ScoredChunk(chunk_id="only-dense", doc_id="d", text="x", score=0.9)]
+    lexical = [ScoredChunk(chunk_id="only-fts", doc_id="f", text="y", score=0.8)]
+    fused = rrf_fuse(dense, lexical, k=60)
+    by_id = {hit.chunk_id: hit for hit in fused}
+    assert by_id["only-dense"].fused_score == pytest.approx(1.0 / 61)
+    assert by_id["only-dense"].fts_score is None
+    assert by_id["only-fts"].fused_score == pytest.approx(1.0 / 61)
+    assert by_id["only-fts"].vector_score is None
+
+
 def test_empty_query_returns_empty_list() -> None:
     hits = retrieve(
         "   ",
@@ -249,6 +260,18 @@ def test_health_still_200() -> None:
     response = TestClient(app).get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_default_embed_path_requires_groq_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "")
+    with pytest.raises(RuntimeError, match="GROQ_API_KEY"):
+        retrieve(
+            "pods onto nodes",
+            RetrieveConfig(),
+            vector_search_fn=lambda _vec, _k: [],
+            fts_search_fn=lambda _q, _k: [],
+            rerank_fn=lambda _q, _hits: [],
+        )
 
 
 def test_retrieve_endpoint_503_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> None:

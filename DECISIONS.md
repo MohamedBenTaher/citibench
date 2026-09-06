@@ -99,3 +99,21 @@ fails with setup instructions. There is no second embed provider.
 `retrieve` and `emit_trace` stay `NotImplemented`. Hybrid retrieve, rerank,
 Langfuse, Playground ask, and eval CI are out of scope for this slice.
 
+## C3 retrieve binding (2026-09-06)
+
+C3 implements Contract C only. `retrieve(query, config=None)` embeds the query
+with Groq `nomic-embed-text-v1.5` and prefix `search_query:`, pulls private
+pgvector (`dense_k` / `vector_k`) and Postgres FTS (`lexical_k` / `fts_k`)
+pools, fuses them with Cormack RRF `k=60`, then FlashRank
+`ms-marco-MiniLM-L-12-v2` scores the top `rerank_pool` / `rerank_input_k` (50)
+and keeps `top_k=8`.
+
+`ChunkHit` carries Contract C fields plus `vector_score`, `fts_score`,
+`fused_score`, and `rerank_score`. Pools are not public. If FlashRank cannot
+load or score, the RRF list is truncated to `top_k` and every hit has
+`rerank_skipped=true` (testable with an injected `RerankFn`). Empty hits
+return `[]`. Missing `GROQ_API_KEY` on the embed path is HTTP 503.
+
+LangGraph generate/abstain, Langfuse, eval CI, MCP, Playground ask UI,
+connectors, a second reranker, and a second embed vendor stay out of scope.
+

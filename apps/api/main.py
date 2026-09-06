@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 
 from db import connect, corpus_stats, ensure_schema
 from pipeline import run_ingest
+from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, load_settings
 
 logging.basicConfig(level=logging.INFO)
@@ -27,7 +28,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Citebench API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Citebench API", version="0.3.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -42,6 +43,15 @@ class IngestRequest(BaseModel):
         default=None,
         description="Optional MANIFEST id to record as an unreachable snapshot (verification).",
     )
+
+
+class RetrieveRequest(BaseModel):
+    query: str
+
+
+class RetrieveResponse(BaseModel):
+    hits: list[ChunkHit]
+    rerank_skipped: bool = False
 
 
 @app.get("/health")
@@ -79,3 +89,24 @@ def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=message) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/retrieve")
+def post_retrieve(body: RetrieveRequest) -> RetrieveResponse:
+    settings = load_settings()
+    if not settings.groq_api_key:
+        raise HTTPException(status_code=503, detail=GROQ_KEY_HELP)
+    query = (body.query or "").strip()
+    if not query:
+        return RetrieveResponse(hits=[], rerank_skipped=False)
+    try:
+        hits = retrieve(query, retrieve_config_from_settings(settings), settings=settings)
+    except RuntimeError as exc:
+        message = str(exc)
+        if "GROQ_API_KEY" in message:
+            raise HTTPException(status_code=503, detail=message) from exc
+        raise HTTPException(status_code=500, detail=message) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    skipped = bool(hits) and all(hit.rerank_skipped for hit in hits)
+    return RetrieveResponse(hits=hits, rerank_skipped=skipped)
