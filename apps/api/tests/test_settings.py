@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from settings import GROQ_KEY_HELP, Settings, _repo_root, require_groq_key
+from settings import GROQ_KEY_HELP, Settings, _repo_root, load_settings, require_groq_key
 
 
 def test_require_groq_key_fails_clearly() -> None:
@@ -24,5 +24,15 @@ def test_require_groq_key_fails_clearly() -> None:
         require_groq_key(settings)
     assert "console.groq.com/keys" in GROQ_KEY_HELP
     assert "second embed provider" in GROQ_KEY_HELP
+    assert "second chat provider" in GROQ_KEY_HELP
     # Import-time repo-root walk must not assume a deep path (Compose image is /app).
     assert _repo_root() is None or (_repo_root() / "config.yaml").exists()
+
+
+def test_load_settings_binds_groq_chat_model() -> None:
+    settings = load_settings()
+    assert settings.provider == "groq"
+    assert settings.chat_model == "llama-3.1-8b-instant"
+    assert settings.abstain_min_score == 0.12
+    assert settings.chat_prompt_usd_per_1m == 0.05
+    assert settings.chat_completion_usd_per_1m == 0.08

@@ -14,7 +14,7 @@ export default function IndexPage() {
           (docs, pages, chunks, last index, failures).
         </li>
         <li>
-          <Link href="/playground">Playground</Link> — query scratch pad; not a
+          <Link href="/playground">Playground</Link> — single-ask generate; not a
           chat surface.
         </li>
         <li>
