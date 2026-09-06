@@ -272,3 +272,30 @@ No third tool. No agent catalog. No Dify-style platform. No chat
 homepage. Runbook: `docs/mcp.md`. Smoke:
 `python -m citebench.mcp --smoke` (protocol) and `--smoke --live` (API).
 
+## TanStack Start instead of Next.js (2026-09-06)
+
+The four product tabs were already client islands plus a thin BFF over
+FastAPI. Next.js App Router added RSC/document-reload ceremony we were
+not using: `/` is a boring index, Playground is one ask, and Evals is a
+public last-run table. That is a navigation-and-loader problem, not an
+App Router problem.
+
+TanStack Start keeps SSR for first paint and same-origin server
+functions, but tab switches are TanStack Router transitions with
+`preload: intent`, typed `?run_id=` search, and pending/error
+boundaries. No login wall on Playground or Evals. FastAPI contracts
+are unchanged. Compose `web` still binds :3000 and proxies with
+server-only `API_URL=http://api:8000` for GET loaders; browser ask/ingest
+use `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`)
+because Nitro aborts POST server-function bodies. That is the
+`NEXT_PUBLIC_API_URL` rename.
+
+The four product tabs use **shadcn/ui** on the Start/Vite path
+(`npx shadcn@latest init --template start --preset nova`), not a Next.js
+App Router install. Nova + Tailwind v4 + Base UI primitives: nav buttons,
+cards, tables, form controls, alerts, and Sonner toasts. No login wall.
+`next-themes` is not required.
+
+Rejected: rewriting the LangGraph pipeline, chat-as-homepage, a second
+component library, or inventing demo metrics. C8/C9 bindings stay.
+

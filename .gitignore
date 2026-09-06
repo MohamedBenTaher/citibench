@@ -11,6 +11,8 @@ dist/
 .env.local
 evals/results/.local-evals-ok
 apps/web/.next/
+apps/web/.output/
+apps/web/.nitro/
 apps/web/node_modules/
 apps/web/tsconfig.tsbuildinfo
 pgdata/

@@ -7,3 +7,5 @@ date	action	detail	result
 2026-09-06	c7-metrics	GET /metrics p50/p95 cost/1k faithfulness; README method footnotes; mock eval + live-html corpus counts	PASS
 2026-09-06	c8-redteam	Contract A attack_type+expect_block; evals/redteam.jsonl 10 cases; generate/abstain runner; Evals public; deploy runbook no invented URL	PASS
 2026-09-06	c9-mcp	stdio MCP search_corpus+get_trace over /retrieve and /traces/{id}; docs/mcp.md; no marketplace	PASS
+2026-09-06	tanstack-start	Replace Next.js App Router with TanStack Start; same four tabs + FastAPI BFF; VITE_API_URL	PASS
+2026-09-06	shadcn-start	shadcn/ui on TanStack Start (init --template start, Nova); cards/tables/forms/toasts; no Next path	PASS

@@ -1,0 +1,106 @@
+import type { ReactNode } from "react";
+import {
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  createRootRoute,
+  useRouterState,
+} from "@tanstack/react-router";
+import { RouteError } from "@/components/status";
+import { buttonVariants } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
+import "../styles.css";
+
+const tabs = [
+  { to: "/corpus", label: "Corpus" },
+  { to: "/playground", label: "Playground" },
+  { to: "/traces", label: "Traces" },
+  { to: "/evals", label: "Evals" },
+] as const;
+
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      {
+        title: "Citebench",
+      },
+      {
+        name: "description",
+        content: "Citation-grounded retrieval bench for a frozen public corpus.",
+      },
+    ],
+  }),
+  component: RootComponent,
+  errorComponent: RouteError,
+});
+
+function RootComponent() {
+  return (
+    <RootDocument>
+      <Outlet />
+    </RootDocument>
+  );
+}
+
+function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const isNavigating = useRouterState({
+    select: (state) => state.isLoading,
+  });
+
+  return (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+            <Link
+              to="/"
+              className={cn(buttonVariants({ variant: "ghost" }), "font-heading text-base")}
+              preload="intent"
+            >
+              Citebench
+            </Link>
+            <Separator orientation="vertical" className="hidden h-5 sm:block" />
+            <nav className="flex flex-wrap items-center gap-1">
+              {tabs.map((tab) => {
+                const isActive = pathname === tab.to;
+                return (
+                  <Link
+                    key={tab.to}
+                    to={tab.to}
+                    preload="intent"
+                    className={cn(
+                      buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+                    )}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            {isNavigating ? (
+              <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">
+                Loading…
+              </span>
+            ) : null}
+          </div>
+          {isNavigating ? (
+            <div className="h-0.5 origin-left animate-pulse bg-foreground" aria-hidden="true" />
+          ) : null}
+        </header>
+        <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">{children}</main>
+        <Toaster />
+        <Scripts />
+      </body>
+    </html>
+  );
+}

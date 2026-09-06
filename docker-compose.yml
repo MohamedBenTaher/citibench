@@ -32,7 +32,7 @@ services:
       EVAL_STORE_DIR: /app/evals/results
       REDTEAM_JSONL: /app/evals/redteam.jsonl
       PYTHONPATH: /repo
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:${WEB_PORT:-3000},http://127.0.0.1:${WEB_PORT:-3000}}
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
       LANGFUSE_HOST: ${LANGFUSE_HOST:-}
@@ -46,12 +46,22 @@ services:
         condition: service_healthy
 
   web:
-    build: ./apps/web
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     environment:
-      NEXT_TELEMETRY_DISABLED: "1"
+      HOST: 0.0.0.0
+      PORT: 3000
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 3000
+      # Server-only FastAPI origin (in-network Compose DNS) for GET loaders.
       API_URL: http://api:8000
+      # Public FastAPI origin baked into the Vite client at build time
+      # (browser ask/ingest). Replaces unused NEXT_PUBLIC_API_URL.
+      VITE_API_URL: http://localhost:8000
     depends_on:
       - api
 

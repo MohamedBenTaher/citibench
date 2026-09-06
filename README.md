@@ -1,270 +1,205 @@
 # Citebench
 
-Citebench measures citation-grounded retrieval on a frozen public Kubernetes and Azure corpus.
+Citebench is a **citation-grounded retrieval bench**, not a chat product.
 
-## Numbers
+It answers questions about a **frozen public corpus** (14 Kubernetes and Azure docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
 
-Counted from this repo, or tagged with the measurement. An em dash means
-we did not measure it here — not that the value is zero.
+The homepage is an index. The interesting surfaces are **Corpus**, **Playground**, **Traces**, and **Evals**. First screenshot for a reviewer: `/evals` or a failing `/traces` row, not a chat bubble.
+
+## How it fits together
+
+```
+  14 pinned public URLs (corpus/MANIFEST.md, freeze 2026-09-05)
+                 │
+                 ▼
+         ingest ──► Postgres 16 + pgvector
+                 │     chunks (512 / 64, tiktoken cl100k_base)
+                 │     dense (Groq nomic-embed-text-v1.5) + FTS
+                 ▼
+         retrieve ──► RRF (k=60) ──► FlashRank top-50 → top-8
+                 │
+                 ▼
+         generate | abstain   (Groq llama-3.1-8b-instant, LangGraph)
+                 │
+                 ├── RunTrace (Langfuse or local JSON)
+                 ├── /metrics  (p50/p95, cost/1k, last eval)
+                 └── evals     (RAGAS gate 0.7 + 10 redteam cases)
+```
+
+| Piece | Role |
+| --- | --- |
+| `apps/api` | FastAPI: health, ingest, retrieve, generate, traces, evals, metrics |
+| `apps/web` | TanStack Start + shadcn/ui: `/` index plus four tabs |
+| `db` | `pgvector/pgvector:pg16` — inspectable SQL, not a hosted vector SaaS |
+| `citebench.eval` | RAGAS CI + redteam runners |
+| `citebench.mcp` | Two tools: `search_corpus`, `get_trace` |
+| `config.yaml` | Chunking, models, `top_k`, faithfulness threshold |
+
+Groq is the only billed LLM. Embed + chat share `GROQ_API_KEY`. Langfuse is optional; missing keys fall back to a local trace store so `/traces` still works.
+
+## Quick start
+
+You need Docker (Compose) and Python 3.12+. A Groq key is required for ingest, retrieve, and generate ([console.groq.com/keys](https://console.groq.com/keys)).
+
+```bash
+make setup          # .env + .venv + pip install
+# edit .env → GROQ_API_KEY=...
+make start          # api :8000, web :3000, Postgres
+make ingest         # index the 14 MANIFEST URLs
+```
+
+Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. GET loaders and `/api/*` proxies use server-only `API_URL=http://api:8000`. Browser ask/ingest call FastAPI at `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`) because Nitro aborts POST server-function bodies. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
+
+Local Vite without rebuilding the image:
+
+```bash
+cd apps/web
+API_URL=http://127.0.0.1:8000 VITE_API_URL=http://localhost:8000 npm run dev
+# http://localhost:3000/  (API must already be up)
+```
+
+If the page says **“Gotenberg has no UI, it's an API”**, that is [Gotenberg](https://gotenberg.dev/) (PDF conversion), not Citebench. It also binds **:3000**. Confirm Citebench with `curl -sS localhost:8000/health` → `{"status":"ok"}`. Then either stop Gotenberg (`docker ps | grep -i gotenberg`) or start Citebench on another port:
+
+```bash
+# stop the other container, or:
+WEB_PORT=3100 make start
+# open http://localhost:3100/
+```
+
+Equivalent without Make:
+
+```bash
+cp -n .env.example .env
+docker compose up --build
+curl -sS -X POST http://localhost:8000/ingest -H 'Content-Type: application/json' -d '{}'
+```
+
+| Make target | What it does |
+| --- | --- |
+| `make setup` | Copy `.env`, create `.venv`, install `apps/api` + pytest |
+| `make start` | `docker compose up --build -d`, wait for `/health` (`WEB_PORT=3100` if :3000 is taken) |
+| `make ingest` | `POST /ingest` |
+| `make evals` | Local pytest + mock RAGAS + mock redteam (run before provision) |
+| `make test` | Pytest only, via `.venv` |
+| `make status` / `logs` / `stop` / `down` | Health, follow logs, stop stack |
+
+Do **not** run bare `pytest` on system Python (`No module named 'fastapi'`). macOS often has `python3` and no `python`. Use `make evals` or `.venv/bin/python -m pytest apps/api`.
+
+## What each tab is
+
+| Route | What you see |
+| --- | --- |
+| `/` | Boring index. Not a chat homepage. |
+| `/corpus` | Freeze + counts. Ingest / re-index the 14 public docs. |
+| `/playground` | Ask UI: answer, citations, abstain, latency, estimated cost. Still not a chat product. |
+| `/traces` | One `RunTrace` per ask: retrieve → rerank → generate\|abstain. |
+| `/evals` | Last RAGAS artifact + 10 redteam cases. Public; no login wall. |
+
+## Pipeline
+
+**Ingest** fetches the pinned URLs, chunks at 512/64, embeds with `search_document:`, writes pgvector + FTS. Snapshots land in `corpus/raw/<id>/` with sha256.
+
+**Retrieve** embeds the query with `search_query:`, fuses dense + lexical lists with RRF, then FlashRank (`ms-marco-MiniLM-L-12-v2`) keeps 8 hits. If rerank fails, order stays RRF and `rerank_skipped` is set — never a silent skip.
+
+**Generate** is one LangGraph path: retrieve, then answer with citations **or** abstain (`I don't know`). Citations are always a subset of retrieved chunk ids. Empty retrieve, low FlashRank score, or ungrounded output → abstain.
+
+```bash
+curl -sS http://localhost:8000/health
+curl -sS http://localhost:8000/corpus/stats
+curl -sS -X POST http://localhost:8000/retrieve \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"how does the kube-scheduler place pods onto nodes"}'
+curl -sS -X POST http://localhost:8000/generate \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"how does the kube-scheduler place pods onto nodes"}'
+```
+
+## Evals and redteam
+
+Run these **on your laptop** before any public provision (`try-provision.sh` exits 3 until they pass).
+
+```bash
+make evals
+# or:  ./scripts/local-evals.sh
+# live redteam after compose + ingest + GROQ_API_KEY:
+./scripts/local-evals.sh --live
+```
+
+- **Known-bad** (`evals/splits/known_bad.jsonl`) — InnovX passwords / Acme payroll. Any concrete answer fails.
+- **RAGAS CI** — mean faithfulness **≥ 0.7** on `evals/splits/ci.jsonl`. That 0.7 is a CI gate, not a published product score.
+- **Redteam** — exactly 10 cases in `evals/redteam.jsonl` (injection / pii_leak / jailbreak). A pass is a **block**: abstain, no cite, no leak.
+
+GitHub Actions (`.github/workflows/eval-ci.yml`) runs pytest + mock RAGAS + mock redteam on `main` and PRs.
+
+## Numbers (honest)
+
+Counted from this repo, or tagged with the measurement. An em dash means we did not measure it — not that the value is zero.
 
 | Metric | Value | Method |
 | --- | --- | --- |
 | Corpus docs | 14 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-05). |
-| Corpus pages | 14 | One HTML snapshot is one page (`parse_doc`). All 14 URLs are HTML. |
-| Corpus chunks | 148 | `measured-under-live-html-fetch-2026-09-06`. tiktoken `cl100k_base` 512/64 on pages fetched that day, recorded in `evals/results/corpus.json`. Not the frozen 2026-09-05 sha256 snapshots (those are not in git). Counts move if the public pages change. After ingest, prefer `GET /corpus/stats`. |
-| Faithfulness | 1.000 | `measured-under-mock-ragas-judge`. Mean on `evals/splits/ci.jsonl` (3 rows) from `evals/results/latest.json` (`mode=mock`). Fixture judge, not a live ragas/Groq run. The CI gate is 0.7; this is not a published product score. |
-| Context precision | 0.833 | Same mock artifact as faithfulness. Exact value in `latest.json` is `0.8333…`. |
-| p95 latency | — | Unmeasured. No live Groq generate sample in this environment. `GET /metrics` returns `null` until traces with `latency_ms > 0` exist. |
-| Cost / 1k queries | — | Unmeasured. Same reason. When traces exist: mean `citebench.cost.v1` USD × 1000. Rates are in `config.yaml`. |
+| Corpus pages | 14 | One HTML snapshot is one page. All 14 URLs are HTML. |
+| Corpus chunks | 148 | `measured-under-live-html-fetch-2026-09-06`. tiktoken 512/64. After ingest, prefer `GET /corpus/stats`. |
+| Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 3 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
+| Context precision | 0.833 | Same mock artifact (`evals/results/latest.json`). |
+| p95 latency | — | Unmeasured until traces with `latency_ms > 0` exist. |
+| Cost / 1k queries | — | Unmeasured. When traces exist: mean `citebench.cost.v1` USD × 1000. |
 
 ```bash
 curl -sS http://localhost:8000/metrics
 curl -sS 'http://localhost:8000/metrics?format=prometheus'
 ```
 
-## Run
+## MCP
+
+Two tools over the Compose API. Not a marketplace. See `docs/mcp.md`.
 
 ```bash
-cp -n .env.example .env   # then set GROQ_API_KEY
-docker compose up --build
+make mcp-smoke
+# after make start:
+export CITEBENCH_API_URL=http://localhost:8000 PYTHONPATH=.
+.venv/bin/python -m citebench.mcp --smoke --live
+.venv/bin/python -m citebench.mcp          # stdio server
 ```
 
-- API health: `GET http://localhost:8000/health` → `{"status":"ok"}`
-- Web: `http://localhost:3000/` (index plus `/corpus`, `/playground`, `/traces`, `/evals`)
-- Playground and Evals are public application routes. There is no login wall
-  that hides Evals. Optional single demo password (Caddy overlay): user
-  `citebench` / password `citebench` — see `infra/deploy/README.md`.
-- **First screenshot:** `/evals` (redteam table or last RAGAS run) or a
-  failing `/traces` row. Not a Playground chat bubble.
-- Database: Postgres 16 with pgvector (`CREATE EXTENSION vector`)
+## Repo map
 
-Langfuse is optional. Unset keys or a down host fail soft to a local
-`RunTrace` store so the Traces tab still works. Cloud:
-
-```bash
-LANGFUSE_PUBLIC_KEY=pk-lf-...
-LANGFUSE_SECRET_KEY=sk-lf-...
-LANGFUSE_HOST=https://cloud.langfuse.com   # or https://us.cloud.langfuse.com
+```
+apps/api/           FastAPI + ingest/retrieve/generate/trace
+apps/web/           TanStack Start tabs
+citebench/eval/     RAGAS + redteam CLIs
+citebench/mcp/      search_corpus + get_trace
+corpus/MANIFEST.md  Frozen 14-URL list
+evals/              ci.jsonl, known_bad.jsonl, redteam.jsonl, results/
+docs/contracts/     Eval / trace / hybrid-retrieve contracts
+infra/deploy/       Demo Compose overlay + Caddy
+config.yaml         Models and knobs
+DECISIONS.md        Why this stack
 ```
 
-Self-host (optional Compose profile; UI at http://localhost:3001):
+## Deploy
+
+No public URL ships with the repo. After `make evals` locally, see `infra/deploy/README.md`. Playground and Evals stay public application routes.
 
 ```bash
+make evals
+make start
+bash infra/deploy/try-provision.sh
+```
+
+Optional Langfuse (UI at http://localhost:3001):
+
+```bash
+# in .env
 LANGFUSE_PUBLIC_KEY=pk-lf-citebench-dev
 LANGFUSE_SECRET_KEY=sk-lf-citebench-dev
 LANGFUSE_HOST=http://langfuse:3000
 docker compose --profile langfuse up --build
 ```
 
-## Ingest (C2)
+## Further reading
 
-Set `GROQ_API_KEY` (https://console.groq.com/keys). Embeddings use only Groq
-`nomic-embed-text-v1.5` via the OpenAI-compatible API.
-
-```bash
-# idempotent re-index of the 14 MANIFEST URLs
-curl -sS -X POST http://localhost:8000/ingest -H 'Content-Type: application/json' -d '{}'
-
-# optional wipe + reload
-curl -sS -X POST http://localhost:8000/ingest -H 'Content-Type: application/json' -d '{"wipe":true}'
-
-# stats (same counts as the Corpus tab)
-curl -sS http://localhost:8000/corpus/stats
-```
-
-Or open `/corpus` and click **Ingest / Re-index**. Snapshots go to
-`corpus/raw/<id>/` with `sha256` recorded on `documents.sha256` and in
-`corpus/raw/<id>/sha256`.
-
-## Config
-
-See `config.yaml`. Chunking is 512 tokens / 64 overlap with tiktoken
-`cl100k_base`. `faithfulness_threshold: 0.7` is the C6 RAGAS CI gate, not a
-published Citebench score. The Evals tab shows the last CI artifact and the
-C8 redteam table.
-
-`retrieve` is implemented (C3). `generate` is implemented (C4) as one
-LangGraph path: retrieve → generate | abstain. `emit_trace` is implemented
-(C5): every generate/ask run writes a `RunTrace` (Langfuse when configured,
-local JSON store otherwise). `GET /metrics` is implemented (C7). MCP is
-implemented (C9): two tools, `search_corpus` and `get_trace` — see
-`docs/mcp.md`.
-
-## Retrieve (C3)
-
-Hybrid search over the ingested chunks. Query embed uses Groq
-`nomic-embed-text-v1.5` with prefix `search_query:` (same `GROQ_API_KEY`;
-**503** if missing). Dense + FTS lists are fused with RRF `k=60`, then
-FlashRank `ms-marco-MiniLM-L-12-v2` reranks the top 50 and returns `top_k=8`.
-
-```bash
-curl -sS -X POST http://localhost:8000/retrieve \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"how does the kube-scheduler place pods onto nodes"}'
-```
-
-FlashRank loads `ms-marco-MiniLM-L-12-v2` once per process into
-`FLASHRANK_CACHE_DIR` (default `/tmp/flashrank`). If rerank fails to load or
-score, the response keeps RRF order and sets `rerank_skipped` on every hit.
-
-Unit tests use the 5-doc fixture at `apps/api/tests/fixtures/retrieve_5doc/`
-and inject embed / search / `RerankFn` stubs (no live Groq).
-
-## Generate (C4)
-
-One LangGraph path. `retrieve()` runs first; then the graph routes to
-**generate** (answer + citations) or **abstain** (`I don't know`). Chat is
-Groq only (`llama-3.1-8b-instant` in `config.yaml`, override `GROQ_CHAT_MODEL`).
-Missing `GROQ_API_KEY` on `POST /generate` is **503**; `/health` stays 200.
-
-```bash
-curl -sS -X POST http://localhost:8000/generate \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"how does the kube-scheduler place pods onto nodes"}'
-```
-
-Playground tab (`/playground`) is the ask UI: answer, citations, abstain
-path, latency, and `citebench.cost.v1` estimated cost. `/` stays an index.
-
-Citations are always a subset of retrieved chunk ids. Empty retrieve, low
-FlashRank confidence, out-of-corpus model abstain, and ungrounded (no valid
-cites) all abstain. Policy is in `apps/api/generate.py` and `DECISIONS.md`.
-
-## Traces (C5)
-
-Every `POST /generate` / Playground ask emits one `RunTrace` via `emit_trace`.
-Span tree is retrieve → rerank → generate|abstain. Citations use `text_ref`
-(`doc_id#chunk_id`), not chunk bodies. Cost is `citebench.cost.v1` (USD +
-method). Langfuse mapping: trace `name=citebench.run`, spans named by
-`span.kind`, citations and cost in metadata, `rerank_skipped` as a score.
-
-```bash
-curl -sS http://localhost:8000/traces
-curl -sS http://localhost:8000/traces/<run_id>
-```
-
-The Traces tab lists one row per run. Click a row for retrieval and
-generation/abstain spans. If Langfuse keys are missing or the host is down,
-the same tab reads the local store (`TRACE_STORE_DIR`, default
-`/tmp/citebench-traces`).
-
-## Evals (C6)
-
-RAGAS CI gate. Known-bad runs first and must fail the naive success assert
-(abstain). Then `evals/splits/ci.jsonl` is scored. The job fails on loader
-errors, an unclean known-bad phase, or mean **faithfulness < 0.7**.
-Context precision and answer relevancy are logged, not gates.
-
-```bash
-# CI default: fixture RAGAS judge + real known-bad fail-closed (no Groq)
-python -m citebench.eval.ci \
-  --split evals/splits/ci.jsonl \
-  --known-bad evals/splits/known_bad.jsonl \
-  --threshold-faithfulness 0.7 \
-  --mock
-
-# Live Groq generate + ragas library (requires GROQ_API_KEY)
-python -m citebench.eval.ci \
-  --split evals/splits/ci.jsonl \
-  --known-bad evals/splits/known_bad.jsonl \
-  --threshold-faithfulness 0.7 \
-  --live
-```
-
-GitHub Actions workflow `.github/workflows/eval-ci.yml` runs `pytest` then
-this command with `--mock` on `main` and pull requests. Score artifact:
-`evals/results/latest.json` (previous run rotated to `previous.json`).
-Failing rows emit a C5 `RunTrace` into `TRACE_STORE_DIR`. The Evals tab
-reads `/evals/latest` and `/evals/redteam` (public; no login). It shows
-last RAGAS scores plus the 10 C8 redteam cases.
-
-```bash
-# API tests (includes C6 and C8 harness tests) — use the repo venv
-./scripts/local-evals.sh
-# or:  .venv/bin/python -m pytest apps/api
-```
-
-## Redteam (C8)
-
-Exactly 10 Contract A rows in `evals/redteam.jsonl`. Each row has `tags`
-including `redteam`, plus `attack_type` (`injection` / `pii_leak` /
-`jailbreak`) and `expect_block`. The runner reuses the generate → abstain
-path (mock: empty retrieve, no Groq).
-
-```bash
-# from repo root, with .venv (not `cd apps/api`; not bare `python`)
-./scripts/local-evals.sh
-
-# or, after `source .venv/bin/activate`:
-python -m citebench.eval.redteam --split evals/redteam.jsonl --mock
-python -m citebench.eval.redteam --split evals/redteam.jsonl --live
-```
-
-A pass is a block: abstain, no concrete answer, no citations. Leaks write a
-C5 `RunTrace`. Artifact: `evals/results/redteam.json`. This is not the RAGAS
-0.7 gate.
-
-## Local evals before provision (C8)
-
-Run evals on your laptop before `try-provision.sh` or any public host.
-System Python will fail collection (`No module named 'fastapi'` / `tiktoken`).
-macOS often has `python3` and no `python`. Use the script from the **repo
-root**, not `apps/api`:
-
-```bash
-./scripts/local-evals.sh          # .venv + pytest + mock RAGAS + mock redteam
-# after compose up, ingest, and GROQ_API_KEY:
-./scripts/local-evals.sh --live
-```
-
-Equivalent by hand:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r apps/api/requirements-dev.txt
-cd apps/api && pytest && cd ../..
-python3 -m citebench.eval.redteam --split evals/redteam.jsonl --mock
-```
-
-`infra/deploy/try-provision.sh` exits 3 until
-`evals/results/.local-evals-ok` exists (`--force` skips that gate).
-
-## Demo URL
-
-No public URL is shipped from this change unless you deploy it. This
-environment had no Fly/Railway/Render/Azure/GHCR credentials.
-
-What you must click: follow `infra/deploy/README.md` (Compose on a VM, or
-Azure Container Apps / Fly / Railway / Render). After the host is up, open
-`/evals` first. Optional password: `citebench` / `citebench`.
-
-```bash
-./scripts/local-evals.sh   # required first
-docker compose -f docker-compose.yml -f infra/deploy/docker-compose.demo.yml up --build
-bash infra/deploy/try-provision.sh   # exits 3 if local evals missing; 2 if no cloud creds
-```
-
-## Metrics (C7)
-
-`GET /metrics` is JSON by default. `?format=prometheus` is the text scrape.
-
-- **p50 / p95 latency** — traces with `latency_ms > 0`
-- **cost / 1k** — mean billed `CostEstimate.usd_estimate` × 1000
-- **faithfulness** — last eval artifact, including `mode`
-- **corpus** — pgvector stats if indexed, else `evals/results/corpus.json`, else MANIFEST docs/pages
-
-Null means “not measured yet,” not zero.
-
-## MCP (C9)
-
-Two tools against the Compose API. Not a marketplace and not extra
-connectors. Full run notes: `docs/mcp.md`.
-
-```bash
-export CITEBENCH_API_URL=http://localhost:8000
-export PYTHONPATH=.
-python -m citebench.mcp --smoke          # protocol only
-python -m citebench.mcp --smoke --live   # after docker compose up
-python -m citebench.mcp                  # stdio server
-```
+- `DECISIONS.md` — Postgres, chunking, rerank, Groq-only, freeze, anti-theater
+- `docs/contracts/` — eval JSONL, traces, hybrid retrieve
+- `docs/mcp.md` — MCP host config
+- `infra/deploy/README.md` — VM / Fly / Railway / Azure
