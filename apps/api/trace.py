@@ -282,18 +282,41 @@ def list_traces(*, settings: Any | None = None) -> list[RunTrace]:
 
 
 def get_trace(run_id: str, *, settings: Any | None = None) -> RunTrace | None:
+    """Look up by ``run_id``, or by ``langfuse_trace_id`` when that id is set."""
+    key = (run_id or "").strip()
+    if not key:
+        return None
     with _MEMORY_LOCK:
-        cached = _MEMORY.get(run_id)
-    if cached is not None:
-        return cached
-    path = resolve_trace_store_dir(settings) / f"{run_id}.json"
-    if not path.is_file():
+        cached = _MEMORY.get(key)
+        if cached is not None:
+            return cached
+        for item in _MEMORY.values():
+            if item.langfuse_trace_id == key:
+                return item
+    path = resolve_trace_store_dir(settings) / f"{key}.json"
+    if path.is_file():
+        try:
+            return RunTrace.model_validate(json.loads(path.read_text(encoding="utf-8")))
+        except Exception as exc:
+            log.warning("failed to read trace %s: %s", key, exc)
+            return None
+    return _find_by_langfuse_id(key, settings)
+
+
+def _find_by_langfuse_id(langfuse_id: str, settings: Any | None) -> RunTrace | None:
+    store = resolve_trace_store_dir(settings)
+    if not store.is_dir():
         return None
-    try:
-        return RunTrace.model_validate(json.loads(path.read_text(encoding="utf-8")))
-    except Exception as exc:
-        log.warning("failed to read trace %s: %s", run_id, exc)
-        return None
+    for path in store.glob("*.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            item = RunTrace.model_validate(payload)
+        except Exception as exc:
+            log.warning("skip unreadable trace %s: %s", path, exc)
+            continue
+        if item.langfuse_trace_id == langfuse_id:
+            return item
+    return None
 
 
 def langfuse_configured(settings: Any | None = None) -> bool:

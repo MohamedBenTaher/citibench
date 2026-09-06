@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from generate import generate
-from retrieve import ChunkHit, RetrieveConfig
+from retrieve import RetrieveConfig
 from test_generate import fixture_hits, load_5doc, make_settings, stub_chat, stub_retrieve
 from trace import (
     ChunkRef,
@@ -19,6 +19,7 @@ from trace import (
     Span,
     SpanKind,
     SpanStatus,
+    clear_memory_store,
     emit_trace,
     get_trace,
     list_traces,
@@ -216,7 +217,22 @@ def test_langfuse_success_sets_id() -> None:
     emit_trace(trace, poster=poster)
     assert trace.langfuse_trace_id == "lf-123"
     assert get_trace("run-lf").langfuse_trace_id == "lf-123"
+    assert get_trace("lf-123").run_id == "run-lf"
     assert poster.calls
+
+
+def test_get_trace_empty_id_is_none() -> None:
+    assert get_trace("") is None
+    assert get_trace("   ") is None
+
+
+def test_get_trace_langfuse_id_from_disk_only() -> None:
+    emit_trace(valid_trace(run_id="run-disk"), poster=FakePoster(trace_id="lf-disk"))
+    clear_memory_store()
+    stored = get_trace("lf-disk")
+    assert stored is not None
+    assert stored.run_id == "run-disk"
+    assert stored.langfuse_trace_id == "lf-disk"
 
 
 def test_langfuse_down_keeps_local() -> None:
@@ -292,6 +308,21 @@ def test_traces_endpoint_lists_generate_runs(monkeypatch: pytest.MonkeyPatch) ->
     assert payload["run_id"] == run_id
     assert payload["query"] == fixture["query"]
     assert {span["kind"] for span in payload["spans"]} >= {"retrieve", "rerank", "generate"}
+
+
+def test_traces_endpoint_accepts_langfuse_id() -> None:
+    poster = FakePoster(trace_id="lf-endpoint")
+    emit_trace(valid_trace(run_id="run-endpoint"), poster=poster)
+    from main import app
+
+    client = TestClient(app)
+    by_run = client.get("/traces/run-endpoint")
+    by_lf = client.get("/traces/lf-endpoint")
+    assert by_run.status_code == 200
+    assert by_lf.status_code == 200
+    assert by_run.json()["run_id"] == "run-endpoint"
+    assert by_lf.json()["run_id"] == "run-endpoint"
+    assert by_lf.json()["langfuse_trace_id"] == "lf-endpoint"
 
 
 def test_schemas_emit_trace_is_implemented() -> None:
