@@ -38,7 +38,10 @@ function CorpusPage() {
     setBusy(true);
     setActionError(null);
     try {
-      await postIngest({ data: body });
+      const outcome = await postIngest({ data: body });
+      if (!outcome.ok) {
+        setActionError(outcome.error);
+      }
       await router.invalidate();
     } catch (error: unknown) {
       setActionError(error instanceof Error ? error.message : "ingest failed");
