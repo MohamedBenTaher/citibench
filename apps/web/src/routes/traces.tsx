@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
@@ -7,6 +7,8 @@ import { RouteError, RoutePending } from "@/components/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -123,6 +125,7 @@ function TracesPage() {
   const navigate = useNavigate({ from: "/traces" });
   const { run_id: selectedId } = Route.useSearch();
   const { list, detail, detailError } = Route.useLoaderData();
+  const [runInput, setRunInput] = useState(selectedId ?? "");
 
   const orderedSpans = useMemo(() => {
     if (!detail) {
@@ -144,15 +147,40 @@ function TracesPage() {
       />
       <BackendNote list={list} />
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => {
-          void router.invalidate();
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(event: FormEvent) => {
+          event.preventDefault();
+          const runId = runInput.trim();
+          if (runId) {
+            selectRun(runId);
+          }
         }}
       >
-        Refresh
-      </Button>
+        <div className="space-y-2">
+          <Label htmlFor="trace-run-id">Run id</Label>
+          <Input
+            id="trace-run-id"
+            name="run_id"
+            value={runInput}
+            onChange={(event) => setRunInput(event.target.value)}
+            placeholder={selectedId ?? "Open a run id"}
+            autoComplete="off"
+          />
+        </div>
+        <Button type="submit" variant="outline">
+          Open
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            void router.invalidate();
+          }}
+        >
+          Refresh
+        </Button>
+      </form>
 
       {!list || list.traces.length === 0 ? (
         <p className="text-sm text-muted-foreground">

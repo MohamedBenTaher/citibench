@@ -1,15 +1,8 @@
 import * as http from "node:http";
 import * as https from "node:https";
+import { ApiError } from "./errors";
 
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-  }
-}
+export { ApiError };
 
 export function apiBase(): string {
   const fromEnv =

@@ -17,8 +17,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { clientApiJson } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
-import { postGenerate } from "@/lib/server";
 import type { GenerateResult } from "@/lib/types";
 
 const IN_CORPUS = "how does the kube-scheduler place pods onto nodes";
@@ -52,15 +52,13 @@ function PlaygroundPage() {
     setBusy(true);
     setError(null);
     try {
-      const outcome = await postGenerate({ data: { query } });
-      if (!outcome.ok) {
-        setResult(null);
-        setError(outcome.error);
-        toast.error(outcome.error);
-        return;
-      }
-      setResult(outcome.data);
-      toast.success(terminalLabel(outcome.data.terminal));
+      const data = await clientApiJson<GenerateResult>("/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      setResult(data);
+      toast.success(terminalLabel(data.terminal));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "generate failed";
       setResult(null);

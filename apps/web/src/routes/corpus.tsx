@@ -15,8 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getCorpusStats, postIngest, type IngestBody } from "@/lib/server";
-import type { CorpusStats } from "@/lib/types";
+import { clientApiJson } from "@/lib/client-api";
+import { getCorpusStats } from "@/lib/server";
+import type { CorpusStats, IngestBody } from "@/lib/types";
 
 const EMPTY: CorpusStats = {
   doc_count: 0,
@@ -52,13 +53,12 @@ function CorpusPage() {
     setBusy(true);
     setActionError(null);
     try {
-      const outcome = await postIngest({ data: body });
-      if (!outcome.ok) {
-        setActionError(outcome.error);
-        toast.error(outcome.error);
-      } else {
-        toast.success("Ingest finished");
-      }
+      await clientApiJson<CorpusStats>("/ingest", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body ?? {}),
+      });
+      toast.success("Ingest finished");
       await router.invalidate();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "ingest failed";
