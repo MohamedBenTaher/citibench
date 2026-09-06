@@ -31,6 +31,9 @@ type GenerateResult = {
   cost_method: string;
   rerank_skipped: boolean;
   model: string;
+  run_id?: string;
+  langfuse_trace_id?: string | null;
+  trace_backend?: "langfuse" | "local";
   detail?: string;
 };
 
@@ -154,6 +157,13 @@ export default function PlaygroundPage() {
             {result.cost.completion_tokens}, embed {result.cost.embed_tokens},
             rerank {result.cost.rerank_tokens}.
           </p>
+          {result.run_id ? (
+            <p className="muted">
+              Trace <code>{result.run_id}</code>
+              {result.trace_backend ? ` (${result.trace_backend})` : ""}.{" "}
+              <a href={`/traces?run_id=${encodeURIComponent(result.run_id)}`}>Open in Traces</a>
+            </p>
+          ) : null}
 
           <h2>Citations</h2>
           {result.citations.length === 0 ? (

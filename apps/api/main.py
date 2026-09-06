@@ -13,6 +13,7 @@ from generate import GenerateResult, generate
 from pipeline import run_ingest
 from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, load_settings
+from trace import get_trace, langfuse_configured, list_traces
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("citebench.api")
@@ -29,7 +30,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Citebench API", version="0.4.0", lifespan=lifespan)
+app = FastAPI(title="Citebench API", version="0.5.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -135,3 +136,43 @@ def post_generate(body: GenerateRequest) -> GenerateResult:
         raise HTTPException(status_code=500, detail=message) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/traces")
+def get_traces() -> dict[str, Any]:
+    settings = load_settings()
+    traces = list_traces(settings=settings)
+    return {
+        "langfuse_configured": langfuse_configured(settings),
+        "backend": "langfuse" if langfuse_configured(settings) else "local",
+        "count": len(traces),
+        "traces": [
+            {
+                "run_id": item.run_id,
+                "query": item.query,
+                "started_at": item.started_at.isoformat(),
+                "finished_at": item.finished_at.isoformat(),
+                "abstained": item.abstained,
+                "model": item.model,
+                "tokens_in": item.tokens_in,
+                "tokens_out": item.tokens_out,
+                "latency_ms": item.latency_ms,
+                "cost": item.cost.model_dump(),
+                "cost_method": item.cost_method,
+                "langfuse_trace_id": item.langfuse_trace_id,
+                "rerank_skipped": item.rerank_skipped,
+                "citation_count": len(item.citations),
+                "failed": any(span.status.value == "error" for span in item.spans),
+            }
+            for item in traces
+        ],
+    }
+
+
+@app.get("/traces/{run_id}")
+def get_trace_detail(run_id: str) -> dict[str, Any]:
+    settings = load_settings()
+    item = get_trace(run_id, settings=settings)
+    if item is None:
+        raise HTTPException(status_code=404, detail=f"trace not found: {run_id}")
+    return item.model_dump(mode="json")

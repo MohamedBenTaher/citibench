@@ -146,3 +146,37 @@ td {
   text-align: left;
   vertical-align: top;
 }
+
+tr.selected td {
+  background: #eef3ff;
+}
+
+button.linkish {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.span {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 0.75rem 0.85rem;
+  margin: 0.75rem 0;
+}
+
+.span h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.attrs {
+  background: #f7f7f5;
+  border: 1px solid #eee;
+  padding: 0.5rem 0.6rem;
+  overflow: auto;
+  font-size: 0.85rem;
+}

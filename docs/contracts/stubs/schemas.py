@@ -9,6 +9,14 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+# Optional C5 runtime. The stub lives under docs/ and must import without apps/api.
+try:
+    from trace import RunTrace as RuntimeTrace
+    from trace import emit_trace as runtime_emit
+except ImportError:
+    RuntimeTrace = None
+    runtime_emit = None
+
 _ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
@@ -122,4 +130,29 @@ def retrieve(query: str, config: RetrieveConfig | None = None) -> list[ChunkHit]
     raise NotImplementedError("C1 stub: retrieve")
 
 def emit_trace(trace: RunTrace) -> None:
-    raise NotImplementedError("C1 stub: emit_trace")
+    """C5: validate the contract tree, then persist via the runtime emitter."""
+    _validate_run_trace(trace)
+    if runtime_emit is None or RuntimeTrace is None:
+        return
+    runtime_emit(RuntimeTrace.model_validate(trace.model_dump()))
+
+
+def _validate_run_trace(trace: RunTrace) -> None:
+    retrieve = [span for span in trace.spans if span.kind == SpanKind.retrieve]
+    rerank = [span for span in trace.spans if span.kind == SpanKind.rerank]
+    generate = [span for span in trace.spans if span.kind == SpanKind.generate]
+    abstain = [span for span in trace.spans if span.kind == SpanKind.abstain]
+    if len(retrieve) != 1 or retrieve[0].parent_id is not None:
+        raise ValueError("exactly one retrieve span with parent_id=null")
+    if len(rerank) != 1 or rerank[0].parent_id != retrieve[0].span_id:
+        raise ValueError("rerank must be the child of retrieve")
+    if "rerank_skipped" not in rerank[0].attributes:
+        raise ValueError("rerank attributes must include rerank_skipped")
+    if trace.abstained:
+        if generate or len(abstain) != 1 or abstain[0].parent_id != rerank[0].span_id:
+            raise ValueError("abstain tree invalid")
+        if trace.citations:
+            raise ValueError("abstained citations must be empty")
+        return
+    if abstain or len(generate) != 1 or generate[0].parent_id != rerank[0].span_id:
+        raise ValueError("generate tree invalid")

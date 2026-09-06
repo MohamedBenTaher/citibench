@@ -59,6 +59,10 @@ class Settings:
     chat_prompt_usd_per_1m: float = 0.05
     chat_completion_usd_per_1m: float = 0.08
     embed_usd_per_1m: float = 0.01
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = ""
+    trace_store_dir: Path = Path("/tmp/citebench-traces")
 
 
 def _chat_model(raw: dict) -> str:
@@ -126,6 +130,12 @@ def load_settings() -> Settings:
         embed_usd_per_1m=float(
             os.environ.get("EMBED_USD_PER_1M") or raw.get("embed_usd_per_1m") or 0.01
         ),
+        langfuse_public_key=os.environ.get("LANGFUSE_PUBLIC_KEY", "").strip(),
+        langfuse_secret_key=os.environ.get("LANGFUSE_SECRET_KEY", "").strip(),
+        langfuse_host=(
+            os.environ.get("LANGFUSE_HOST") or os.environ.get("LANGFUSE_BASE_URL") or ""
+        ).strip(),
+        trace_store_dir=Path(os.environ.get("TRACE_STORE_DIR", "/tmp/citebench-traces")),
         database_url=os.environ.get(
             "DATABASE_URL",
             "postgresql://citebench:citebench@127.0.0.1:5432/citebench",
