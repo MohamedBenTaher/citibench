@@ -10,8 +10,8 @@ export default function IndexPage() {
       </p>
       <ul>
         <li>
-          <Link href="/corpus">Corpus</Link> — frozen manifest of 14 public
-          Kubernetes and Azure documents.
+          <Link href="/corpus">Corpus</Link> — frozen 14-doc index counts
+          (docs, pages, chunks, last index, failures).
         </li>
         <li>
           <Link href="/playground">Playground</Link> — query scratch pad; not a

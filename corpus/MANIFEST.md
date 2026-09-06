@@ -5,8 +5,9 @@ Freeze date: **2026-09-05**
 ## Policy
 
 Public Kubernetes concept documentation and public Microsoft Learn Azure
-documentation only. No PDFs, no internal runbooks, no paywalled pages, no
-customer data. Pages (HTML snapshots) are TBD until C2 ingest.
+documentation only. No extra PDFs, no internal runbooks, no paywalled pages, no
+customer data. C2 snapshots each pinned URL to `corpus/raw/<id>/` (HTML or PDF)
+with a companion `sha256` file. Do not add documents that are not in this table.
 
 ## Re-freeze rule
 
