@@ -11,3 +11,4 @@ date	action	detail	result
 2026-09-06	shadcn-start	shadcn/ui on TanStack Start (init --template start, Nova); cards/tables/forms/toasts; no Next path	PASS
 2026-09-06	local-nomic	Groq dropped nomic-embed-text-v1.5 (404 model_not_found); ingest/retrieve fall back to local ONNX; Groq key is chat-only	PASS
 2026-09-06	gpt-oss-20b	Groq retired llama-3.1-8b-instant for developer keys; generate uses openai/gpt-oss-20b	PASS
+2026-09-06	langfuse-soft	Probe Langfuse host/auth once; disable SDK on failure; local /traces stays up	PASS

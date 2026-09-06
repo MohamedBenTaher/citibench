@@ -246,6 +246,65 @@ def test_langfuse_down_keeps_local() -> None:
     assert stored.langfuse_trace_id is None
 
 
+def test_langfuse_unreachable_host_stays_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-citebench-dev")
+    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-citebench-dev")
+    monkeypatch.setenv("LANGFUSE_HOST", "http://127.0.0.1:9")
+    monkeypatch.setattr("trace._langfuse_host_reachable", lambda _host, timeout=1.5: False)
+    trace = valid_trace(run_id="run-unreach")
+    emit_trace(trace)
+    assert trace.langfuse_trace_id is None
+    assert get_trace("run-unreach") is not None
+
+
+def test_langfuse_auth_failure_stays_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Reject:
+        def __init__(self, _settings) -> None:
+            pass
+
+        def auth_ok(self) -> bool:
+            return False
+
+        def post(self, _trace: RunTrace) -> str:
+            raise AssertionError("must not post after auth failure")
+
+    monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-bad")
+    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-bad")
+    monkeypatch.setenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    monkeypatch.setattr("trace._langfuse_host_reachable", lambda _host, timeout=1.5: True)
+    monkeypatch.setattr("trace.SdkLangfusePoster", Reject)
+    trace = valid_trace(run_id="run-auth")
+    emit_trace(trace)
+    assert trace.langfuse_trace_id is None
+    assert get_trace("run-auth") is not None
+
+
+def test_langfuse_post_failure_trips_breaker(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"n": 0}
+
+    class Once:
+        def __init__(self, _settings) -> None:
+            pass
+
+        def auth_ok(self) -> bool:
+            return True
+
+        def post(self, _trace: RunTrace) -> str:
+            calls["n"] += 1
+            raise RuntimeError("langfuse down")
+
+    monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-ok")
+    monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-ok")
+    monkeypatch.setenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
+    monkeypatch.setattr("trace._langfuse_host_reachable", lambda _host, timeout=1.5: True)
+    monkeypatch.setattr("trace.SdkLangfusePoster", Once)
+    emit_trace(valid_trace(run_id="run-a"))
+    emit_trace(valid_trace(run_id="run-b"))
+    assert calls["n"] == 1
+    assert get_trace("run-a") is not None
+    assert get_trace("run-b") is not None
+
+
 def test_unconfigured_langfuse_is_local_only() -> None:
     trace = valid_trace(run_id="run-local")
     emit_trace(trace)

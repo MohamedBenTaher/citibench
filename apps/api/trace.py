@@ -13,6 +13,7 @@ from threading import Lock
 from typing import Any, Protocol
 from uuid import uuid4
 
+import httpx
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 log = logging.getLogger("citebench.trace")
@@ -22,6 +23,9 @@ _TEXT_REF_RE = re.compile(r"^[A-Za-z0-9._:-]+#[A-Za-z0-9._:-]+$")
 _BODY_KEYS = frozenset({"text", "body", "chunk_text", "passage", "content", "document"})
 _MEMORY: dict[str, "RunTrace"] = {}
 _MEMORY_LOCK = Lock()
+_LANGFUSE_LOCK = Lock()
+_langfuse_disabled = False
+_DEFAULT_LANGFUSE_HOST = "https://cloud.langfuse.com"
 
 
 class SpanKind(str, Enum):
@@ -239,6 +243,42 @@ def clear_memory_store() -> None:
         _MEMORY.clear()
 
 
+def reset_langfuse_state() -> None:
+    """Test helper: allow Langfuse again after a circuit-break."""
+    global _langfuse_disabled
+    with _LANGFUSE_LOCK:
+        _langfuse_disabled = False
+
+
+def _disable_langfuse(reason: str) -> None:
+    global _langfuse_disabled
+    with _LANGFUSE_LOCK:
+        _langfuse_disabled = True
+    log.warning("Langfuse disabled for this process; local RunTrace store only. %s", reason)
+
+
+def _silence_langfuse_sdk() -> None:
+    logging.getLogger("langfuse").setLevel(logging.CRITICAL)
+
+
+def _langfuse_host(settings: Any | None) -> str:
+    host = (
+        _setting(settings, "langfuse_host")
+        or os.environ.get("LANGFUSE_HOST", "")
+        or os.environ.get("LANGFUSE_BASE_URL", "")
+    ).strip()
+    return host or _DEFAULT_LANGFUSE_HOST
+
+
+def _langfuse_host_reachable(host: str, *, timeout: float = 1.5) -> bool:
+    url = host.rstrip("/") + "/api/public/health"
+    try:
+        response = httpx.get(url, timeout=timeout)
+    except httpx.HTTPError:
+        return False
+    return response.status_code < 500
+
+
 def emit_trace(
     trace: RunTrace,
     *,
@@ -254,7 +294,10 @@ def emit_trace(
     try:
         langfuse_id = client.post(trace)
     except Exception as exc:
-        log.warning("Langfuse emit failed; keeping local RunTrace %s: %s", trace.run_id, exc)
+        if poster is None:
+            _disable_langfuse(f"emit failed: {exc}")
+        else:
+            log.warning("Langfuse emit failed; keeping local RunTrace %s: %s", trace.run_id, exc)
         return
     if langfuse_id:
         trace.langfuse_trace_id = str(langfuse_id)
@@ -349,12 +392,21 @@ def _setting(settings: Any | None, name: str) -> str:
 
 
 def _default_poster(settings: Any | None) -> LangfusePoster | None:
-    if not langfuse_configured(settings):
+    if _langfuse_disabled or not langfuse_configured(settings):
+        return None
+    host = _langfuse_host(settings)
+    if not _langfuse_host_reachable(host):
+        _disable_langfuse(f"host unreachable: {host}")
         return None
     try:
-        return SdkLangfusePoster(settings)
+        _silence_langfuse_sdk()
+        poster = SdkLangfusePoster(settings)
+        if not poster.auth_ok():
+            _disable_langfuse(f"auth failed for {host}")
+            return None
+        return poster
     except Exception as exc:
-        log.warning("Langfuse client init failed; using local store: %s", exc)
+        _disable_langfuse(f"client init failed: {exc}")
         return None
 
 
@@ -382,6 +434,15 @@ class SdkLangfusePoster:
         if host.strip():
             kwargs["host"] = host.strip()
         self._client = Langfuse(**kwargs)
+
+    def auth_ok(self) -> bool:
+        check = getattr(self._client, "auth_check", None)
+        if not callable(check):
+            return True
+        try:
+            return bool(check())
+        except Exception:
+            return False
 
     def post(self, trace: RunTrace) -> str:
         if hasattr(self._client, "trace"):

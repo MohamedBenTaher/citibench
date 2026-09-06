@@ -170,9 +170,11 @@ Langfuse SDK posts `name=citebench.run`, child spans named by `span.kind`,
 citation `text_ref`s on output metadata, `CostEstimate` + method on
 metadata, and `rerank_skipped` as a score. Configure
 `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_HOST` (cloud or
-`http://langfuse:3000` for the optional Compose profile). If keys are unset
-or Langfuse errors, `emit_trace` keeps the in-memory/local JSON store and
-leaves `langfuse_trace_id` null so `/traces` still works.
+`http://langfuse:3000` for the optional Compose profile). If keys are unset,
+the host is unreachable, or auth fails, `emit_trace` probes once, disables
+Langfuse for the process, keeps the local JSON store, and leaves
+`langfuse_trace_id` null so `/traces` still works. The Langfuse SDK's
+`ERROR:langfuse:Unexpected error…` log is not a product failure.
 
 Eval CI is C6. `/metrics` README numbers are C7. MCP, connectors, a chat
 homepage, and an analytics product stay out of scope.

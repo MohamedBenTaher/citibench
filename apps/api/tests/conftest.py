@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from trace import clear_memory_store
+from trace import clear_memory_store, reset_langfuse_state
 
 
 @pytest.fixture(autouse=True)
@@ -12,5 +12,7 @@ def isolate_trace_store(tmp_path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
     monkeypatch.delenv("LANGFUSE_HOST", raising=False)
     clear_memory_store()
+    reset_langfuse_state()
     yield
     clear_memory_store()
+    reset_langfuse_state()

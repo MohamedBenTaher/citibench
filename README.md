@@ -197,7 +197,7 @@ make start
 bash infra/deploy/try-provision.sh
 ```
 
-Optional Langfuse (UI at http://localhost:3001):
+Optional Langfuse (UI at http://localhost:3001). Leave `LANGFUSE_*` empty unless you run this profile or have cloud keys — a dead host used to log `ERROR:langfuse:Unexpected error…` on every ask; emit now probes once and keeps the local `/traces` store.
 
 ```bash
 # in .env
