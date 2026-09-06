@@ -86,7 +86,9 @@ C8 redteam table.
 `retrieve` is implemented (C3). `generate` is implemented (C4) as one
 LangGraph path: retrieve → generate | abstain. `emit_trace` is implemented
 (C5): every generate/ask run writes a `RunTrace` (Langfuse when configured,
-local JSON store otherwise). `GET /metrics` is implemented (C7).
+local JSON store otherwise). `GET /metrics` is implemented (C7). MCP is
+implemented (C9): two tools, `search_corpus` and `get_trace` — see
+`docs/mcp.md`.
 
 ## Retrieve (C3)
 
@@ -253,3 +255,16 @@ bash infra/deploy/try-provision.sh   # exits 3 if local evals missing; 2 if no c
 - **corpus** — pgvector stats if indexed, else `evals/results/corpus.json`, else MANIFEST docs/pages
 
 Null means “not measured yet,” not zero.
+
+## MCP (C9)
+
+Two tools against the Compose API. Not a marketplace and not extra
+connectors. Full run notes: `docs/mcp.md`.
+
+```bash
+export CITEBENCH_API_URL=http://localhost:8000
+export PYTHONPATH=.
+python -m citebench.mcp --smoke          # protocol only
+python -m citebench.mcp --smoke --live   # after docker compose up
+python -m citebench.mcp                  # stdio server
+```

@@ -225,8 +225,8 @@ C1–C5 bindings are unchanged: Postgres 16 + pgvector, chunk 512 / 64,
 FlashRank MiniLM top-50 → top-8, no fine-tune on the 14-page freeze,
 Langfuse as the named trace backend, Groq as the only generation provider.
 
-C8 redteam + deploy is this slice. C9 MCP, a chat homepage, and connectors
-stay out of scope.
+C8 redteam + deploy is this slice. A chat homepage and connectors stay
+out of scope. C9 is the thin MCP only.
 
 ## C8 redteam + demo binding (2026-09-06)
 
@@ -253,5 +253,22 @@ screenshot is `/evals` or a failing trace, not a chat bubble.
 
 Deploy is best-effort. Compose overlay lives in `infra/deploy/`. Azure
 Container Apps, Fly, Railway, Render, and GHCR are runbook-only unless
-credentials exist. Do not invent a demo URL. C9 MCP stays hard-stop.
+credentials exist. Do not invent a demo URL. C9 is the thin MCP only.
+
+## C9 MCP binding (2026-09-06)
+
+C9 is two MCP tools over the running Compose API. It is not a marketplace,
+not a connector platform, and not a new UI.
+
+stdio JSON-RPC (`python -m citebench.mcp`). `CITEBENCH_API_URL` defaults
+to `http://localhost:8000`.
+
+1. `search_corpus` — wraps `POST /retrieve` (C3 hybrid). Argument: `query`.
+2. `get_trace` — wraps `GET /traces/{id}` (C5 local store). Argument:
+   `run_id`, which may be the Citebench run id or `langfuse_trace_id`
+   when that field is present.
+
+No third tool. No agent catalog. No Dify-style platform. No chat
+homepage. Runbook: `docs/mcp.md`. Smoke:
+`python -m citebench.mcp --smoke` (protocol) and `--smoke --live` (API).
 

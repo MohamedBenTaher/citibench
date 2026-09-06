@@ -89,7 +89,7 @@ def _cors_origins() -> list[str]:
     return ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 
-app = FastAPI(title="Citebench API", version="0.8.0", lifespan=lifespan)
+app = FastAPI(title="Citebench API", version="0.9.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
