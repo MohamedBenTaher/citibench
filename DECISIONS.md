@@ -280,15 +280,17 @@ not using: `/` is a boring index, Playground is one ask, and Evals is a
 public last-run table. That is a navigation-and-loader problem, not an
 App Router problem.
 
-TanStack Start keeps SSR for first paint and same-origin server
-functions, but tab switches are TanStack Router transitions with
-`preload: intent`, typed `?run_id=` search, and pending/error
-boundaries. No login wall on Playground or Evals. FastAPI contracts
-are unchanged. Compose `web` still binds :3000 and proxies with
-server-only `API_URL=http://api:8000` for GET loaders; browser ask/ingest
-use `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`)
-because Nitro aborts POST server-function bodies. That is the
-`NEXT_PUBLIC_API_URL` rename.
+TanStack Start keeps SSR for first paint, but tab switches are TanStack
+Router transitions with `preload: intent`, typed `?run_id=` search, and
+pending/error boundaries. No login wall on Playground or Evals. FastAPI
+contracts are unchanged. Compose `web` still binds :3000. Loaders call
+FastAPI directly: Nitro SSR uses `API_URL=http://api:8000`; the browser
+uses `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`)
+for ingest, ask, corpus stats, traces, and evals. GET `createServerFn`
+RPCs were dropped — Start returns 401/500 on client navigations
+(CSRF/origin), which showed up as Corpus “Internal Server Error” and a
+dead Traces tab. That is the `NEXT_PUBLIC_API_URL` rename plus the
+server-function read-path rollback.
 
 The four product tabs use **shadcn/ui** on the Start/Vite path
 (`npx shadcn@latest init --template start --preset nova`), not a Next.js

@@ -100,9 +100,11 @@ function CorpusPage() {
         </Button>
       </div>
       <p className="text-sm text-muted-foreground">
-        Re-index is idempotent (replace per MANIFEST id).{" "}
+        Re-index is idempotent (replace per MANIFEST id). Browser calls FastAPI at{" "}
+        <code>VITE_API_URL</code> (default <code>http://localhost:8000</code>).{" "}
         <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes documents
-        and chunks first.
+        and chunks first. A Groq 401 means <code>GROQ_API_KEY</code> was rejected —
+        confirm the key in <code>.env</code> and restart Compose.
       </p>
 
       {loadError ? <ErrorAlert title="Corpus stats" message={loadError} /> : null}

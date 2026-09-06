@@ -83,10 +83,34 @@ async def lifespan(_app: FastAPI):
 
 
 def _cors_origins() -> list[str]:
-    raw = os.environ.get("CORS_ORIGINS", "").strip()
-    if raw:
-        return [item.strip() for item in raw.split(",") if item.strip()]
-    return ["http://localhost:3000", "http://127.0.0.1:3000"]
+    """Localhost UI ports plus CORS_ORIGINS extras.
+
+    Compose sometimes leaves `${WEB_PORT:-3000}` uninterpolated inside the
+    CORS_ORIGINS default. Those tokens are dropped so ingest/generate from
+    the browser still get Access-Control-Allow-Origin.
+    """
+    ports = {3000, 4173, 5173}
+    raw_port = os.environ.get("WEB_PORT", "3000").strip()
+    try:
+        ports.add(int(raw_port))
+    except ValueError:
+        pass
+    origins = [f"http://localhost:{port}" for port in sorted(ports)]
+    origins.extend(f"http://127.0.0.1:{port}" for port in sorted(ports))
+    for item in os.environ.get("CORS_ORIGINS", "").split(","):
+        origin = item.strip()
+        if origin and "${" not in origin:
+            origins.append(origin)
+    return list(dict.fromkeys(origins))
+
+
+def _runtime_http_error(exc: RuntimeError) -> HTTPException:
+    message = str(exc)
+    if "rejected by Groq" in message:
+        return HTTPException(status_code=401, detail=message)
+    if "GROQ_API_KEY" in message:
+        return HTTPException(status_code=503, detail=message)
+    return HTTPException(status_code=500, detail=message)
 
 
 app = FastAPI(title="Citebench API", version="0.9.0", lifespan=lifespan)
@@ -148,10 +172,7 @@ def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
             simulate_failure_id=req.simulate_failure_id,
         )
     except RuntimeError as exc:
-        message = str(exc)
-        if "GROQ_API_KEY" in message:
-            raise HTTPException(status_code=503, detail=message) from exc
-        raise HTTPException(status_code=500, detail=message) from exc
+        raise _runtime_http_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -167,10 +188,7 @@ def post_retrieve(body: RetrieveRequest) -> RetrieveResponse:
     try:
         hits = retrieve(query, retrieve_config_from_settings(settings), settings=settings)
     except RuntimeError as exc:
-        message = str(exc)
-        if "GROQ_API_KEY" in message:
-            raise HTTPException(status_code=503, detail=message) from exc
-        raise HTTPException(status_code=500, detail=message) from exc
+        raise _runtime_http_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     skipped = bool(hits) and all(hit.rerank_skipped for hit in hits)
@@ -189,10 +207,7 @@ def post_generate(body: GenerateRequest) -> GenerateResult:
             config=retrieve_config_from_settings(settings),
         )
     except RuntimeError as exc:
-        message = str(exc)
-        if "GROQ_API_KEY" in message:
-            raise HTTPException(status_code=503, detail=message) from exc
-        raise HTTPException(status_code=500, detail=message) from exc
+        raise _runtime_http_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

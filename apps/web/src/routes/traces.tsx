@@ -20,6 +20,13 @@ import {
 import { getTrace, getTraces } from "@/lib/server";
 import type { Citation, JsonValue, SpanKind, SpanStatus, TraceList } from "@/lib/types";
 
+const EMPTY_LIST: TraceList = {
+  langfuse_configured: false,
+  backend: "local",
+  count: 0,
+  traces: [],
+};
+
 type TracesSearch = {
   run_id?: string;
 };
@@ -35,18 +42,25 @@ export const Route = createFileRoute("/traces")({
   validateSearch: tracesSearch,
   loaderDeps: ({ search }) => ({ run_id: search.run_id }),
   loader: async ({ deps }) => {
-    const list = await getTraces();
+    let list: TraceList = EMPTY_LIST;
+    let loadError: string | null = null;
+    try {
+      list = await getTraces();
+    } catch (error: unknown) {
+      loadError = error instanceof Error ? error.message : "failed to load traces";
+    }
     if (!deps.run_id) {
-      return { list, detail: null, detailError: null as string | null };
+      return { list, detail: null, detailError: null as string | null, loadError };
     }
     try {
-      const detail = await getTrace({ data: deps.run_id });
-      return { list, detail, detailError: null as string | null };
+      const detail = await getTrace(deps.run_id);
+      return { list, detail, detailError: null as string | null, loadError };
     } catch (error: unknown) {
       return {
         list,
         detail: null,
         detailError: error instanceof Error ? error.message : "failed to load trace",
+        loadError,
       };
     }
   },
@@ -124,7 +138,7 @@ function TracesPage() {
   const router = useRouter();
   const navigate = useNavigate({ from: "/traces" });
   const { run_id: selectedId } = Route.useSearch();
-  const { list, detail, detailError } = Route.useLoaderData();
+  const { list, detail, detailError, loadError } = Route.useLoaderData();
   const [runInput, setRunInput] = useState(selectedId ?? "");
 
   const orderedSpans = useMemo(() => {
@@ -146,6 +160,7 @@ function TracesPage() {
         description="One RunTrace per generate/ask run. Langfuse is the named backend (citebench.run + nested retrieve → rerank → generate|abstain). This tab is the local fallback view and stays available if Langfuse is down or unconfigured."
       />
       <BackendNote list={list} />
+      {loadError ? <ErrorAlert title="Traces" message={loadError} /> : null}
 
       <form
         className="flex flex-wrap items-end gap-2"
