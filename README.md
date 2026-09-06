@@ -41,4 +41,24 @@ See `config.yaml`. Chunking is 512 tokens / 64 overlap with tiktoken
 `cl100k_base`. `faithfulness_threshold: 0.7` is a future CI gate only. This
 repository does not report RAGAS scores.
 
-`retrieve` and `emit_trace` remain stubs.
+`emit_trace` remains a stub. `retrieve` is implemented (C3).
+
+## Retrieve (C3)
+
+Hybrid search over the ingested chunks. Query embed uses Groq
+`nomic-embed-text-v1.5` with prefix `search_query:` (same `GROQ_API_KEY`;
+**503** if missing). Dense + FTS lists are fused with RRF `k=60`, then
+FlashRank `ms-marco-MiniLM-L-12-v2` reranks the top 50 and returns `top_k=8`.
+
+```bash
+curl -sS -X POST http://localhost:8000/retrieve \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"how does the kube-scheduler place pods onto nodes"}'
+```
+
+FlashRank loads `ms-marco-MiniLM-L-12-v2` once per process into
+`FLASHRANK_CACHE_DIR` (default `/tmp/flashrank`). If rerank fails to load or
+score, the response keeps RRF order and sets `rerank_skipped` on every hit.
+
+Unit tests use the 5-doc fixture at `apps/api/tests/fixtures/retrieve_5doc/`
+and inject embed / search / `RerankFn` stubs (no live Groq).

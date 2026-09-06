@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS chunks (
 );
 
 CREATE INDEX IF NOT EXISTS chunks_doc_id_idx ON chunks (doc_id);
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS tsv tsvector;
 CREATE INDEX IF NOT EXISTS chunks_tsv_gin ON chunks USING GIN (tsv);
+UPDATE chunks SET tsv = to_tsvector('english', text) WHERE tsv IS NULL;
 
 CREATE TABLE IF NOT EXISTS ingest_runs (
     id SERIAL PRIMARY KEY,
