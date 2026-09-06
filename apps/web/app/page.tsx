@@ -22,8 +22,8 @@ export default function IndexPage() {
           fallback).
         </li>
         <li>
-          <Link href="/evals">Evals</Link> — last RAGAS CI run (faithfulness
-          gate 0.7, context precision, answer relevancy).
+          <Link href="/evals">Evals</Link> — public RAGAS last-run plus 10
+          redteam cases. Start demo screenshots here, not on Playground.
         </li>
         <li>
           Metrics — scrape <code>GET /metrics</code> on the API (p50/p95,

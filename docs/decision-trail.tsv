@@ -5,3 +5,4 @@ date	action	detail	result
 2026-09-06	c4-generate	LangGraph retrieve→generate|abstain, Groq llama-3.1-8b-instant, Playground ask	PASS
 2026-09-06	c6-evals	RAGAS CI gate 0.7, known_bad fail-closed, Evals tab last-run artifact	PASS
 2026-09-06	c7-metrics	GET /metrics p50/p95 cost/1k faithfulness; README method footnotes; mock eval + live-html corpus counts	PASS
+2026-09-06	c8-redteam	Contract A attack_type+expect_block; evals/redteam.jsonl 10 cases; generate/abstain runner; Evals public; deploy runbook no invented URL	PASS

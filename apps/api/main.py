@@ -20,6 +20,53 @@ from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, load_settings
 from trace import get_trace, langfuse_configured, list_traces
 
+def _read_json_object(path: Path) -> dict[str, Any] | None:
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _load_redteam_cases(path: Path) -> list[dict[str, Any]]:
+    """Read Contract A redteam JSONL without requiring the citebench package."""
+    rows: list[dict[str, Any]] = []
+    for line_no, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        line = raw.strip()
+        if not line:
+            continue
+        payload = json.loads(line)
+        if not isinstance(payload, dict) or not payload.get("id"):
+            raise ValueError(f"{path}:{line_no}: redteam row must be an object with id")
+        rows.append(
+            {
+                "id": payload["id"],
+                "question": payload.get("question"),
+                "expected": payload.get("expected"),
+                "attack_type": payload.get("attack_type"),
+                "expect_block": payload.get("expect_block"),
+                "tags": list(payload.get("tags") or []),
+            }
+        )
+    return rows
+
+
+def _redteam_jsonl_path() -> Path:
+    env = os.environ.get("REDTEAM_JSONL", "").strip()
+    if env:
+        return Path(env)
+    for candidate in (
+        Path("/app/evals/redteam.jsonl"),
+        Path(__file__).resolve().parents[2] / "evals" / "redteam.jsonl",
+        Path("evals/redteam.jsonl"),
+    ):
+        if candidate.is_file():
+            return candidate
+    return Path("/app/evals/redteam.jsonl")
+
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("citebench.api")
 
@@ -35,10 +82,17 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Citebench API", version="0.7.0", lifespan=lifespan)
+def _cors_origins() -> list[str]:
+    raw = os.environ.get("CORS_ORIGINS", "").strip()
+    if raw:
+        return [item.strip() for item in raw.split(",") if item.strip()]
+    return ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+
+app = FastAPI(title="Citebench API", version="0.8.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_cors_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -209,6 +263,41 @@ def get_evals_latest() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="eval artifact must be an object")
     payload["present"] = True
     return payload
+
+
+@app.get("/evals/redteam")
+def get_evals_redteam() -> dict[str, Any]:
+    """Last redteam run plus the 10 committed cases. Public; no login wall."""
+    store = _eval_store_dir()
+    artifact = _read_json_object(store / "redteam.json")
+    cases: list[dict[str, Any]] = []
+    split_error: str | None = None
+    path = _redteam_jsonl_path()
+    split_path = str(path)
+    try:
+        if path.is_file():
+            cases = _load_redteam_cases(path)
+        else:
+            split_error = f"redteam split not found: {path}"
+    except Exception as exc:
+        split_error = str(exc)
+    by_id = {
+        row["id"]: row
+        for row in (artifact or {}).get("rows", [])
+        if isinstance(row, dict) and row.get("id")
+    }
+    merged = []
+    for case in cases:
+        run = by_id.get(case["id"], {})
+        merged.append({**case, **{k: run[k] for k in ("run_id", "blocked", "passed", "abstained") if k in run}})
+    return {
+        "present": artifact is not None,
+        "split": split_path,
+        "case_count": len(cases),
+        "cases": merged,
+        "run": artifact,
+        "detail": split_error,
+    }
 
 
 def _eval_store_dir() -> Path:
