@@ -1,0 +1,8 @@
+provider: groq
+embed_model: nomic-embed-text-v1.5
+rerank_model: ms-marco-MiniLM-L-12-v2
+chunk_size: 512
+chunk_overlap: 64
+top_k: 8
+faithfulness_threshold: 0.7
+chat_model: ""

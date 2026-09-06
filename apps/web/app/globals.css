@@ -1,0 +1,51 @@
+:root {
+  color: #111;
+  background: #f7f7f5;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+header {
+  border-bottom: 1px solid #ccc;
+  padding: 0.75rem 1.25rem;
+  background: #fff;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+nav a {
+  color: #111;
+}
+
+nav .brand {
+  font-weight: 700;
+  text-decoration: none;
+  margin-right: 0.5rem;
+}
+
+main {
+  padding: 1.25rem;
+  max-width: 52rem;
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+ul {
+  padding-left: 1.25rem;
+}
