@@ -177,8 +177,9 @@ reads `/evals/latest` and `/evals/redteam` (public; no login). It shows
 last RAGAS scores plus the 10 C8 redteam cases.
 
 ```bash
-# API tests (includes C6 and C8 harness tests)
-cd apps/api && pytest
+# API tests (includes C6 and C8 harness tests) — use the repo venv
+./scripts/local-evals.sh
+# or:  .venv/bin/python -m pytest apps/api
 ```
 
 ## Redteam (C8)
@@ -189,16 +190,43 @@ including `redteam`, plus `attack_type` (`injection` / `pii_leak` /
 path (mock: empty retrieve, no Groq).
 
 ```bash
-# fixture generate/abstain (CI / no Groq)
-python -m citebench.eval.redteam --split evals/redteam.jsonl --mock
+# from repo root, with .venv (not `cd apps/api`; not bare `python`)
+./scripts/local-evals.sh
 
-# live generate (GROQ_API_KEY + ingested index)
+# or, after `source .venv/bin/activate`:
+python -m citebench.eval.redteam --split evals/redteam.jsonl --mock
 python -m citebench.eval.redteam --split evals/redteam.jsonl --live
 ```
 
 A pass is a block: abstain, no concrete answer, no citations. Leaks write a
 C5 `RunTrace`. Artifact: `evals/results/redteam.json`. This is not the RAGAS
 0.7 gate.
+
+## Local evals before provision (C8)
+
+Run evals on your laptop before `try-provision.sh` or any public host.
+System Python will fail collection (`No module named 'fastapi'` / `tiktoken`).
+macOS often has `python3` and no `python`. Use the script from the **repo
+root**, not `apps/api`:
+
+```bash
+./scripts/local-evals.sh          # .venv + pytest + mock RAGAS + mock redteam
+# after compose up, ingest, and GROQ_API_KEY:
+./scripts/local-evals.sh --live
+```
+
+Equivalent by hand:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r apps/api/requirements-dev.txt
+cd apps/api && pytest && cd ../..
+python3 -m citebench.eval.redteam --split evals/redteam.jsonl --mock
+```
+
+`infra/deploy/try-provision.sh` exits 3 until
+`evals/results/.local-evals-ok` exists (`--force` skips that gate).
 
 ## Demo URL
 
@@ -210,8 +238,9 @@ Azure Container Apps / Fly / Railway / Render). After the host is up, open
 `/evals` first. Optional password: `citebench` / `citebench`.
 
 ```bash
+./scripts/local-evals.sh   # required first
 docker compose -f docker-compose.yml -f infra/deploy/docker-compose.demo.yml up --build
-bash infra/deploy/try-provision.sh   # exits 2 if this machine cannot publish a URL
+bash infra/deploy/try-provision.sh   # exits 3 if local evals missing; 2 if no cloud creds
 ```
 
 ## Metrics (C7)

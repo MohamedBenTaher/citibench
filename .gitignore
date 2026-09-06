@@ -9,6 +9,7 @@ dist/
 *.log
 .env
 .env.local
+evals/results/.local-evals-ok
 apps/web/.next/
 apps/web/node_modules/
 apps/web/tsconfig.tsbuildinfo

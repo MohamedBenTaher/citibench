@@ -1,8 +1,36 @@
 #!/usr/bin/env bash
 # Best-effort public URL. Exits 2 when this environment cannot deploy.
+# Exits 3 when local C8 evals have not been run on this machine.
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+FORCE=0
+if [[ "${1:-}" == "--force" ]]; then
+  FORCE=1
+fi
+
+stamp="${EVAL_STORE_DIR:-${ROOT}/evals/results}/.local-evals-ok"
+if [[ "$FORCE" -eq 0 && ! -f "$stamp" ]]; then
+  cat <<EOF
+Local C8 evals have not been run on this machine.
+
+Do this first (laptop, not a fresh VM):
+
+  ./scripts/local-evals.sh
+
+That creates .venv, installs apps/api deps, runs pytest, mock RAGAS,
+and mock redteam. Then re-run this provisioner.
+
+Override only if you mean it: $0 --force
+EOF
+  exit 3
+fi
+
 echo "citebench demo provisioner"
+if [[ -f "$stamp" ]]; then
+  echo "local evals stamp: $stamp"
+  cat "$stamp"
+fi
 echo "checking for cloud credentials..."
 
 found=0
