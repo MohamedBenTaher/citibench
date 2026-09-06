@@ -13,6 +13,11 @@ export type FailureRow = {
   error: string;
 };
 
+export type IngestBody = {
+  wipe?: boolean;
+  simulate_failure_id?: string;
+};
+
 export type CorpusStats = {
   doc_count: number;
   page_count: number;

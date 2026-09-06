@@ -3,7 +3,6 @@ import { apiJson } from "./api";
 import type {
   CorpusStats,
   EvalLatest,
-  GenerateResult,
   RedteamLatest,
   RunTrace,
   TraceList,
@@ -12,31 +11,6 @@ import type {
 export const getCorpusStats = createServerFn({ method: "GET" }).handler(
   async () => apiJson<CorpusStats>("/corpus/stats"),
 );
-
-export type IngestBody = {
-  wipe?: boolean;
-  simulate_failure_id?: string;
-};
-
-export const postIngest = createServerFn({ method: "POST" })
-  .validator((body: IngestBody) => body)
-  .handler(async ({ data }) =>
-    apiJson<CorpusStats>("/ingest", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(data ?? {}),
-    }),
-  );
-
-export const postGenerate = createServerFn({ method: "POST" })
-  .validator((body: { query: string }) => body)
-  .handler(async ({ data }) =>
-    apiJson<GenerateResult>("/generate", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ query: data.query }),
-    }),
-  );
 
 export const getTraces = createServerFn({ method: "GET" }).handler(async () =>
   apiJson<TraceList>("/traces"),

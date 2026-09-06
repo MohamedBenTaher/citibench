@@ -7,7 +7,11 @@ import {
   createRootRoute,
   useRouterState,
 } from "@tanstack/react-router";
-import { RouteError } from "../components/status";
+import { RouteError } from "@/components/status";
+import { buttonVariants } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 import "../styles.css";
 
 const tabs = [
@@ -44,6 +48,7 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isNavigating = useRouterState({
     select: (state) => state.isLoading,
   });
@@ -54,30 +59,46 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body>
-        <header>
-          <nav>
-            <Link className="brand" to="/">
+        <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+            <Link
+              to="/"
+              className={cn(buttonVariants({ variant: "ghost" }), "font-heading text-base")}
+              preload="intent"
+            >
               Citebench
             </Link>
-            {tabs.map((tab) => (
-              <Link
-                key={tab.to}
-                to={tab.to}
-                activeProps={{ className: "active" }}
-                preload="intent"
-              >
-                {tab.label}
-              </Link>
-            ))}
+            <Separator orientation="vertical" className="hidden h-5 sm:block" />
+            <nav className="flex flex-wrap items-center gap-1">
+              {tabs.map((tab) => {
+                const isActive = pathname === tab.to;
+                return (
+                  <Link
+                    key={tab.to}
+                    to={tab.to}
+                    preload="intent"
+                    className={cn(
+                      buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+                    )}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </nav>
             {isNavigating ? (
-              <span className="nav-status" aria-live="polite">
+              <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">
                 Loading…
               </span>
             ) : null}
-          </nav>
-          {isNavigating ? <div className="progress" aria-hidden="true" /> : null}
+          </div>
+          {isNavigating ? (
+            <div className="h-0.5 origin-left animate-pulse bg-foreground" aria-hidden="true" />
+          ) : null}
         </header>
-        <main>{children}</main>
+        <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">{children}</main>
+        <Toaster />
         <Scripts />
       </body>
     </html>

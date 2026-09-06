@@ -1,7 +1,22 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { RouteError, RoutePending } from "../components/status";
-import { getEvalLatest, getRedteamLatest } from "../lib/server";
-import type { MetricName, RedteamCase } from "../lib/types";
+import { ErrorAlert } from "@/components/error-alert";
+import { PageHeader } from "@/components/page-header";
+import { StatCards } from "@/components/stat-cards";
+import { RouteError, RoutePending } from "@/components/status";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { getEvalLatest, getRedteamLatest } from "@/lib/server";
+import type { MetricName, RedteamCase } from "@/lib/types";
 
 const METRICS: { key: MetricName; label: string }[] = [
   { key: "faithfulness", label: "Faithfulness" },
@@ -72,10 +87,7 @@ function resultLabel(row: RedteamCase): string {
 
 export const Route = createFileRoute("/evals")({
   loader: async () => {
-    const [latest, redteam] = await Promise.all([
-      getEvalLatest(),
-      getRedteamLatest(),
-    ]);
+    const [latest, redteam] = await Promise.all([getEvalLatest(), getRedteamLatest()]);
     return { latest, redteam };
   },
   pendingComponent: () => <RoutePending label="Loading last eval run…" />,
@@ -93,148 +105,163 @@ function EvalsPage() {
 
   return (
     <>
-      <h1>Evals</h1>
-      <p>
-        Public scores and traces. There is no login wall on this tab. Demo
-        screenshots should start here (or on a failing RunTrace), not on a
-        Playground chat bubble.
-      </p>
+      <PageHeader
+        title="Evals"
+        description="Public scores and traces. There is no login wall on this tab. Demo screenshots should start here (or on a failing RunTrace), not on a Playground chat bubble."
+      />
 
-      <h2>Redteam</h2>
-      <p>
-        Ten Contract A cases in <code>evals/redteam.jsonl</code> (
-        <code>tags</code> include <code>redteam</code>, plus{" "}
-        <code>attack_type</code> and <code>expect_block</code>). Mix is
-        injection / pii_leak / jailbreak. The runner reuses generate → abstain.
-      </p>
-      <p className="muted">
-        Command:{" "}
-        <code>python -m citebench.eval.redteam --split evals/redteam.jsonl --mock</code>
-      </p>
-      {redteamRun ? (
-        <p className="muted">
-          Run <code>{redteamRun.run_id}</code>
-          {redteamRun.mode ? ` · ${redteamRun.mode}` : ""}
-          {redteamRun.finished_at ? ` · ${redteamRun.finished_at}` : ""}
-          {redteamRun.gate_passed ? " · gate passed" : " · gate failed"}
-          {redteamRun.gate_reason ? ` · ${redteamRun.gate_reason}` : ""}
-          {typeof redteamRun.blocked === "number"
-            ? ` · blocked ${redteamRun.blocked}/${redteam?.case_count ?? redteamCases.length}`
-            : ""}
-        </p>
-      ) : (
-        <p className="muted">
-          {redteamCases.length} cases loaded
-          {redteam?.detail ? ` · ${redteam.detail}` : " · no runner artifact yet"}.
-        </p>
-      )}
-      {redteamCases.length > 0 ? (
-        <table>
-          <thead>
-            <tr>
-              <th>id</th>
-              <th>attack</th>
-              <th>expect_block</th>
-              <th>result</th>
-            </tr>
-          </thead>
-          <tbody>
-            {redteamCases.map((row) => (
-              <tr key={row.id} className={row.passed === false ? "selected" : undefined}>
-                <td>
-                  <code>{row.id}</code>
-                </td>
-                <td>{attackLabel(row.attack_type)}</td>
-                <td>{row.expect_block ? "true" : "false"}</td>
-                <td>
-                  {resultLabel(row)}
-                  {row.run_id ? (
-                    <>
-                      {" "}
-                      <Link
-                        to="/traces"
-                        search={{ run_id: row.run_id }}
-                        preload="intent"
-                      >
-                        trace
-                      </Link>
-                    </>
-                  ) : null}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>
-          No redteam cases loaded. Check <code>evals/redteam.jsonl</code>.
-        </p>
-      )}
-
-      <h2>RAGAS CI</h2>
-      <p>
-        Last CI run of the RAGAS gate. Faithfulness 0.7 is the CI threshold, not a
-        published Citebench score. Companion metrics are logged only. See{" "}
-        <code>evals/splits/ci.jsonl</code>, <code>evals/splits/known_bad.jsonl</code>,
-        and <code>docs/contracts/eval-jsonl.md</code>.
-      </p>
-      <p className="muted">
-        Command:{" "}
-        <code>
-          python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad
-          evals/splits/known_bad.jsonl --threshold-faithfulness 0.7
-        </code>
-      </p>
-
-      <p className="actions">
-        <button
-          type="button"
-          onClick={() => {
-            void router.invalidate();
-          }}
-        >
-          Refresh
-        </button>
-      </p>
-
-      {!hasRun ? (
-        <p>No CI run artifact yet. Run the eval harness, then refresh.</p>
-      ) : (
-        <>
-          <p className="muted">
-            Run <code>{latest?.run_id}</code>
-            {latest?.mode ? ` · ${latest.mode}` : ""}
-            {latest?.framework ? ` · ${latest.framework}` : ""}
-            {latest?.finished_at ? ` · ${latest.finished_at}` : ""}
-            {latest?.gate_passed ? " · gate passed" : " · gate failed"}
-            {latest?.gate_reason ? ` · ${latest.gate_reason}` : ""}
+      <Card>
+        <CardHeader>
+          <CardTitle>Redteam</CardTitle>
+          <CardDescription>
+            Ten Contract A cases in <code>evals/redteam.jsonl</code> (<code>tags</code>{" "}
+            include <code>redteam</code>, plus <code>attack_type</code> and{" "}
+            <code>expect_block</code>). Mix is injection / pii_leak / jailbreak. The
+            runner reuses generate → abstain.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Command:{" "}
+            <code>python -m citebench.eval.redteam --split evals/redteam.jsonl --mock</code>
           </p>
-          <dl className="stats">
-            {METRICS.map((metric) => (
-              <div key={metric.key}>
-                <dt>{metricLabel(metric.key)}</dt>
-                <dd>{formatScore(metrics?.[metric.key])}</dd>
-                <p className="muted">
-                  vs previous: {formatDiff(latest?.diff?.[metric.key])}
-                  {latest?.previous
-                    ? ` (${formatScore(latest.previous[metric.key])})`
-                    : " (no previous run)"}
-                </p>
-              </div>
-            ))}
-          </dl>
-          <p className="muted">
-            Known-bad phase:{" "}
-            <code>{latest?.known_bad?.clean ? "clean" : "unclean"}</code>
-            {latest?.failing_run_ids && latest.failing_run_ids.length > 0
-              ? ` · failing traces: ${latest.failing_run_ids.join(", ")}`
-              : ""}
-            . Threshold {formatScore(latest?.threshold_faithfulness ?? 0.7)} gates
-            faithfulness only.
+          {redteamRun ? (
+            <p className="text-sm text-muted-foreground">
+              Run <code>{redteamRun.run_id}</code>
+              {redteamRun.mode ? ` · ${redteamRun.mode}` : ""}
+              {redteamRun.finished_at ? ` · ${redteamRun.finished_at}` : ""}
+              {redteamRun.gate_passed ? " · gate passed" : " · gate failed"}
+              {redteamRun.gate_reason ? ` · ${redteamRun.gate_reason}` : ""}
+              {typeof redteamRun.blocked === "number"
+                ? ` · blocked ${redteamRun.blocked}/${redteam?.case_count ?? redteamCases.length}`
+                : ""}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {redteamCases.length} cases loaded
+              {redteam?.detail ? ` · ${redteam.detail}` : " · no runner artifact yet"}.
+            </p>
+          )}
+          {redteamCases.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>id</TableHead>
+                  <TableHead>attack</TableHead>
+                  <TableHead>expect_block</TableHead>
+                  <TableHead>result</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {redteamCases.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.passed === false ? "selected" : undefined}
+                  >
+                    <TableCell>
+                      <code>{row.id}</code>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{attackLabel(row.attack_type)}</Badge>
+                    </TableCell>
+                    <TableCell>{row.expect_block ? "true" : "false"}</TableCell>
+                    <TableCell className="whitespace-normal">
+                      <Badge variant={row.passed === false ? "destructive" : "secondary"}>
+                        {resultLabel(row)}
+                      </Badge>
+                      {row.run_id ? (
+                        <>
+                          {" "}
+                          <Link
+                            to="/traces"
+                            search={{ run_id: row.run_id }}
+                            preload="intent"
+                            className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
+                          >
+                            trace
+                          </Link>
+                        </>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <ErrorAlert
+              title="Redteam"
+              message="No redteam cases loaded. Check evals/redteam.jsonl."
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>RAGAS CI</CardTitle>
+          <CardDescription>
+            Last CI run of the RAGAS gate. Faithfulness 0.7 is the CI threshold, not a
+            published Citebench score. Companion metrics are logged only. See{" "}
+            <code>evals/splits/ci.jsonl</code>, <code>evals/splits/known_bad.jsonl</code>,
+            and <code>docs/contracts/eval-jsonl.md</code>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Command:{" "}
+            <code>
+              python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad
+              evals/splits/known_bad.jsonl --threshold-faithfulness 0.7
+            </code>
           </p>
-        </>
-      )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              void router.invalidate();
+            }}
+          >
+            Refresh
+          </Button>
+
+          {!hasRun ? (
+            <p className="text-sm text-muted-foreground">
+              No CI run artifact yet. Run the eval harness, then refresh.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Run <code>{latest?.run_id}</code>
+                {latest?.mode ? ` · ${latest.mode}` : ""}
+                {latest?.framework ? ` · ${latest.framework}` : ""}
+                {latest?.finished_at ? ` · ${latest.finished_at}` : ""}
+                {latest?.gate_passed ? " · gate passed" : " · gate failed"}
+                {latest?.gate_reason ? ` · ${latest.gate_reason}` : ""}
+              </p>
+              <StatCards
+                items={METRICS.map((metric) => ({
+                  label: metricLabel(metric.key),
+                  value: formatScore(metrics?.[metric.key]),
+                  hint: `vs previous: ${formatDiff(latest?.diff?.[metric.key])}${
+                    latest?.previous
+                      ? ` (${formatScore(latest.previous[metric.key])})`
+                      : " (no previous run)"
+                  }`,
+                }))}
+              />
+              <p className="text-sm text-muted-foreground">
+                Known-bad phase:{" "}
+                <code>{latest?.known_bad?.clean ? "clean" : "unclean"}</code>
+                {latest?.failing_run_ids && latest.failing_run_ids.length > 0
+                  ? ` · failing traces: ${latest.failing_run_ids.join(", ")}`
+                  : ""}
+                . Threshold {formatScore(latest?.threshold_faithfulness ?? 0.7)} gates
+                faithfulness only.
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
-

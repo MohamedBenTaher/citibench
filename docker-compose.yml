@@ -46,7 +46,10 @@ services:
         condition: service_healthy
 
   web:
-    build: ./apps/web
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
       - "${WEB_PORT:-3000}:3000"
     environment:
@@ -54,11 +57,10 @@ services:
       PORT: 3000
       NITRO_HOST: 0.0.0.0
       NITRO_PORT: 3000
-      # Server-only FastAPI origin (in-network Compose DNS).
+      # Server-only FastAPI origin (in-network Compose DNS) for GET loaders.
       API_URL: http://api:8000
-      # Public/client FastAPI origin (Vite prefix). Browser uses same-origin
-      # Start server functions + /api/* proxies; this is the fallback/docs name
-      # that replaced unused NEXT_PUBLIC_API_URL.
+      # Public FastAPI origin baked into the Vite client at build time
+      # (browser ask/ingest). Replaces unused NEXT_PUBLIC_API_URL.
       VITE_API_URL: http://localhost:8000
     depends_on:
       - api

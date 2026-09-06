@@ -29,7 +29,7 @@ The homepage is an index. The interesting surfaces are **Corpus**, **Playground*
 | Piece | Role |
 | --- | --- |
 | `apps/api` | FastAPI: health, ingest, retrieve, generate, traces, evals, metrics |
-| `apps/web` | TanStack Start: `/` index plus four tabs |
+| `apps/web` | TanStack Start + shadcn/ui: `/` index plus four tabs |
 | `db` | `pgvector/pgvector:pg16` — inspectable SQL, not a hosted vector SaaS |
 | `citebench.eval` | RAGAS CI + redteam runners |
 | `citebench.mcp` | Two tools: `search_corpus`, `get_trace` |
@@ -48,7 +48,7 @@ make start          # api :8000, web :3000, Postgres
 make ingest         # index the 14 MANIFEST URLs
 ```
 
-Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. Server functions and `/api/*` proxies use `API_URL=http://api:8000`. `VITE_API_URL` is the public FastAPI origin (replaces unused `NEXT_PUBLIC_API_URL`).
+Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. GET loaders and `/api/*` proxies use server-only `API_URL=http://api:8000`. Browser ask/ingest call FastAPI at `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`) because Nitro aborts POST server-function bodies. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
 
 Local Vite without rebuilding the image:
 
