@@ -33,6 +33,10 @@ def reset_ranker_cache() -> None:
         _ranker_model = None
 
 
+def warmup_ranker(model_name: str = DEFAULT_RERANK_MODEL) -> None:
+    load_ranker(model_name)
+
+
 def load_ranker(model_name: str = DEFAULT_RERANK_MODEL) -> Any:
     """Load FlashRank once per process. Model files land in FLASHRANK_CACHE_DIR."""
     global _ranker, _ranker_model

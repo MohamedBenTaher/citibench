@@ -19,11 +19,13 @@ from db import (
     ensure_schema,
     is_database_error,
 )
+from embed import warmup_local_embed
 from generate import GenerateResult, generate
 from metrics import MetricsSnapshot, collect_metrics, render_prometheus
 from pipeline import run_ingest
+from rerank import warmup_ranker
 from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
-from settings import GROQ_KEY_HELP, load_settings
+from settings import GROQ_KEY_HELP, Settings, load_settings
 from trace import get_trace, langfuse_configured, list_traces
 
 def _read_json_object(path: Path) -> dict[str, Any] | None:
@@ -76,6 +78,26 @@ def _redteam_jsonl_path() -> Path:
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("citebench.api")
 
+_WARMUP_SKIP_VALUES = frozenset({"1", "true", "yes"})
+
+
+def should_skip_model_warmup() -> bool:
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return True
+    raw = os.environ.get("CITEBENCH_SKIP_MODEL_WARMUP", "").strip().lower()
+    return raw in _WARMUP_SKIP_VALUES
+
+
+def maybe_warmup(settings: Settings) -> None:
+    if should_skip_model_warmup():
+        return
+    try:
+        warmup_local_embed()
+        warmup_ranker(settings.rerank_model)
+        log.info("local embed and rerank models ready")
+    except Exception as exc:
+        log.warning("model warmup skipped or failed: %s", exc)
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -85,6 +107,7 @@ async def lifespan(_app: FastAPI):
             ensure_schema(conn)
     except Exception as exc:
         log.warning("database schema not ready at startup: %s", exc)
+    maybe_warmup(settings)
     yield
 
 
