@@ -28,6 +28,9 @@ const EMPTY: CorpusStats = {
 };
 
 export const Route = createFileRoute("/corpus")({
+  head: () => ({
+    meta: [{ title: "Corpus · Citebench" }],
+  }),
   loader: async () => {
     try {
       return { stats: await getCorpusStats(), loadError: null as string | null };
@@ -48,6 +51,7 @@ function CorpusPage() {
   const { stats, loadError } = Route.useLoaderData();
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const isEmpty = stats.doc_count === 0 && stats.chunk_count === 0;
 
   async function runIngest(body: IngestBody) {
     setBusy(true);
@@ -86,27 +90,41 @@ function CorpusPage() {
         ]}
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button type="button" disabled={busy} onClick={() => void runIngest({})}>
           {busy ? "Indexing…" : "Ingest / Re-index"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={busy}
-          onClick={() => void runIngest({ simulate_failure_id: "k8s-pods" })}
-        >
-          Re-index with one failure
-        </Button>
+        {isEmpty ? (
+          <p className="text-sm text-muted-foreground">Index is empty — ingest the freeze.</p>
+        ) : null}
       </div>
-      <p className="text-sm text-muted-foreground">
-        Re-index is idempotent (replace per MANIFEST id). Browser calls FastAPI at{" "}
-        <code>VITE_API_URL</code> (default <code>http://localhost:8000</code>).{" "}
-        <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes documents
-        and chunks first. Embeddings are local <code>nomic-embed-text-v1.5</code>{" "}
-        (Groq no longer hosts that model). First ingest downloads the ONNX weights
-        (~0.5&nbsp;GB) into <code>NOMIC_CACHE_DIR</code>.
-      </p>
+
+      <details className="text-sm text-muted-foreground">
+        <summary className="cursor-pointer font-medium text-foreground">Operator notes</summary>
+        <p className="mt-2">
+          Re-index is idempotent (replace per MANIFEST id). Browser calls FastAPI at{" "}
+          <code>VITE_API_URL</code> (default <code>http://localhost:8000</code>).{" "}
+          <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes documents and
+          chunks first. Embeddings are local <code>nomic-embed-text-v1.5</code> (Groq no longer
+          hosts that model). First ingest downloads the ONNX weights (~0.5&nbsp;GB) into{" "}
+          <code>NOMIC_CACHE_DIR</code>.
+        </p>
+      </details>
+
+      <details className="text-sm text-muted-foreground">
+        <summary className="cursor-pointer font-medium text-foreground">Verification</summary>
+        <div className="mt-2 space-y-2">
+          <p>Simulate a single snapshot failure to verify the failures table.</p>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void runIngest({ simulate_failure_id: "k8s-pods" })}
+          >
+            Re-index with one failure
+          </Button>
+        </div>
+      </details>
 
       {loadError ? <ErrorAlert title="Corpus stats" message={loadError} /> : null}
       {actionError ? <ErrorAlert title="Ingest" message={actionError} /> : null}
