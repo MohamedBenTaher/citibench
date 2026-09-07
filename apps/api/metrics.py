@@ -11,7 +11,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from citebench.eval.store import read_latest, resolve_eval_store_dir
-from db import connect, corpus_stats, ensure_schema
+from db import connect, corpus_stats
 from generate import COST_METHOD_NAME, cost_method_string
 from manifest import parse_manifest
 from settings import Settings, load_settings
@@ -285,7 +285,6 @@ def _manifest_doc_count(settings: Settings) -> int | None:
 def _try_corpus_stats(settings: Settings) -> dict[str, Any] | None:
     try:
         with connect(settings.database_url) as conn:
-            ensure_schema(conn)
             return corpus_stats(conn)
     except Exception:
         return None

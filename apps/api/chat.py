@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from typing import Any
 
@@ -11,6 +12,9 @@ import httpx
 from settings import Settings, require_groq_key
 
 log = logging.getLogger("citebench.chat")
+
+_http_client: httpx.Client | None = None
+_http_client_lock = threading.Lock()
 
 # llama-3.1-8b-instant is enterprise-only after 2026-08-16. Developer/free
 # keys get model_not_found; Groq's published replacement is gpt-oss-20b.
@@ -28,6 +32,22 @@ class ChatResult:
         self.completion_tokens = completion_tokens
 
 
+def reset_http_client() -> None:
+    global _http_client
+    with _http_client_lock:
+        if _http_client is not None:
+            _http_client.close()
+            _http_client = None
+
+
+def _get_http_client() -> httpx.Client:
+    global _http_client
+    with _http_client_lock:
+        if _http_client is None:
+            _http_client = httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0))
+        return _http_client
+
+
 def groq_chat(
     messages: list[dict[str, str]],
     settings: Settings,
@@ -40,16 +60,16 @@ def groq_chat(
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     models = _chat_candidates(settings.chat_model)
     last_exc: Exception | None = None
-    with httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
-        for model in models:
-            try:
-                return _post_chat(client, url, headers, messages, model, temperature)
-            except ChatError as exc:
-                last_exc = exc
-                if _is_model_missing(exc) and model != models[-1]:
-                    log.warning("Groq chat model %s unavailable (%s); trying %s", model, exc, models[-1])
-                    continue
-                raise
+    client = _get_http_client()
+    for model in models:
+        try:
+            return _post_chat(client, url, headers, messages, model, temperature)
+        except ChatError as exc:
+            last_exc = exc
+            if _is_model_missing(exc) and model != models[-1]:
+                log.warning("Groq chat model %s unavailable (%s); trying %s", model, exc, models[-1])
+                continue
+            raise
     raise ChatError(f"Groq chat failed after retries: {last_exc}")
 
 

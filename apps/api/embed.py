@@ -49,6 +49,10 @@ def reset_embed_cache() -> None:
         _groq_model_missing = False
 
 
+def warmup_local_embed() -> None:
+    _load_local_model()
+
+
 def embed_texts(
     texts: list[str],
     settings: Settings,

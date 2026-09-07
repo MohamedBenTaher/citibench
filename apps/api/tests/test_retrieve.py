@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -13,9 +14,11 @@ from retrieve import (
     FusedChunk,
     RetrieveConfig,
     ScoredChunk,
+    hybrid_search,
     retrieve,
     rrf_fuse,
 )
+from test_generate import make_settings
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "retrieve_5doc" / "corpus.json"
 
@@ -286,3 +289,74 @@ def test_retrieve_endpoint_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> 
     assert response.status_code == 200
     assert response.json()["hits"] == []
     assert "GROQ_API_KEY" not in response.text
+
+
+class _FakeCursor:
+    def fetchall(self) -> list:
+        return []
+
+
+class _FakeConn:
+    def __init__(self) -> None:
+        self.executes: list[tuple[str, tuple | None]] = []
+
+    def execute(self, sql: str, params=None) -> _FakeCursor:
+        self.executes.append((sql.strip(), params))
+        return _FakeCursor()
+
+
+def test_hybrid_search_runs_vector_then_fts_on_same_connection() -> None:
+    conn = _FakeConn()
+    dense, lexical = hybrid_search(
+        conn,
+        [0.1] * 768,
+        "pods onto nodes",
+        dense_k=50,
+        lexical_k=50,
+    )
+    assert dense == []
+    assert lexical == []
+    assert len(conn.executes) == 2
+    assert "embedding <=>" in conn.executes[0][0]
+    assert "ts_rank_cd" in conn.executes[1][0]
+
+
+def test_default_retrieve_opens_one_connection(monkeypatch: pytest.MonkeyPatch) -> None:
+    enter_count = 0
+
+    class _DummyConn:
+        def execute(self, *_args, **_kwargs) -> _FakeCursor:
+            raise RuntimeError("search failed on dummy connection")
+
+        def commit(self) -> None:
+            return None
+
+        def rollback(self) -> None:
+            return None
+
+        def close(self) -> None:
+            return None
+
+    @contextmanager
+    def counting_connect(_database_url: str):
+        nonlocal enter_count
+        enter_count += 1
+        yield _DummyConn()
+
+    monkeypatch.setattr("retrieve.connect", counting_connect)
+
+    with pytest.raises(RuntimeError, match="search failed on dummy connection"):
+        retrieve(
+            "pods onto nodes",
+            RetrieveConfig(),
+            settings=make_settings(),
+            embed_query_fn=stub_embed,
+        )
+
+    assert enter_count == 1
+
+
+def test_retrieve_module_does_not_import_ensure_schema() -> None:
+    import retrieve as retrieve_mod
+
+    assert not hasattr(retrieve_mod, "ensure_schema")

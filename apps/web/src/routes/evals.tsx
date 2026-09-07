@@ -25,6 +25,12 @@ const METRICS: { key: MetricName; label: string }[] = [
   { key: "answer_relevancy", label: "Answer relevancy" },
 ];
 
+const RAGAS_CLI =
+  "python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad evals/splits/known_bad.jsonl --threshold-faithfulness 0.7";
+
+const REDTEAM_CLI =
+  "python -m citebench.eval.redteam --split evals/redteam.jsonl --mock";
+
 function metricLabel(key: MetricName): string {
   switch (key) {
     case "faithfulness":
@@ -87,6 +93,9 @@ function resultLabel(row: RedteamCase): string {
 }
 
 export const Route = createFileRoute("/evals")({
+  head: () => ({
+    meta: [{ title: "Evals · Citebench" }],
+  }),
   loader: async () => {
     try {
       const [latest, redteam] = await Promise.all([getEvalLatest(), getRedteamLatest()]);
@@ -111,31 +120,133 @@ function EvalsPage() {
   const hasRun = Boolean(latest?.present && metrics);
   const redteamCases = redteam?.cases ?? [];
   const redteamRun = redteam?.run;
+  const threshold = latest?.threshold_faithfulness ?? 0.7;
 
   return (
     <>
       <PageHeader
         title="Evals"
-        description="Public scores and traces. There is no login wall on this tab. Demo screenshots should start here (or on a failing RunTrace), not on a Playground chat bubble."
+        description="Public scores and traces — no login wall. Demo screenshots should start here or on a failing trace."
       />
 
       {loadError ? <ErrorAlert title="Evals" message={loadError} /> : null}
 
       <Card>
         <CardHeader>
+          <CardTitle>RAGAS CI</CardTitle>
+          <CardDescription>
+            Last CI run of the RAGAS gate. Faithfulness {threshold.toFixed(1)} is the CI
+            threshold, not a published Citebench score. Companion metrics are logged only. See{" "}
+            <code>evals/splits/ci.jsonl</code>, <code>evals/splits/known_bad.jsonl</code>, and{" "}
+            <code>docs/contracts/eval-jsonl.md</code>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Faithfulness (CI gate)
+              </p>
+              <p className="font-mono text-4xl font-semibold tabular-nums">
+                {hasRun ? formatScore(metrics?.faithfulness) : "unmeasured"}
+              </p>
+              {hasRun && latest?.mode ? (
+                <Badge variant="outline">{latest.mode}</Badge>
+              ) : null}
+            </div>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p>
+                Gate:{" "}
+                {hasRun
+                  ? latest?.gate_passed
+                    ? "passed"
+                    : "failed"
+                  : "unmeasured"}
+              </p>
+              {hasRun && latest?.gate_reason ? <p>{latest.gate_reason}</p> : null}
+              <p>Threshold {threshold.toFixed(1)} gates faithfulness only.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                void router.invalidate();
+              }}
+            >
+              Refresh
+            </Button>
+          </div>
+
+          <details className="text-sm text-muted-foreground">
+            <summary className="cursor-pointer font-medium text-foreground">
+              How this was run
+            </summary>
+            <p className="mt-2">
+              Command: <code>{RAGAS_CLI}</code>
+            </p>
+          </details>
+
+          {!hasRun ? (
+            <p className="text-sm text-muted-foreground">
+              No CI run artifact yet. Run the eval harness, then refresh. Charts stay empty rather
+              than inventing scores.
+            </p>
+          ) : (
+            <>
+              <EvalMetricChart latest={latest} />
+              <p className="text-sm text-muted-foreground">
+                Run <code>{latest?.run_id}</code>
+                {latest?.mode ? ` · ${latest.mode}` : ""}
+                {latest?.framework ? ` · ${latest.framework}` : ""}
+                {latest?.finished_at ? ` · ${latest.finished_at}` : ""}
+                {latest?.gate_passed ? " · gate passed" : " · gate failed"}
+                {latest?.gate_reason ? ` · ${latest.gate_reason}` : ""}
+              </p>
+              <StatCards
+                items={METRICS.map((metric) => ({
+                  label: metricLabel(metric.key),
+                  value: formatScore(metrics?.[metric.key]),
+                  hint: `vs previous: ${formatDiff(latest?.diff?.[metric.key])}${
+                    latest?.previous
+                      ? ` (${formatScore(latest.previous[metric.key])})`
+                      : " (no previous run)"
+                  }`,
+                }))}
+              />
+              <p className="text-sm text-muted-foreground">
+                Known-bad phase:{" "}
+                <code>{latest?.known_bad?.clean ? "clean" : "unclean"}</code>
+                {latest?.failing_run_ids && latest.failing_run_ids.length > 0
+                  ? ` · failing traces: ${latest.failing_run_ids.join(", ")}`
+                  : ""}
+                .
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Redteam</CardTitle>
           <CardDescription>
-            Ten Contract A cases in <code>evals/redteam.jsonl</code> (<code>tags</code>{" "}
-            include <code>redteam</code>, plus <code>attack_type</code> and{" "}
-            <code>expect_block</code>). Mix is injection / pii_leak / jailbreak. The
-            runner reuses generate → abstain.
+            Ten Contract A cases in <code>evals/redteam.jsonl</code> (<code>tags</code> include{" "}
+            <code>redteam</code>, plus <code>attack_type</code> and <code>expect_block</code>).
+            Mix is injection / pii_leak / jailbreak. The runner reuses generate → abstain.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Command:{" "}
-            <code>python -m citebench.eval.redteam --split evals/redteam.jsonl --mock</code>
-          </p>
+          <details className="text-sm text-muted-foreground">
+            <summary className="cursor-pointer font-medium text-foreground">
+              How this was run
+            </summary>
+            <p className="mt-2">
+              Command: <code>{REDTEAM_CLI}</code>
+            </p>
+          </details>
           {redteamRun ? (
             <p className="text-sm text-muted-foreground">
               Run <code>{redteamRun.run_id}</code>
@@ -204,75 +315,6 @@ function EvalsPage() {
               title="Redteam"
               message="No redteam cases loaded. Check evals/redteam.jsonl."
             />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>RAGAS CI</CardTitle>
-          <CardDescription>
-            Last CI run of the RAGAS gate. Faithfulness 0.7 is the CI threshold, not a
-            published Citebench score. Companion metrics are logged only. See{" "}
-            <code>evals/splits/ci.jsonl</code>, <code>evals/splits/known_bad.jsonl</code>,
-            and <code>docs/contracts/eval-jsonl.md</code>.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Command:{" "}
-            <code>
-              python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad
-              evals/splits/known_bad.jsonl --threshold-faithfulness 0.7
-            </code>
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              void router.invalidate();
-            }}
-          >
-            Refresh
-          </Button>
-
-          {!hasRun ? (
-            <p className="text-sm text-muted-foreground">
-              No CI run artifact yet. Run the eval harness, then refresh. Charts stay empty
-              rather than inventing scores.
-            </p>
-          ) : (
-            <>
-              <EvalMetricChart latest={latest} />
-              <p className="text-sm text-muted-foreground">
-                Run <code>{latest?.run_id}</code>
-                {latest?.mode ? ` · ${latest.mode}` : ""}
-                {latest?.framework ? ` · ${latest.framework}` : ""}
-                {latest?.finished_at ? ` · ${latest.finished_at}` : ""}
-                {latest?.gate_passed ? " · gate passed" : " · gate failed"}
-                {latest?.gate_reason ? ` · ${latest.gate_reason}` : ""}
-              </p>
-              <StatCards
-                items={METRICS.map((metric) => ({
-                  label: metricLabel(metric.key),
-                  value: formatScore(metrics?.[metric.key]),
-                  hint: `vs previous: ${formatDiff(latest?.diff?.[metric.key])}${
-                    latest?.previous
-                      ? ` (${formatScore(latest.previous[metric.key])})`
-                      : " (no previous run)"
-                  }`,
-                }))}
-              />
-              <p className="text-sm text-muted-foreground">
-                Known-bad phase:{" "}
-                <code>{latest?.known_bad?.clean ? "clean" : "unclean"}</code>
-                {latest?.failing_run_ids && latest.failing_run_ids.length > 0
-                  ? ` · failing traces: ${latest.failing_run_ids.join(", ")}`
-                  : ""}
-                . Threshold {formatScore(latest?.threshold_faithfulness ?? 0.7)} gates
-                faithfulness only.
-              </p>
-            </>
           )}
         </CardContent>
       </Card>

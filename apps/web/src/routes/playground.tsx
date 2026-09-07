@@ -3,7 +3,6 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
-import { StatCards } from "@/components/stat-cards";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,9 +45,13 @@ function PlaygroundPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const canSubmit = !busy && query.trim().length > 0;
 
   async function onAsk(event: FormEvent) {
     event.preventDefault();
+    if (!query.trim()) {
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -58,7 +61,18 @@ function PlaygroundPage() {
         body: JSON.stringify({ query }),
       });
       setResult(data);
-      toast.success(terminalLabel(data.terminal));
+      switch (data.terminal) {
+        case "generate":
+          toast.success(terminalLabel(data.terminal));
+          break;
+        case "abstain":
+          toast.message(terminalLabel(data.terminal));
+          break;
+        default: {
+          const _exhaustive: never = data.terminal;
+          return _exhaustive;
+        }
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "generate failed";
       setResult(null);
@@ -84,7 +98,11 @@ function PlaygroundPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="flex flex-col gap-3" onSubmit={(event) => void onAsk(event)}>
+          <form
+            className="flex flex-col gap-3"
+            aria-busy={busy}
+            onSubmit={(event) => void onAsk(event)}
+          >
             <div className="space-y-2">
               <Label htmlFor="playground-query">Question</Label>
               <Textarea
@@ -97,7 +115,7 @@ function PlaygroundPage() {
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={busy}>
+              <Button type="submit" disabled={!canSubmit}>
                 {busy ? "Asking…" : "Ask"}
               </Button>
               <Button
@@ -128,55 +146,49 @@ function PlaygroundPage() {
           <Card>
             <CardHeader>
               <CardTitle>Answer</CardTitle>
-              <CardDescription className="flex flex-wrap gap-2">
-                <Badge variant={result.abstained ? "secondary" : "default"}>
+              <CardDescription className="flex flex-wrap items-center gap-2">
+                <Badge variant={result.terminal === "generate" ? "default" : "secondary"}>
                   {terminalLabel(result.terminal)}
                 </Badge>
                 {result.rerank_skipped ? <Badge variant="outline">rerank skipped</Badge> : null}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm">
+            <CardContent className="space-y-4">
+              <p className="whitespace-pre-wrap text-base leading-relaxed">
                 {result.answer}
               </p>
+              <p className="text-sm text-muted-foreground">
+                {result.latency_ms.toFixed(1)} ms · ${result.cost.usd_estimate.toFixed(6)} ·{" "}
+                model <code>{result.model}</code>
+                {result.rerank_skipped ? " · rerank skipped" : ""}
+              </p>
+              <details className="text-sm text-muted-foreground">
+                <summary className="cursor-pointer font-medium text-foreground">Cost method</summary>
+                <p className="mt-2">
+                  <code>{result.cost_method}</code>
+                </p>
+                <p className="mt-1">
+                  Tokens: prompt {result.cost.prompt_tokens}, completion{" "}
+                  {result.cost.completion_tokens}, embed {result.cost.embed_tokens}, rerank{" "}
+                  {result.cost.rerank_tokens}.
+                </p>
+              </details>
+              {result.run_id ? (
+                <p className="text-sm text-muted-foreground">
+                  Trace <code>{result.run_id}</code>
+                  {result.trace_backend ? ` (${result.trace_backend})` : ""}.{" "}
+                  <Link
+                    to="/traces"
+                    search={{ run_id: result.run_id }}
+                    preload="intent"
+                    className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
+                  >
+                    Open in Traces
+                  </Link>
+                </p>
+              ) : null}
             </CardContent>
           </Card>
-
-          <StatCards
-            items={[
-              { label: "Path", value: result.path.join(" → ") || "—" },
-              { label: "Terminal", value: terminalLabel(result.terminal) },
-              { label: "Abstained", value: result.abstained ? "yes" : "no" },
-              { label: "Reason", value: result.abstain_reason ?? "—" },
-              { label: "Latency", value: `${result.latency_ms.toFixed(1)} ms` },
-              { label: "Estimated cost", value: `$${result.cost.usd_estimate.toFixed(6)}` },
-            ]}
-          />
-
-          <p className="text-sm text-muted-foreground">
-            Model <code>{result.model}</code>
-            {result.rerank_skipped ? " · rerank skipped" : ""}. Cost method{" "}
-            <code>{result.cost_method}</code>
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Tokens: prompt {result.cost.prompt_tokens}, completion{" "}
-            {result.cost.completion_tokens}, embed {result.cost.embed_tokens}, rerank{" "}
-            {result.cost.rerank_tokens}.
-          </p>
-          {result.run_id ? (
-            <p className="text-sm text-muted-foreground">
-              Trace <code>{result.run_id}</code>
-              {result.trace_backend ? ` (${result.trace_backend})` : ""}.{" "}
-              <Link
-                to="/traces"
-                search={{ run_id: result.run_id }}
-                preload="intent"
-                className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
-              >
-                Open in Traces
-              </Link>
-            </p>
-          ) : null}
 
           <Card>
             <CardHeader>
@@ -212,12 +224,16 @@ function PlaygroundPage() {
             </CardContent>
           </Card>
 
-          <p className="text-sm text-muted-foreground">
-            Retrieved chunk ids:{" "}
-            {result.retrieved_chunk_ids.length === 0
-              ? "None."
-              : result.retrieved_chunk_ids.join(", ")}
-          </p>
+          {result.retrieved_chunk_ids.length > 0 ? (
+            <details className="text-sm text-muted-foreground">
+              <summary className="cursor-pointer font-medium text-foreground">
+                Retrieved chunk ids ({result.retrieved_chunk_ids.length})
+              </summary>
+              <p className="mt-2 break-all">{result.retrieved_chunk_ids.join(", ")}</p>
+            </details>
+          ) : (
+            <p className="text-sm text-muted-foreground">Retrieved chunk ids: None.</p>
+          )}
         </section>
       ) : null}
     </>

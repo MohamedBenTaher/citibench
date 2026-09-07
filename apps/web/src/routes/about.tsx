@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/about")({
+  head: () => ({
+    meta: [{ title: "About · Citebench" }],
+  }),
   component: AboutPage,
 });
 
