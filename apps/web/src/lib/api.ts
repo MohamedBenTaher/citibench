@@ -1,6 +1,6 @@
 import * as http from "node:http";
 import * as https from "node:https";
-import { ApiError } from "./errors";
+import { ApiError, formatApiDetail } from "./errors";
 
 export { ApiError };
 
@@ -48,6 +48,10 @@ function requestApi(
     req.on("error", (error) => {
       reject(error);
     });
+    req.setTimeout(15_000, () => {
+      req.destroy();
+      reject(new ApiError("api timeout", 503));
+    });
     if (init?.body) {
       req.write(init.body);
     }
@@ -83,14 +87,17 @@ export async function apiJson<T>(
     throw new ApiError(detail, 503);
   }
 
-  let data: T & { detail?: string };
+  let data: T & { detail?: unknown };
   try {
-    data = JSON.parse(result.body) as T & { detail?: string };
+    data = JSON.parse(result.body) as T & { detail?: unknown };
   } catch {
     throw new ApiError(result.body || `HTTP ${result.status}`, result.status);
   }
   if (result.status < 200 || result.status >= 300) {
-    throw new ApiError(data.detail || `HTTP ${result.status}`, result.status);
+    throw new ApiError(
+      formatApiDetail(data.detail) ?? `HTTP ${result.status}`,
+      result.status,
+    );
   }
   return data;
 }

@@ -53,7 +53,15 @@ function CorpusPage() {
   const [busy, setBusy] = useState(false);
   const isEmpty = stats.doc_count === 0 && stats.chunk_count === 0;
 
-  async function runIngest(body: IngestBody) {
+  async function runIngest(body: IngestBody, options?: { skipConfirm?: boolean }) {
+    if (
+      !options?.skipConfirm &&
+      !window.confirm(
+        "Re-index can take several minutes. The first run also downloads ONNX embedding weights (~0.5 GB). Continue?",
+      )
+    ) {
+      return;
+    }
     setBusy(true);
     setActionError(null);
     try {
@@ -119,7 +127,7 @@ function CorpusPage() {
             type="button"
             variant="outline"
             disabled={busy}
-            onClick={() => void runIngest({ simulate_failure_id: "k8s-pods" })}
+            onClick={() => void runIngest({ simulate_failure_id: "k8s-pods" }, { skipConfirm: true })}
           >
             Re-index with one failure
           </Button>

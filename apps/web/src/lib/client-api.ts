@@ -1,4 +1,4 @@
-import { ApiError } from "./errors";
+import { ApiError, formatApiDetail } from "./errors";
 
 export function publicApiBase(): string {
   const fromEnv = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -20,14 +20,17 @@ export async function clientApiJson<T>(
     throw new ApiError(detail, 503);
   }
 
-  let data: T & { detail?: string };
+  let data: T & { detail?: unknown };
   try {
-    data = (await response.json()) as T & { detail?: string };
+    data = (await response.json()) as T & { detail?: unknown };
   } catch {
     throw new ApiError(`HTTP ${response.status}`, response.status);
   }
   if (!response.ok) {
-    throw new ApiError(data.detail || `HTTP ${response.status}`, response.status);
+    throw new ApiError(
+      formatApiDetail(data.detail) ?? `HTTP ${response.status}`,
+      response.status,
+    );
   }
   return data;
 }

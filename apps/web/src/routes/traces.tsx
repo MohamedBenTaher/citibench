@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
@@ -135,12 +135,24 @@ function chunkRefsFromAttributes(attributes: { [key: string]: JsonValue }): Cita
   });
 }
 
+function formatSpanTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso.slice(0, 19);
+  }
+  return date.toLocaleString();
+}
+
 function TracesPage() {
   const router = useRouter();
   const navigate = useNavigate({ from: "/traces" });
   const { run_id: selectedId } = Route.useSearch();
   const { list, detail, detailError, loadError } = Route.useLoaderData();
   const [runInput, setRunInput] = useState(selectedId ?? "");
+
+  useEffect(() => {
+    setRunInput(selectedId ?? "");
+  }, [selectedId]);
 
   const orderedSpans = useMemo(() => {
     if (!detail) {
@@ -228,8 +240,6 @@ function TracesPage() {
                   <TableRow
                     key={row.run_id}
                     data-state={selectedId === row.run_id ? "selected" : undefined}
-                    className="cursor-pointer"
-                    onClick={() => selectRun(row.run_id)}
                   >
                     <TableCell className="whitespace-normal">
                       <Button
@@ -314,7 +324,10 @@ function TracesPage() {
                       {span.parent_id
                         ? `child of ${span.parent_id.slice(0, 12)}`
                         : "root"}{" "}
-                      · {span.started_at} → {span.finished_at}
+                      ·{" "}
+                      <span title={span.started_at}>{formatSpanTime(span.started_at)}</span>
+                      {" → "}
+                      <span title={span.finished_at}>{formatSpanTime(span.finished_at)}</span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -322,9 +335,12 @@ function TracesPage() {
                       <ChunkTable refs={chunkRefsFromAttributes(span.attributes)} />
                     ) : null}
                     {span.kind === "generate" || span.kind === "abstain" ? (
-                      <pre className="overflow-auto rounded-lg bg-muted/50 p-3 text-xs">
-                        {JSON.stringify(span.attributes, null, 2)}
-                      </pre>
+                      <details className="text-sm">
+                        <summary className="cursor-pointer font-medium">Span attributes</summary>
+                        <pre className="mt-2 overflow-auto rounded-lg bg-muted/50 p-3 text-xs">
+                          {JSON.stringify(span.attributes, null, 2)}
+                        </pre>
+                      </details>
                     ) : null}
                     {typeof span.attributes.rerank_skipped === "boolean" ? (
                       <p className="text-sm text-muted-foreground">
