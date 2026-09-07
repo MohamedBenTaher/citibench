@@ -29,6 +29,11 @@ const surfaces = [
     title: "Evals",
     body: "Public RAGAS last-run plus 10 redteam cases. Start demo screenshots here, not on Playground.",
   },
+  {
+    to: "/about" as const,
+    title: "About",
+    body: "What Citebench is (and is not): frozen corpus, local nomic embed, Groq chat, public evals.",
+  },
 ] as const;
 
 function IndexPage() {

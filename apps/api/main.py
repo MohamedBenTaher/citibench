@@ -12,7 +12,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
-from db import connect, corpus_stats, ensure_schema
+from db import (
+    connect,
+    corpus_stats,
+    database_unavailable_detail,
+    ensure_schema,
+    is_database_error,
+)
 from generate import GenerateResult, generate
 from metrics import MetricsSnapshot, collect_metrics, render_prometheus
 from pipeline import run_ingest
@@ -156,7 +162,10 @@ def get_corpus_stats() -> dict[str, Any]:
             ensure_schema(conn)
             return corpus_stats(conn)
     except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"database unavailable: {exc}") from exc
+        raise HTTPException(
+            status_code=503,
+            detail=database_unavailable_detail(exc, settings.database_url),
+        ) from exc
 
 
 @app.post("/ingest")
@@ -172,6 +181,11 @@ def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
     except RuntimeError as exc:
         raise _runtime_http_error(exc) from exc
     except Exception as exc:
+        if is_database_error(exc):
+            raise HTTPException(
+                status_code=503,
+                detail=database_unavailable_detail(exc, settings.database_url),
+            ) from exc
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 

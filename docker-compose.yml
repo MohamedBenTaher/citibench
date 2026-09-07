@@ -1,6 +1,8 @@
 services:
   db:
     image: pgvector/pgvector:pg16
+    hostname: db
+    container_name: citebench-db
     environment:
       POSTGRES_USER: citebench
       POSTGRES_PASSWORD: citebench
@@ -21,6 +23,10 @@ services:
     build: ./apps/api
     ports:
       - "8000:8000"
+    extra_hosts:
+      # Used only when embedded DNS cannot resolve `db`; Python then
+      # falls back to host.docker.internal → published :5432.
+      - "host.docker.internal:host-gateway"
     environment:
       DATABASE_URL: postgresql://citebench:citebench@db:5432/citebench
       GROQ_API_KEY: ${GROQ_API_KEY:-}
