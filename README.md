@@ -4,7 +4,7 @@ Citebench is a **citation-grounded retrieval bench**, not a chat product.
 
 It answers questions about a **frozen public corpus** (14 Kubernetes and Azure docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
 
-The homepage is an index. The interesting surfaces are **Corpus**, **Playground**, **Traces**, and **Evals**. First screenshot for a reviewer: `/evals` or a failing `/traces` row, not a chat bubble.
+The homepage is an index. Nav order is **Evals · Traces · Corpus · Playground**. First screenshot for a reviewer: `/evals` or a failing `/traces?run_id=` receipt, not a chat bubble. See `docs/ux-evals-traces.md`.
 
 ## How it fits together
 
@@ -48,7 +48,7 @@ make start          # api :8000, web :3000, Postgres
 make ingest         # index the 14 MANIFEST URLs
 ```
 
-Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. GET loaders and `/api/*` proxies use server-only `API_URL=http://api:8000`. Browser ask/ingest call FastAPI at `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`) because Nitro aborts POST server-function bodies. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
+Open [http://localhost:3000/evals](http://localhost:3000/evals) (hero surface), then `/traces`, `/corpus`, `/playground`. `/` is a boring index. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. GET loaders and `/api/*` proxies use server-only `API_URL=http://api:8000`. Browser ask/ingest call FastAPI at `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`) because Nitro aborts POST server-function bodies. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
 
 Local Vite without rebuilding the image:
 
@@ -90,10 +90,10 @@ Do **not** run bare `pytest` on system Python (`No module named 'fastapi'`). mac
 | Route | What you see |
 | --- | --- |
 | `/` | Boring index. Not a chat homepage. |
+| `/evals` | Faithfulness gate 0.7, last-run diffs, 10 redteam cases, receipts into Traces. |
+| `/traces` | Split-view `RunTrace`: retrieve → rerank → generate\|abstain. `?run_id=` deep link. |
 | `/corpus` | Freeze + counts. Ingest / re-index the 14 public docs. |
 | `/playground` | Ask UI: answer, citations, abstain, latency, estimated cost. Still not a chat product. |
-| `/traces` | One `RunTrace` per ask: retrieve → rerank → generate\|abstain. |
-| `/evals` | Last RAGAS artifact + 10 redteam cases. Public; no login wall. |
 
 ## Pipeline
 
@@ -200,6 +200,7 @@ docker compose --profile langfuse up --build
 ## Further reading
 
 - `DECISIONS.md` — Postgres, chunking, rerank, Groq-only, freeze, anti-theater
+- `docs/ux-evals-traces.md` — Evals + Traces hiring-manager demo surface
 - `docs/contracts/` — eval JSONL, traces, hybrid retrieve
 - `docs/mcp.md` — MCP host config
 - `infra/deploy/README.md` — VM / Fly / Railway / Azure

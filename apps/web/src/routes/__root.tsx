@@ -15,10 +15,10 @@ import { cn } from "@/lib/utils";
 import "../styles.css";
 
 const tabs = [
+  { to: "/evals", label: "Evals" },
+  { to: "/traces", label: "Traces" },
   { to: "/corpus", label: "Corpus" },
   { to: "/playground", label: "Playground" },
-  { to: "/traces", label: "Traces" },
-  { to: "/evals", label: "Evals" },
 ] as const;
 
 export const Route = createRootRoute({
@@ -60,7 +60,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       </head>
       <body>
         <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3">
             <Link
               to="/"
               className={cn(buttonVariants({ variant: "ghost" }), "font-heading text-base")}
@@ -97,7 +97,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             <div className="h-0.5 origin-left animate-pulse bg-foreground" aria-hidden="true" />
           ) : null}
         </header>
-        <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">{children}</main>
+        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8">{children}</main>
         <Toaster />
         <Scripts />
       </body>
