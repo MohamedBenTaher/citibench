@@ -2,7 +2,9 @@ provider: groq
 embed_model: nomic-embed-text-v1.5
 embed_dimensions: 768
 # Same 768-d nomic weights. Groq hosted them, then 404'd (model_not_found).
-# Ingest/retrieve try Groq /embeddings, then local ONNX via fastembed.
+# local = ONNX via fastembed (default). groq_then_local = historical probe
+# for hosted nomic (Groq 404s; kept for tests / rollback).
+embed_backend: local
 # No second billed embed provider.
 embed_api_base: https://api.groq.com/openai/v1
 # nomic-embed-text-v1.5 prefixes (model card). Applied before the embed call.

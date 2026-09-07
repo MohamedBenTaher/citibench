@@ -47,6 +47,7 @@ class Settings:
     corpus_dir: Path
     manifest_path: Path
     groq_api_key: str
+    embed_backend: str = "local"
     embed_query_prefix: str = "search_query: "
     rerank_model: str = "ms-marco-MiniLM-L-12-v2"
     rrf_k: int = 60
@@ -63,6 +64,18 @@ class Settings:
     langfuse_secret_key: str = ""
     langfuse_host: str = ""
     trace_store_dir: Path = Path("/tmp/citebench-traces")
+
+
+def _embed_backend(raw: dict) -> str:
+    configured = str(
+        os.environ.get("EMBED_BACKEND") or raw.get("embed_backend") or "local"
+    ).strip().lower()
+    if configured not in ("local", "groq_then_local"):
+        raise ValueError(
+            "embed_backend must be 'local' or 'groq_then_local', "
+            f"got {configured!r}"
+        )
+    return configured
 
 
 def _chat_model(raw: dict) -> str:
@@ -143,6 +156,7 @@ def load_settings() -> Settings:
         corpus_dir=corpus_dir,
         manifest_path=corpus_dir / "MANIFEST.md",
         groq_api_key=os.environ.get("GROQ_API_KEY", "").strip(),
+        embed_backend=_embed_backend(raw),
     )
 
 

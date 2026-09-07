@@ -36,3 +36,4 @@ def test_load_settings_binds_groq_chat_model() -> None:
     assert settings.abstain_min_score == 0.12
     assert settings.chat_prompt_usd_per_1m == 0.075
     assert settings.chat_completion_usd_per_1m == 0.30
+    assert settings.embed_backend == "local"

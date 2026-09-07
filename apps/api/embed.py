@@ -61,7 +61,11 @@ def embed_texts(
         return []
     used_prefix = settings.embed_document_prefix if prefix is None else prefix
     prefixed = [used_prefix + text for text in texts]
-    if settings.groq_api_key and not _groq_model_missing:
+    if (
+        settings.embed_backend == "groq_then_local"
+        and settings.groq_api_key
+        and not _groq_model_missing
+    ):
         try:
             return _embed_via_groq(prefixed, settings, batch_size=batch_size)
         except EmbedError as exc:
