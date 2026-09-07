@@ -144,7 +144,15 @@ export type EvalLatest = {
   metrics: Metrics | null;
   previous: Metrics | null;
   diff: Metrics | null;
-  known_bad?: { clean: boolean; rows: { id: string; required_assert_failed: boolean }[] };
+  known_bad?: {
+    clean: boolean;
+    rows: {
+      id: string;
+      required_assert_failed: boolean;
+      run_id?: string;
+      abstained?: boolean;
+    }[];
+  };
   failing_run_ids?: string[];
   detail?: string;
 };

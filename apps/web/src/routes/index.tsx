@@ -10,6 +10,16 @@ export const Route = createFileRoute("/")({
 
 const surfaces = [
   {
+    to: "/evals" as const,
+    title: "Evals",
+    body: "Faithfulness gate 0.7, redteam blocks, and receipts into Traces. Start here, not on Playground.",
+  },
+  {
+    to: "/traces" as const,
+    title: "Traces",
+    body: "Every hop: retrieve → rerank → generate|abstain. Deep-link with ?run_id=.",
+  },
+  {
     to: "/corpus" as const,
     title: "Corpus",
     body: "Frozen 14-doc index counts (docs, pages, chunks, last index, failures).",
@@ -17,17 +27,7 @@ const surfaces = [
   {
     to: "/playground" as const,
     title: "Playground",
-    body: "Single-ask generate; not a chat surface.",
-  },
-  {
-    to: "/traces" as const,
-    title: "Traces",
-    body: "RunTrace list (Langfuse + local fallback).",
-  },
-  {
-    to: "/evals" as const,
-    title: "Evals",
-    body: "Public RAGAS last-run plus 10 redteam cases. Start demo screenshots here, not on Playground.",
+    body: "Single-ask generate; not a chat surface. Creates a RunTrace.",
   },
 ] as const;
 

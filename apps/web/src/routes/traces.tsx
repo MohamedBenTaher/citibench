@@ -1,14 +1,16 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { useMemo, useState, type KeyboardEvent } from "react";
+import { Link, createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { RefreshCwIcon } from "lucide-react";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
-import { StatCards } from "@/components/stat-cards";
-import { RouteError, RoutePending } from "@/components/status";
+import { RouteError } from "@/components/status";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -17,12 +19,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatLatency, formatUsd, formatUtc, snippet } from "@/lib/format";
 import { getTrace, getTraces } from "@/lib/server";
-import type { Citation, JsonValue, SpanKind, SpanStatus, TraceList } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import type { Citation, JsonValue, RunTrace, Span, SpanKind, SpanStatus, TraceRow } from "@/lib/types";
 
 type TracesSearch = {
   run_id?: string;
 };
+
+type PathFilter = "all" | "generate" | "abstain" | "error";
+type RunPath = Exclude<PathFilter, "all">;
 
 function tracesSearch(search: Record<string, unknown>): TracesSearch {
   return {
@@ -50,10 +57,22 @@ export const Route = createFileRoute("/traces")({
       };
     }
   },
-  pendingComponent: () => <RoutePending label="Loading traces…" />,
+  pendingComponent: TracesPending,
   errorComponent: RouteError,
   component: TracesPage,
 });
+
+function TracesPending() {
+  return (
+    <div className="space-y-4" aria-live="polite">
+      <p className="text-sm text-muted-foreground">Loading traces…</p>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        <Skeleton className="h-80" />
+        <Skeleton className="h-80" />
+      </div>
+    </div>
+  );
+}
 
 function backendLabel(configured: boolean, langfuseId: string | null): string {
   if (langfuseId) {
@@ -92,6 +111,63 @@ function statusLabel(status: SpanStatus): string {
   }
 }
 
+function runPath(row: Pick<TraceRow, "failed" | "abstained">): RunPath {
+  if (row.failed) {
+    return "error";
+  }
+  if (row.abstained) {
+    return "abstain";
+  }
+  return "generate";
+}
+
+function pathLabel(path: RunPath): string {
+  switch (path) {
+    case "generate":
+      return "generate";
+    case "abstain":
+      return "abstain";
+    case "error":
+      return "error";
+    default: {
+      const _exhaustive: never = path;
+      return _exhaustive;
+    }
+  }
+}
+
+function filterLabel(filter: PathFilter): string {
+  switch (filter) {
+    case "all":
+      return "All";
+    case "generate":
+      return "Generate";
+    case "abstain":
+      return "Abstain";
+    case "error":
+      return "Error";
+    default: {
+      const _exhaustive: never = filter;
+      return _exhaustive;
+    }
+  }
+}
+
+function pathBadgeVariant(path: RunPath): "secondary" | "destructive" | "outline" {
+  switch (path) {
+    case "error":
+      return "destructive";
+    case "abstain":
+      return "outline";
+    case "generate":
+      return "secondary";
+    default: {
+      const _exhaustive: never = path;
+      return _exhaustive;
+    }
+  }
+}
+
 function chunkRefsFromAttributes(attributes: { [key: string]: JsonValue }): Citation[] {
   const raw = attributes.chunks;
   if (!Array.isArray(raw)) {
@@ -120,57 +196,86 @@ function chunkRefsFromAttributes(attributes: { [key: string]: JsonValue }): Cita
   });
 }
 
+function textRefsFromAttributes(attributes: { [key: string]: JsonValue }): string[] {
+  const raw = attributes.citation_text_refs;
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw.flatMap((item) => (typeof item === "string" && item ? [item] : []));
+}
+
+function spanTree(spans: Span[]): { span: Span; depth: number }[] {
+  const children = new Map<string | null, Span[]>();
+  const ids = new Set(spans.map((span) => span.span_id));
+  for (const span of spans) {
+    const parentId = span.parent_id && ids.has(span.parent_id) ? span.parent_id : null;
+    const list = children.get(parentId) ?? [];
+    list.push(span);
+    children.set(parentId, list);
+  }
+  const order: SpanKind[] = ["retrieve", "rerank", "generate", "abstain"];
+  function walk(parentId: string | null, depth: number): { span: Span; depth: number }[] {
+    const kids = [...(children.get(parentId) ?? [])].sort(
+      (a, b) => order.indexOf(a.kind) - order.indexOf(b.kind),
+    );
+    return kids.flatMap((kid) => [{ span: kid, depth }, ...walk(kid.span_id, depth + 1)]);
+  }
+  return walk(null, 0);
+}
+
+function attrPreview(value: JsonValue): string {
+  if (value === null) {
+    return "null";
+  }
+  switch (typeof value) {
+    case "string":
+    case "number":
+    case "boolean":
+      return String(value);
+    default:
+      return JSON.stringify(value);
+  }
+}
+
 function TracesPage() {
   const router = useRouter();
   const navigate = useNavigate({ from: "/traces" });
   const { run_id: selectedId } = Route.useSearch();
   const { list, detail, detailError } = Route.useLoaderData();
+  const [filter, setFilter] = useState<PathFilter>("all");
   const [runInput, setRunInput] = useState(selectedId ?? "");
 
-  const orderedSpans = useMemo(() => {
-    if (!detail) {
-      return [];
+  const tree = useMemo(() => (detail ? spanTree(detail.spans) : []), [detail]);
+
+  const filtered = useMemo(() => {
+    const rows = list?.traces ?? [];
+    if (filter === "all") {
+      return rows;
     }
-    const order: SpanKind[] = ["retrieve", "rerank", "generate", "abstain"];
-    return [...detail.spans].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-  }, [detail]);
+    return rows.filter((row) => runPath(row) === filter);
+  }, [list, filter]);
 
   function selectRun(runId: string) {
+    setRunInput(runId);
     void navigate({ search: { run_id: runId } });
   }
 
+  function onRowKey(event: KeyboardEvent<HTMLTableRowElement>, runId: string) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectRun(runId);
+    }
+  }
+
+  const filters: PathFilter[] = ["all", "generate", "abstain", "error"];
+
   return (
     <>
-      <PageHeader
-        title="Traces"
-        description="One RunTrace per generate/ask run. Langfuse is the named backend (citebench.run + nested retrieve → rerank → generate|abstain). This tab is the local fallback view and stays available if Langfuse is down or unconfigured."
-      />
-      <BackendNote list={list} />
-
-      <form
-        className="flex flex-wrap items-end gap-2"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          const runId = runInput.trim();
-          if (runId) {
-            selectRun(runId);
-          }
-        }}
-      >
-        <div className="space-y-2">
-          <Label htmlFor="trace-run-id">Run id</Label>
-          <Input
-            id="trace-run-id"
-            name="run_id"
-            value={runInput}
-            onChange={(event) => setRunInput(event.target.value)}
-            placeholder={selectedId ?? "Open a run id"}
-            autoComplete="off"
-          />
-        </div>
-        <Button type="submit" variant="outline">
-          Open
-        </Button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader
+          title="Traces"
+          description="Inspect every hop: retrieve → rerank → generate|abstain. Citations are text_ref pointers, not corpus dumps."
+        />
         <Button
           type="button"
           variant="outline"
@@ -178,167 +283,350 @@ function TracesPage() {
             void router.invalidate();
           }}
         >
+          <RefreshCwIcon data-icon="inline-start" />
           Refresh
         </Button>
-      </form>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline">
+          {list
+            ? backendLabel(
+                list.langfuse_configured,
+                list.traces.some((row) => row.langfuse_trace_id) ? "set" : null,
+              )
+            : "—"}
+        </Badge>
+        <span className="text-sm text-muted-foreground">
+          {list ? `${list.count} run${list.count === 1 ? "" : "s"}` : "—"}
+        </span>
+      </div>
 
       {!list || list.traces.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No runs yet. Ask a question on Playground, then refresh.
-        </p>
-      ) : (
-        <Card>
-          <CardContent className="pt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Query</TableHead>
-                  <TableHead>Outcome</TableHead>
-                  <TableHead>Model</TableHead>
-                  <TableHead>Tokens</TableHead>
-                  <TableHead>Latency</TableHead>
-                  <TableHead>Cost</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {list.traces.map((row) => (
-                  <TableRow
-                    key={row.run_id}
-                    data-state={selectedId === row.run_id ? "selected" : undefined}
-                    className="cursor-pointer"
-                    onClick={() => selectRun(row.run_id)}
+        <Alert>
+          <AlertTitle>No runs yet</AlertTitle>
+          <AlertDescription>
+            Ask a question on{" "}
+            <Link
+              to="/playground"
+              preload="intent"
+              className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
+            >
+              Playground
+            </Link>{" "}
+            to create a RunTrace. Playground is not the homepage.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {list && list.traces.length > 0 ? (
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+          <Card className="min-w-0">
+            <CardHeader className="gap-3">
+              <CardTitle>Runs</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {filters.map((item) => (
+                  <Button
+                    key={item}
+                    type="button"
+                    size="xs"
+                    variant={filter === item ? "secondary" : "outline"}
+                    aria-pressed={filter === item}
+                    onClick={() => setFilter(item)}
                   >
-                    <TableCell className="whitespace-normal">
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="h-auto px-0"
-                        onClick={() => selectRun(row.run_id)}
-                      >
-                        {row.query.trim() || "(empty query)"}
-                      </Button>
-                      <div className="text-xs text-muted-foreground">
-                        <code>{row.run_id.slice(0, 8)}</code>
-                        {row.langfuse_trace_id
-                          ? ` · lf ${row.langfuse_trace_id.slice(0, 8)}`
-                          : ""}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={row.failed ? "destructive" : "secondary"}>
-                        {row.failed ? "failed" : row.abstained ? "abstain" : "generate"}
-                      </Badge>
-                      {row.rerank_skipped ? (
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          · rerank skipped
-                        </span>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      <code>{row.model || "—"}</code>
-                    </TableCell>
-                    <TableCell>
-                      {row.tokens_in} / {row.tokens_out}
-                    </TableCell>
-                    <TableCell>{row.latency_ms.toFixed(1)} ms</TableCell>
-                    <TableCell>${row.cost.usd_estimate.toFixed(6)}</TableCell>
-                  </TableRow>
+                    {filterLabel(item)}
+                  </Button>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+              </div>
+            </CardHeader>
+            <CardContent className="max-h-[70vh] overflow-y-auto px-0">
+              {filtered.length === 0 ? (
+                <p className="px-(--card-spacing) text-sm text-muted-foreground">
+                  No runs match this filter.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Query</TableHead>
+                      <TableHead>Path</TableHead>
+                      <TableHead>Latency</TableHead>
+                      <TableHead>Cost</TableHead>
+                      <TableHead>Time</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((row) => {
+                      const path = runPath(row);
+                      return (
+                        <TableRow
+                          key={row.run_id}
+                          data-state={selectedId === row.run_id ? "selected" : undefined}
+                          className="cursor-pointer"
+                          tabIndex={0}
+                          onClick={() => selectRun(row.run_id)}
+                          onKeyDown={(event) => onRowKey(event, row.run_id)}
+                        >
+                          <TableCell className="max-w-[12rem] whitespace-normal">
+                            <div className="font-medium">{snippet(row.query, 64)}</div>
+                            <div className="text-xs text-muted-foreground">
+                              <code>{row.run_id.slice(0, 8)}</code>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={pathBadgeVariant(path)}>{pathLabel(path)}</Badge>
+                          </TableCell>
+                          <TableCell className="tabular-nums">
+                            {formatLatency(row.latency_ms)}
+                          </TableCell>
+                          <TableCell className="tabular-nums">
+                            {formatUsd(row.cost.usd_estimate)}
+                          </TableCell>
+                          <TableCell className="whitespace-normal text-xs text-muted-foreground">
+                            {formatUtc(row.finished_at)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-      {selectedId ? (
-        <section className="space-y-4" aria-live="polite">
-          <PageHeader title={`Run ${selectedId.slice(0, 8)}`} description="" />
-          {detailError ? <ErrorAlert title="Trace" message={detailError} /> : null}
-          {detail ? (
-            <>
-              <StatCards
-                items={[
-                  { label: "Query", value: detail.query.trim() || "(empty)" },
-                  { label: "Abstained", value: detail.abstained ? "yes" : "no" },
-                  { label: "Model", value: detail.model || "—" },
-                  { label: "Tokens in / out", value: `${detail.tokens_in} / ${detail.tokens_out}` },
-                  { label: "Latency", value: `${detail.latency_ms.toFixed(1)} ms` },
-                  { label: "Cost", value: `$${detail.cost.usd_estimate.toFixed(6)}` },
-                ]}
-              />
-              <p className="text-sm text-muted-foreground">
-                Method <code>{detail.cost_method || "—"}</code>
-                {detail.langfuse_trace_id
-                  ? ` · Langfuse ${detail.langfuse_trace_id}`
-                  : " · local fallback (no langfuse_trace_id)"}
-                {detail.rerank_skipped ? " · rerank_skipped=true" : ""}
-              </p>
-
-              <h2 className="font-heading text-lg font-medium">Spans</h2>
-              <p className="text-sm text-muted-foreground">
-                retrieve → rerank → generate | abstain
-              </p>
-              {orderedSpans.map((span) => (
-                <Card key={span.span_id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      {kindLabel(span.kind)}
-                      <Badge variant={span.status === "error" ? "destructive" : "outline"}>
-                        {statusLabel(span.status)}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      {span.parent_id
-                        ? `child of ${span.parent_id.slice(0, 12)}`
-                        : "root"}{" "}
-                      · {span.started_at} → {span.finished_at}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {span.kind === "retrieve" || span.kind === "rerank" ? (
-                      <ChunkTable refs={chunkRefsFromAttributes(span.attributes)} />
-                    ) : null}
-                    {span.kind === "generate" || span.kind === "abstain" ? (
-                      <pre className="overflow-auto rounded-lg bg-muted/50 p-3 text-xs">
-                        {JSON.stringify(span.attributes, null, 2)}
-                      </pre>
-                    ) : null}
-                    {typeof span.attributes.rerank_skipped === "boolean" ? (
-                      <p className="text-sm text-muted-foreground">
-                        rerank_skipped={String(span.attributes.rerank_skipped)}
-                      </p>
-                    ) : null}
-                  </CardContent>
-                </Card>
-              ))}
-
-              <h2 className="font-heading text-lg font-medium">Citations</h2>
-              <ChunkTable refs={detail.citations} empty="None (empty on abstain)." />
-            </>
-          ) : null}
-        </section>
+          <TraceDetail
+            selectedId={selectedId}
+            runInput={runInput}
+            setRunInput={setRunInput}
+            onOpen={(runId) => selectRun(runId)}
+            detail={detail}
+            detailError={detailError}
+            tree={tree}
+          />
+        </div>
+      ) : selectedId ? (
+        <TraceDetail
+          selectedId={selectedId}
+          runInput={runInput}
+          setRunInput={setRunInput}
+          onOpen={(runId) => selectRun(runId)}
+          detail={detail}
+          detailError={detailError}
+          tree={tree}
+        />
       ) : null}
     </>
   );
 }
 
-function BackendNote({ list }: { list: TraceList | null }) {
+function TraceDetail({
+  selectedId,
+  runInput,
+  setRunInput,
+  onOpen,
+  detail,
+  detailError,
+  tree,
+}: {
+  selectedId: string | undefined;
+  runInput: string;
+  setRunInput: (value: string) => void;
+  onOpen: (runId: string) => void;
+  detail: RunTrace | null;
+  detailError: string | null;
+  tree: { span: Span; depth: number }[];
+}) {
+  const path = detail
+    ? runPath({ failed: detail.spans.some((span) => span.status === "error"), abstained: detail.abstained })
+    : null;
+
   return (
-    <p className="text-sm text-muted-foreground">
-      Backend:{" "}
-      <code>
-        {list
-          ? backendLabel(
-              list.langfuse_configured,
-              list.traces.some((row) => row.langfuse_trace_id) ? "set" : null,
-            )
-          : "—"}
-      </code>
-      {list?.langfuse_configured
-        ? " · LANGFUSE_PUBLIC_KEY/SECRET_KEY are set"
-        : " · no Langfuse keys; local store only"}
-      . Chunks are <code>text_ref</code> pointers, not corpus dumps.
-    </p>
+    <div className="min-w-0 space-y-4 lg:sticky lg:top-20">
+      <form
+        className="flex flex-wrap items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const runId = runInput.trim();
+          if (runId) {
+            onOpen(runId);
+          }
+        }}
+      >
+        <div className="min-w-[12rem] flex-1 space-y-1">
+          <Label htmlFor="trace-run-id" className="text-xs text-muted-foreground">
+            Deep link run id
+          </Label>
+          <Input
+            id="trace-run-id"
+            name="run_id"
+            value={runInput}
+            onChange={(event) => setRunInput(event.target.value)}
+            placeholder={selectedId ?? "Paste a run id"}
+            autoComplete="off"
+          />
+        </div>
+        <Button type="submit" variant="outline">
+          Open
+        </Button>
+      </form>
+
+      {!selectedId ? (
+        <Alert>
+          <AlertTitle>Select a run</AlertTitle>
+          <AlertDescription>
+            Choose a row to inspect retrieve → rerank → generate|abstain. Evals
+            receipts deep-link here with <code>?run_id=</code>.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {detailError ? <ErrorAlert title="Trace" message={detailError} /> : null}
+
+      {detail ? (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex flex-wrap items-center gap-2">
+                Run <code className="text-sm font-normal">{detail.run_id.slice(0, 8)}</code>
+                {path ? (
+                  <Badge variant={pathBadgeVariant(path)}>{pathLabel(path)}</Badge>
+                ) : null}
+              </CardTitle>
+              <CardDescription className="whitespace-normal">
+                {detail.query.trim() || "(empty query)"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-3">
+                <div>
+                  <dt className="text-xs text-muted-foreground">Latency</dt>
+                  <dd className="tabular-nums">{formatLatency(detail.latency_ms)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Cost</dt>
+                  <dd className="tabular-nums">{formatUsd(detail.cost.usd_estimate, 6)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Method</dt>
+                  <dd>
+                    <code>{detail.cost_method || "—"}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Model</dt>
+                  <dd>
+                    <code>{detail.model || "—"}</code>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Tokens</dt>
+                  <dd className="tabular-nums">
+                    {detail.tokens_in} / {detail.tokens_out}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Finished</dt>
+                  <dd>{formatUtc(detail.finished_at)}</dd>
+                </div>
+              </dl>
+              {detail.rerank_skipped ? (
+                <p className="text-xs text-muted-foreground">rerank_skipped=true</p>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-2">
+            <h2 className="font-heading text-lg font-medium">Spans</h2>
+            {tree.map(({ span, depth }) => (
+              <Card
+                key={span.span_id}
+                size="sm"
+                className={cn(depth > 0 && "border-l-2", depth === 1 && "ml-4", depth >= 2 && "ml-8")}
+              >
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {depth > 0 ? (
+                      <span className="text-muted-foreground" aria-hidden="true">
+                        └
+                      </span>
+                    ) : null}
+                    {kindLabel(span.kind)}
+                    <Badge variant={span.status === "error" ? "destructive" : "outline"}>
+                      {statusLabel(span.status)}
+                    </Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    {formatUtc(span.started_at)} → {formatUtc(span.finished_at)}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {span.kind === "retrieve" || span.kind === "rerank" ? (
+                    <ChunkTable refs={chunkRefsFromAttributes(span.attributes)} />
+                  ) : null}
+                  {span.kind === "generate" ? (
+                    <TextRefList refs={textRefsFromAttributes(span.attributes)} />
+                  ) : null}
+                  {span.kind === "abstain" && typeof span.attributes.reason === "string" ? (
+                    <p className="text-sm">
+                      reason <code>{span.attributes.reason}</code>
+                    </p>
+                  ) : null}
+                  <AttrDetails attributes={span.attributes} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="font-heading text-lg font-medium">Citations</h2>
+            <ChunkTable refs={detail.citations} empty="None (empty on abstain)." />
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function TextRefList({ refs }: { refs: string[] }) {
+  if (refs.length === 0) {
+    return <p className="text-sm text-muted-foreground">No citation text_refs on this span.</p>;
+  }
+  return (
+    <ul className="flex flex-wrap gap-1">
+      {refs.map((ref) => (
+        <li key={ref}>
+          <Badge variant="outline">
+            <code>{ref}</code>
+          </Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function AttrDetails({ attributes }: { attributes: { [key: string]: JsonValue } }) {
+  const entries = Object.entries(attributes).filter(
+    ([key]) => key !== "chunks" && key !== "citation_text_refs",
+  );
+  if (entries.length === 0) {
+    return null;
+  }
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer text-muted-foreground">Attributes</summary>
+      <dl className="mt-2 grid gap-1">
+        {entries.map(([key, value]) => (
+          <div key={key} className="grid grid-cols-[8rem_minmax(0,1fr)] gap-2">
+            <dt className="text-muted-foreground">
+              <code>{key}</code>
+            </dt>
+            <dd className="min-w-0 break-all">
+              <code>{attrPreview(value)}</code>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   );
 }
 
@@ -356,7 +644,6 @@ function ChunkTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>chunk_id</TableHead>
           <TableHead>text_ref</TableHead>
           <TableHead>rank</TableHead>
         </TableRow>
@@ -364,10 +651,7 @@ function ChunkTable({
       <TableBody>
         {refs.map((row) => (
           <TableRow key={`${row.chunk_id}-${row.rank ?? "x"}`}>
-            <TableCell>
-              <code>{row.chunk_id}</code>
-            </TableCell>
-            <TableCell>
+            <TableCell className="whitespace-normal">
               <code>{row.text_ref}</code>
             </TableCell>
             <TableCell>{row.rank ?? "—"}</TableCell>

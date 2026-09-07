@@ -299,3 +299,11 @@ cards, tables, form controls, alerts, and Sonner toasts. No login wall.
 Rejected: rewriting the LangGraph pipeline, chat-as-homepage, a second
 component library, or inventing demo metrics. C8/C9 bindings stay.
 
+## Evals / Traces as the demo hero (2026-09-07)
+
+Hiring-manager first paint is `/evals` (faithfulness 0.7 gate, mock/live
+badge, last-run diff, redteam blocked/failed chips) or a failing
+`/traces?run_id=` hop, not Playground. Nav order is Evals · Traces ·
+Corpus · Playground. `/` stays a boring index. UI-only against existing
+FastAPI artifacts; see `docs/ux-evals-traces.md`.
+
