@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS chunks (
 CREATE INDEX IF NOT EXISTS chunks_doc_id_idx ON chunks (doc_id);
 ALTER TABLE chunks ADD COLUMN IF NOT EXISTS tsv tsvector;
 CREATE INDEX IF NOT EXISTS chunks_tsv_gin ON chunks USING GIN (tsv);
-UPDATE chunks SET tsv = to_tsvector('english', text) WHERE tsv IS NULL;
 
 CREATE TABLE IF NOT EXISTS ingest_runs (
     id SERIAL PRIMARY KEY,
@@ -180,8 +179,15 @@ def connect(database_url: str) -> Iterator[psycopg.Connection]:
         conn.close()
 
 
+def backfill_chunk_tsv(conn: psycopg.Connection) -> None:
+    conn.execute(
+        "UPDATE chunks SET tsv = to_tsvector('english', text) WHERE tsv IS NULL"
+    )
+
+
 def ensure_schema(conn: psycopg.Connection) -> None:
     conn.execute(SCHEMA_SQL)
+    backfill_chunk_tsv(conn)
     conn.commit()
 
 

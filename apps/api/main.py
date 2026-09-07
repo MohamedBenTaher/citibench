@@ -159,7 +159,6 @@ def get_corpus_stats() -> dict[str, Any]:
     settings = load_settings()
     try:
         with connect(settings.database_url) as conn:
-            ensure_schema(conn)
             return corpus_stats(conn)
     except Exception as exc:
         raise HTTPException(
