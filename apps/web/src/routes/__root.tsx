@@ -62,8 +62,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body>
-        <header className="sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
+        <header className="sticky top-0 z-10 border-b border-border bg-background">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-2.5">
             <Link
               to="/"
               className={cn(buttonVariants({ variant: "ghost" }), "gap-2 font-heading text-base")}
@@ -73,7 +73,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               Citebench
             </Link>
             <Separator orientation="vertical" className="hidden h-5 sm:block" />
-            <nav className="flex flex-wrap items-center gap-1">
+            <nav className="flex flex-wrap items-end gap-0.5">
               {tabs.map((tab) => {
                 const isActive = pathname === tab.to;
                 return (
@@ -82,7 +82,11 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                     to={tab.to}
                     preload="intent"
                     className={cn(
-                      buttonVariants({ variant: isActive ? "secondary" : "ghost" }),
+                      buttonVariants({ variant: "ghost", size: "sm" }),
+                      "rounded-none px-2.5 pb-2 pt-1.5",
+                      isActive
+                        ? "border-b-2 border-foreground font-medium text-foreground"
+                        : "text-muted-foreground",
                     )}
                     aria-current={isActive ? "page" : undefined}
                   >
@@ -98,10 +102,10 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             ) : null}
           </div>
           {isNavigating ? (
-            <div className="h-0.5 origin-left animate-pulse bg-foreground" aria-hidden="true" />
+            <div className="h-0.5 origin-left animate-pulse bg-primary" aria-hidden="true" />
           ) : null}
         </header>
-        <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">{children}</main>
+        <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">{children}</main>
         <Toaster />
         <Scripts />
       </body>
