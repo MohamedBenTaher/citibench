@@ -33,7 +33,7 @@ function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            The homepage is an index. The useful surfaces are{" "}
+            The homepage is a research-gym index, not a chat. The circuit is{" "}
             <Link to="/corpus" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
               Corpus
             </Link>
