@@ -95,7 +95,7 @@ def _cors_origins() -> list[str]:
     CORS_ORIGINS default. Those tokens are dropped so ingest/generate from
     the browser still get Access-Control-Allow-Origin.
     """
-    ports = {3000, 4173, 5173}
+    ports = {3000, 3100, 4173, 5173}
     raw_port = os.environ.get("WEB_PORT", "3000").strip()
     try:
         ports.add(int(raw_port))
