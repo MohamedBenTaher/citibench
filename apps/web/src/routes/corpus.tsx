@@ -6,7 +6,13 @@ import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -27,17 +33,42 @@ const EMPTY: CorpusStats = {
   failures: [],
 };
 
+function formatLastIndex(iso: string | null): string {
+  if (!iso) {
+    return "—";
+  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return iso.slice(0, 16);
+  }
+  return (
+    new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "UTC",
+    }).format(date) + " UTC"
+  );
+}
+
 export const Route = createFileRoute("/corpus")({
   head: () => ({
     meta: [{ title: "Corpus · Citebench" }],
   }),
   loader: async () => {
     try {
-      return { stats: await getCorpusStats(), loadError: null as string | null };
+      return {
+        stats: await getCorpusStats(),
+        loadError: null as string | null,
+      };
     } catch (error) {
       return {
         stats: EMPTY,
-        loadError: error instanceof Error ? error.message : "failed to load stats",
+        loadError:
+          error instanceof Error ? error.message : "failed to load stats",
       };
     }
   },
@@ -53,7 +84,10 @@ function CorpusPage() {
   const [busy, setBusy] = useState(false);
   const isEmpty = stats.doc_count === 0 && stats.chunk_count === 0;
 
-  async function runIngest(body: IngestBody, options?: { skipConfirm?: boolean }) {
+  async function runIngest(
+    body: IngestBody,
+    options?: { skipConfirm?: boolean },
+  ) {
     if (
       !options?.skipConfirm &&
       !window.confirm(
@@ -94,53 +128,80 @@ function CorpusPage() {
           { label: "Documents", value: String(stats.doc_count) },
           { label: "Pages", value: String(stats.page_count) },
           { label: "Chunks", value: String(stats.chunk_count) },
-          { label: "Last index", value: stats.last_index_time ?? "—" },
+          {
+            label: "Last index",
+            value: formatLastIndex(stats.last_index_time),
+            title: stats.last_index_time ?? undefined,
+            dense: true,
+          },
         ]}
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" disabled={busy} onClick={() => void runIngest({})}>
+        <Button
+          type="button"
+          disabled={busy}
+          onClick={() => void runIngest({})}
+        >
           {busy ? "Indexing…" : "Ingest / Re-index"}
         </Button>
         {isEmpty ? (
-          <p className="text-sm text-muted-foreground">Index is empty — ingest the freeze.</p>
+          <p className="text-sm text-muted-foreground">
+            Index is empty — ingest the freeze.
+          </p>
         ) : null}
       </div>
 
       <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer font-medium text-foreground">Operator notes</summary>
+        <summary className="cursor-pointer font-medium text-foreground">
+          Operator notes
+        </summary>
         <p className="mt-2">
-          Re-index is idempotent (replace per MANIFEST id). Browser calls FastAPI at{" "}
-          <code>VITE_API_URL</code> (default <code>http://localhost:8000</code>).{" "}
-          <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> wipes documents and
-          chunks first. Embeddings are local <code>nomic-embed-text-v1.5</code> (Groq no longer
-          hosts that model). First ingest downloads the ONNX weights (~0.5&nbsp;GB) into{" "}
-          <code>NOMIC_CACHE_DIR</code>.
+          Re-index is idempotent (replace per MANIFEST id). Browser calls
+          FastAPI at <code>VITE_API_URL</code> (default{" "}
+          <code>http://localhost:8000</code>). <code>POST /ingest</code> with{" "}
+          <code>{`{"wipe": true}`}</code> wipes documents and chunks first.
+          Embeddings are local <code>nomic-embed-text-v1.5</code> (Groq no
+          longer hosts that model). First ingest downloads the ONNX weights
+          (~0.5&nbsp;GB) into <code>NOMIC_CACHE_DIR</code>.
         </p>
       </details>
 
       <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer font-medium text-foreground">Verification</summary>
+        <summary className="cursor-pointer font-medium text-foreground">
+          Verification
+        </summary>
         <div className="mt-2 space-y-2">
-          <p>Simulate a single snapshot failure to verify the failures table.</p>
+          <p>
+            Simulate a single snapshot failure to verify the failures table.
+          </p>
           <Button
             type="button"
             variant="outline"
             disabled={busy}
-            onClick={() => void runIngest({ simulate_failure_id: "k8s-pods" }, { skipConfirm: true })}
+            onClick={() =>
+              void runIngest(
+                { simulate_failure_id: "k8s-pods" },
+                { skipConfirm: true },
+              )
+            }
           >
             Re-index with one failure
           </Button>
         </div>
       </details>
 
-      {loadError ? <ErrorAlert title="Corpus stats" message={loadError} /> : null}
+      {loadError ? (
+        <ErrorAlert title="Corpus stats" message={loadError} />
+      ) : null}
       {actionError ? <ErrorAlert title="Ingest" message={actionError} /> : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Failures</CardTitle>
-          <CardDescription>Snapshot rows that did not land in the index.</CardDescription>
+          <CardDescription>
+            Snapshot rows that did not land in the index.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {stats.failures.length === 0 ? (
@@ -161,7 +222,9 @@ function CorpusPage() {
                     </TableCell>
                     <TableCell className="whitespace-normal">
                       {row.error}
-                      <div className="text-xs text-muted-foreground">{row.source_url}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {row.source_url}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

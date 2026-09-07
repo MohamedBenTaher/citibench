@@ -1,9 +1,12 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export type StatItem = {
   label: string;
   value: string;
   hint?: string;
+  dense?: boolean;
+  title?: string;
 };
 
 export function StatCards({ items }: { items: StatItem[] }) {
@@ -15,7 +18,15 @@ export function StatCards({ items }: { items: StatItem[] }) {
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               {item.label}
             </p>
-            <p className="font-mono text-2xl font-semibold tabular-nums text-foreground">
+            <p
+              title={item.title}
+              className={cn(
+                "font-mono font-semibold tabular-nums text-foreground",
+                item.dense
+                  ? "text-sm leading-snug tracking-tight sm:text-base"
+                  : "text-2xl",
+              )}
+            >
               {item.value}
             </p>
           </CardHeader>
