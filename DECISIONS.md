@@ -95,9 +95,10 @@ Chunk boundaries use tiktoken `cl100k_base` at 512 / 64 so re-index is stable.
 Embeddings use `nomic-embed-text-v1.5` (768-d) with the documented prefixes.
 C2 called Groq's OpenAI-compatible `/embeddings`. Groq later removed that
 model (`model_not_found` on both `nomic-embed-text-v1.5` and
-`nomic-embed-text-v1_5`). Ingest and retrieve now try Groq, then fall back
-to the same open weights via local ONNX (fastembed). That is not a second
-billed embed provider. `GROQ_API_KEY` is required for generate/chat only.
+`nomic-embed-text-v1_5`). Default `embed_backend` is `local` (ONNX via
+fastembed). `groq_then_local` keeps the historical Groq probe, then falls
+back to the same open weights. That is not a second billed embed provider.
+`GROQ_API_KEY` is required for generate/chat only.
 
 `retrieve` and `emit_trace` stay `NotImplemented`. Hybrid retrieve, rerank,
 Langfuse, Playground ask, and eval CI are out of scope for this slice.

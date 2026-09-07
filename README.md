@@ -116,7 +116,7 @@ Do **not** run bare `pytest` on system Python (`No module named 'fastapi'`). mac
 
 ## Pipeline
 
-**Ingest** fetches the pinned URLs, chunks at 512/64, embeds with `search_document:` using local `nomic-embed-text-v1.5` (tries Groq `/embeddings` first; Groq now 404s that model), writes pgvector + FTS. Snapshots land in `corpus/raw/<id>/` with sha256. First ingest downloads the ONNX weights (~0.5 GB) into `NOMIC_CACHE_DIR`.
+**Ingest** fetches the pinned URLs, chunks at 512/64, embeds with `search_document:` using local `nomic-embed-text-v1.5` ONNX by default (`embed_backend: local`); set `EMBED_BACKEND=groq_then_local` to restore the historical Groq `/embeddings` probe (Groq now 404s that model), writes pgvector + FTS. Snapshots land in `corpus/raw/<id>/` with sha256. First ingest downloads the ONNX weights (~0.5 GB) into `NOMIC_CACHE_DIR`.
 
 **Retrieve** embeds the query with `search_query:`, fuses dense + lexical lists with RRF, then FlashRank (`ms-marco-MiniLM-L-12-v2`) keeps 8 hits. If rerank fails, order stays RRF and `rerank_skipped` is set — never a silent skip.
 

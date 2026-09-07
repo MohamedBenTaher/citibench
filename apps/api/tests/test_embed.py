@@ -55,7 +55,12 @@ def test_embed_query_uses_search_query_prefix(monkeypatch: pytest.MonkeyPatch) -
     assert len(vector) == 768
 
 
-def _settings(*, groq_api_key: str = "gsk_test", api_base: str = "https://api.groq.com/openai/v1") -> Settings:
+def _settings(
+    *,
+    groq_api_key: str = "gsk_test",
+    api_base: str = "https://api.groq.com/openai/v1",
+    embed_backend: str = "groq_then_local",
+) -> Settings:
     return Settings(
         provider="groq",
         embed_model="nomic-embed-text-v1.5",
@@ -69,6 +74,7 @@ def _settings(*, groq_api_key: str = "gsk_test", api_base: str = "https://api.gr
         corpus_dir=Path("."),
         manifest_path=Path("MANIFEST.md"),
         groq_api_key=groq_api_key,
+        embed_backend=embed_backend,
     )
 
 
@@ -139,6 +145,24 @@ def test_custom_embed_host_404_does_not_fallback(monkeypatch: pytest.MonkeyPatch
             ["hello"],
             _settings(api_base="http://127.0.0.1:9/openai/v1"),
         )
+
+
+def test_local_backend_skips_groq_even_when_key_present(monkeypatch: pytest.MonkeyPatch) -> None:
+    embed.reset_embed_cache()
+
+    def boom(*_args, **_kwargs):
+        raise AssertionError("groq must not be called")
+
+    monkeypatch.setattr(embed, "_embed_via_groq", boom)
+    monkeypatch.setattr(
+        embed,
+        "_embed_local",
+        lambda texts, dims, batch_size=32: [[0.75] * dims for _ in texts],
+    )
+    vectors = embed.embed_texts(["hello"], _settings(embed_backend="local"))
+    assert len(vectors) == 1
+    assert len(vectors[0]) == 768
+    assert vectors[0][0] == 0.75
 
 
 def test_no_groq_key_uses_local(monkeypatch: pytest.MonkeyPatch) -> None:
