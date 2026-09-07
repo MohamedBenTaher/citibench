@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TraceCharts } from "@/components/trace-charts";
 import { getTrace, getTraces } from "@/lib/server";
 import type { Citation, JsonValue, SpanKind, SpanStatus, TraceList } from "@/lib/types";
 
@@ -199,9 +200,16 @@ function TracesPage() {
 
       {!list || list.traces.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No runs yet. Ask a question on Playground, then refresh.
+          No runs yet. Ask a question on Playground, then refresh. Charts stay empty until a
+          RunTrace exists — they do not invent latency or cost.
         </p>
       ) : (
+        <>
+          <TraceCharts traces={list.traces} />
+        </>
+      )}
+
+      {list && list.traces.length > 0 ? (
         <Card>
           <CardContent className="pt-4">
             <Table>
@@ -263,7 +271,7 @@ function TracesPage() {
             </Table>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {selectedId ? (
         <section className="space-y-4" aria-live="polite">

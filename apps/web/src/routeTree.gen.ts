@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as CorpusRouteImport } from './routes/corpus'
 import { Route as EvalsRouteImport } from './routes/evals'
 import { Route as PlaygroundRouteImport } from './routes/playground'
@@ -24,6 +25,11 @@ import { Route as ApiTracesRunIdRouteImport } from './routes/api/traces/$runId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CorpusRoute = CorpusRouteImport.update({
@@ -79,6 +85,7 @@ const ApiTracesRunIdRoute = ApiTracesRunIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/corpus': typeof CorpusRoute
   '/evals': typeof EvalsRoute
   '/playground': typeof PlaygroundRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/corpus': typeof CorpusRoute
   '/evals': typeof EvalsRoute
   '/playground': typeof PlaygroundRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/corpus': typeof CorpusRoute
   '/evals': typeof EvalsRoute
   '/playground': typeof PlaygroundRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/corpus'
     | '/evals'
     | '/playground'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/corpus'
     | '/evals'
     | '/playground'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/corpus'
     | '/evals'
     | '/playground'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   CorpusRoute: typeof CorpusRoute
   EvalsRoute: typeof EvalsRoute
   PlaygroundRoute: typeof PlaygroundRoute
@@ -179,6 +192,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/corpus': {
@@ -268,6 +288,7 @@ const ApiTracesRouteWithChildren = ApiTracesRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   CorpusRoute: CorpusRoute,
   EvalsRoute: EvalsRoute,
   PlaygroundRoute: PlaygroundRoute,

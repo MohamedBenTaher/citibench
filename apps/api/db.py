@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import logging
+import socket
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 import psycopg
 from psycopg.rows import dict_row
+
+log = logging.getLogger("citebench.db")
+
+# Compose service names. A host-run API that inherited DATABASE_URL=@db
+# cannot resolve these; fall back to the published Postgres port.
+_DOCKER_DB_HOSTS = frozenset({"db", "postgres", "postgresql", "database"})
+_FALLBACK_DB_HOSTS = ("127.0.0.1", "localhost", "host.docker.internal")
 
 SCHEMA_SQL = """
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -62,10 +72,100 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
 """
 
 
+def hostname_resolves(host: str) -> bool:
+    if not host:
+        return False
+    try:
+        socket.getaddrinfo(host, None)
+    except OSError:
+        return False
+    return True
+
+
+def rewrite_database_url_host(database_url: str, host: str) -> str:
+    parsed = urlparse(database_url)
+    userinfo = parsed.username or ""
+    if parsed.password is not None:
+        userinfo = f"{userinfo}:{parsed.password}"
+    if userinfo:
+        userinfo = f"{userinfo}@"
+    port = f":{parsed.port}" if parsed.port is not None else ""
+    return urlunparse(parsed._replace(netloc=f"{userinfo}{host}{port}"))
+
+
+def resolve_database_url(database_url: str) -> str:
+    """Keep a resolvable host; rewrite Compose names when DNS fails.
+
+    `db` is valid inside the Compose network. The same URL on a host-run
+    API (uvicorn leftover on :8000, or DATABASE_URL copied into .env)
+    raises [Errno -2] Name or service not known. Prefer 127.0.0.1 so the
+    published :5432 works. host.docker.internal covers an API container
+    whose embedded DNS cannot see the `db` service.
+    """
+    host = urlparse(database_url).hostname
+    if host and hostname_resolves(host):
+        return database_url
+    if host not in _DOCKER_DB_HOSTS:
+        return database_url
+    for candidate in _FALLBACK_DB_HOSTS:
+        if hostname_resolves(candidate):
+            return rewrite_database_url_host(database_url, candidate)
+    return database_url
+
+
+def is_database_error(exc: BaseException) -> bool:
+    name = type(exc).__name__.lower()
+    text = str(exc).lower()
+    if "operationalerror" in name:
+        return True
+    return any(
+        marker in text
+        for marker in (
+            "name or service not known",
+            "nodename nor servname",
+            "connection refused",
+            "could not translate host",
+            "connection timed out",
+            "timeout expired",
+            "no route to host",
+            "temporary failure in name resolution",
+        )
+    )
+
+
+def database_unavailable_detail(exc: BaseException, database_url: str) -> str:
+    host = urlparse(database_url).hostname or "?"
+    text = str(exc).lower()
+    dns_failure = any(
+        marker in text
+        for marker in (
+            "name or service not known",
+            "nodename nor servname",
+            "could not translate host",
+            "temporary failure in name resolution",
+        )
+    )
+    if dns_failure:
+        return (
+            f"database unavailable: could not resolve host '{host}'. "
+            "Compose sets DATABASE_URL host 'db' only for the api container. "
+            "A host-run API (uvicorn or a leftover process on :8000) must use "
+            f"127.0.0.1 (published :5432), not '{host}'. Original error: {exc}"
+        )
+    return f"database unavailable: host '{host}': {exc}"
+
+
 @contextmanager
 def connect(database_url: str) -> Iterator[psycopg.Connection]:
+    resolved = resolve_database_url(database_url)
+    if resolved != database_url:
+        log.info(
+            "DATABASE_URL host %s did not resolve; connecting via %s",
+            urlparse(database_url).hostname,
+            urlparse(resolved).hostname,
+        )
     conn = psycopg.connect(
-        database_url,
+        resolved,
         row_factory=dict_row,
         autocommit=False,
         connect_timeout=5,

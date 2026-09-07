@@ -7,6 +7,7 @@ import {
   createRootRoute,
   useRouterState,
 } from "@tanstack/react-router";
+import { CitebenchMark } from "@/components/citebench-mark";
 import { RouteError } from "@/components/status";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +20,7 @@ const tabs = [
   { to: "/playground", label: "Playground" },
   { to: "/traces", label: "Traces" },
   { to: "/evals", label: "Evals" },
+  { to: "/about", label: "About" },
 ] as const;
 
 export const Route = createRootRoute({
@@ -34,6 +36,7 @@ export const Route = createRootRoute({
         content: "Citation-grounded retrieval bench for a frozen public corpus.",
       },
     ],
+    links: [{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }],
   }),
   component: RootComponent,
   errorComponent: RouteError,
@@ -63,9 +66,10 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
           <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3">
             <Link
               to="/"
-              className={cn(buttonVariants({ variant: "ghost" }), "font-heading text-base")}
+              className={cn(buttonVariants({ variant: "ghost" }), "gap-2 font-heading text-base")}
               preload="intent"
             >
+              <CitebenchMark className="size-6" />
               Citebench
             </Link>
             <Separator orientation="vertical" className="hidden h-5 sm:block" />

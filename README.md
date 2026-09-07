@@ -48,7 +48,7 @@ make start          # api :8000, web :3000, Postgres
 make ingest         # index the 14 MANIFEST URLs
 ```
 
-Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. Tab loaders call FastAPI directly: Nitro SSR uses `API_URL=http://api:8000`, the browser uses `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`). Do not route those reads through TanStack `createServerFn` — Start's GET RPC returns 401/500 on client navigations (CSRF/origin), which is what made Corpus stats and Traces look broken. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
+Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`, `/about`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. Tab loaders call FastAPI directly: Nitro SSR uses `API_URL=http://api:8000`, the browser uses `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`). Do not route those reads through TanStack `createServerFn` — Start's GET RPC returns 401/500 on client navigations (CSRF/origin), which is what made Corpus stats and Traces look broken. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
 
 Local Vite without rebuilding the image:
 
@@ -64,6 +64,14 @@ If **Corpus stats** or **Traces** show Internal Server Error / 401 after a pull,
 curl -sS localhost:8000/health          # {"status":"ok"}
 curl -sS localhost:8000/corpus/stats    # counts; 503 only if Postgres is down
 curl -sS localhost:8000/traces          # {"count":0,"traces":[]} is fine
+```
+
+If **Corpus stats** / **Ingest** say `database unavailable: [Errno -2] Name or service not known`, the API process cannot resolve host `db`. That hostname exists only on the Compose network. Usual cause: a host-run uvicorn (or leftover `:8000`) inherited `DATABASE_URL=...@db:5432` from `.env`. Unset that variable or set `127.0.0.1`; Citebench also rewrites Compose service names when they fail DNS. Confirm who owns `:8000`:
+
+```bash
+curl -sS localhost:8000/health
+docker compose ps
+# if a host process is bound to :8000, stop it and `make start` again
 ```
 
 Ingest **401** from FastAPI means Groq rejected `GROQ_API_KEY` (missing key is **503**). Put a live key in `.env` and recreate the API container (`docker compose up -d --force-recreate api`). Traces stay empty until a Playground ask succeeds; the local store is now a Compose volume (`citebench_traces`).
@@ -102,8 +110,9 @@ Do **not** run bare `pytest` on system Python (`No module named 'fastapi'`). mac
 | `/` | Boring index. Not a chat homepage. |
 | `/corpus` | Freeze + counts. Ingest / re-index the 14 public docs. |
 | `/playground` | Ask UI: answer, citations, abstain, latency, estimated cost. Still not a chat product. |
-| `/traces` | One `RunTrace` per ask: retrieve → rerank → generate\|abstain. |
-| `/evals` | Last RAGAS artifact + 10 redteam cases. Public; no login wall. |
+| `/traces` | One `RunTrace` per ask: retrieve → rerank → generate\|abstain. Charts for latency/cost and outcome mix when runs exist. |
+| `/evals` | Last RAGAS artifact + 10 redteam cases, with metric and attack-type charts. Public; no login wall. |
+| `/about` | What Citebench is (and is not): frozen corpus, models, evals. |
 
 ## Pipeline
 

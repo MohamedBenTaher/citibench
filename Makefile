@@ -59,7 +59,7 @@ start up: .env
 	@curl -sS "$(API)/health"; echo
 	@echo "API  $(API)"
 	@echo "Web  $(WEB)"
-	@echo "Tabs $(WEB)/corpus  $(WEB)/playground  $(WEB)/traces  $(WEB)/evals"
+	@echo "Tabs $(WEB)/corpus  $(WEB)/playground  $(WEB)/traces  $(WEB)/evals  $(WEB)/about"
 
 stop:
 	$(COMPOSE) stop

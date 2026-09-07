@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EvalMetricChart, RedteamChart } from "@/components/eval-charts";
 import { cn } from "@/lib/utils";
 import { getEvalLatest, getRedteamLatest } from "@/lib/server";
 import type { MetricName, RedteamCase } from "@/lib/types";
@@ -152,6 +153,7 @@ function EvalsPage() {
               {redteam?.detail ? ` · ${redteam.detail}` : " · no runner artifact yet"}.
             </p>
           )}
+          <RedteamChart cases={redteamCases} />
           {redteamCases.length > 0 ? (
             <Table>
               <TableHeader>
@@ -236,10 +238,12 @@ function EvalsPage() {
 
           {!hasRun ? (
             <p className="text-sm text-muted-foreground">
-              No CI run artifact yet. Run the eval harness, then refresh.
+              No CI run artifact yet. Run the eval harness, then refresh. Charts stay empty
+              rather than inventing scores.
             </p>
           ) : (
             <>
+              <EvalMetricChart latest={latest} />
               <p className="text-sm text-muted-foreground">
                 Run <code>{latest?.run_id}</code>
                 {latest?.mode ? ` · ${latest.mode}` : ""}
