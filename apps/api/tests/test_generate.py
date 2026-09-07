@@ -15,6 +15,7 @@ from generate import (
     ChunkRef,
     CostEstimate,
     cost_method_string,
+    estimate_embed_tokens,
     estimate_usd,
     generate,
     parse_model_payload,
@@ -257,6 +258,33 @@ def test_out_of_corpus_known_bad_abstains() -> None:
     assert result.abstain_reason == "out_of_corpus"
     assert result.terminal == "abstain"
     assert result.path == ["retrieve", "generate"]
+
+
+def test_estimate_embed_tokens_caches_encoding(monkeypatch: pytest.MonkeyPatch) -> None:
+    import generate as generate_mod
+
+    original_cache = dict(generate_mod._encoding_cache)
+    generate_mod._encoding_cache.clear()
+    calls: list[str] = []
+
+    class FakeEncoding:
+        def encode(self, text: str) -> list[int]:
+            del text
+            return [1, 2, 3]
+
+    def fake_get_encoding(name: str):
+        calls.append(name)
+        return FakeEncoding()
+
+    monkeypatch.setattr(generate_mod.tiktoken, "get_encoding", fake_get_encoding)
+    try:
+        settings = make_settings()
+        estimate_embed_tokens("first query", settings)
+        estimate_embed_tokens("second query", settings)
+        assert calls == ["cl100k_base"]
+    finally:
+        generate_mod._encoding_cache.clear()
+        generate_mod._encoding_cache.update(original_cache)
 
 
 def test_cost_estimate_matches_v1_formula() -> None:

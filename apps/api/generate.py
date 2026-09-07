@@ -32,6 +32,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import threading
 import time
 from collections.abc import Sequence
 from datetime import datetime
@@ -59,6 +60,9 @@ from trace import (
 )
 
 log = logging.getLogger("citebench.generate")
+
+_encoding_cache: dict[str, tiktoken.Encoding] = {}
+_encoding_lock = threading.Lock()
 
 ABSTAIN_ANSWER = "I don't know"
 COST_METHOD_NAME = "citebench.cost.v1"
@@ -156,8 +160,17 @@ def estimate_embed_tokens(query: str, settings: Settings) -> int:
     return _count_tokens(settings.embed_query_prefix + text, settings.tokenizer)
 
 
+def _get_encoding(tokenizer: str) -> tiktoken.Encoding:
+    with _encoding_lock:
+        encoding = _encoding_cache.get(tokenizer)
+        if encoding is None:
+            encoding = tiktoken.get_encoding(tokenizer)
+            _encoding_cache[tokenizer] = encoding
+        return encoding
+
+
 def _count_tokens(text: str, tokenizer: str) -> int:
-    encoding = tiktoken.get_encoding(tokenizer)
+    encoding = _get_encoding(tokenizer)
     return len(encoding.encode(text))
 
 
