@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -29,6 +30,7 @@ const EMPTY: CorpusStats = {
   doc_count: 0,
   page_count: 0,
   chunk_count: 0,
+  user_doc_count: 0,
   last_index_time: null,
   failures: [],
 };
@@ -82,6 +84,7 @@ function CorpusPage() {
   const { stats, loadError } = Route.useLoaderData();
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sourceUrl, setSourceUrl] = useState("");
   const isEmpty = stats.doc_count === 0 && stats.chunk_count === 0;
 
   async function runIngest(
@@ -116,11 +119,57 @@ function CorpusPage() {
     }
   }
 
+  async function addUrl() {
+    const url = sourceUrl.trim();
+    if (!url) {
+      return;
+    }
+    setBusy(true);
+    setActionError(null);
+    try {
+      await clientApiJson<CorpusStats>("/corpus/sources", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      toast.success("Source indexed");
+      setSourceUrl("");
+      await router.invalidate();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "source ingest failed";
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addUpload(file: File) {
+    setBusy(true);
+    setActionError(null);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      await clientApiJson<CorpusStats>("/corpus/uploads", {
+        method: "POST",
+        body,
+      });
+      toast.success("Upload indexed");
+      await router.invalidate();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "upload ingest failed";
+      setActionError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <>
       <PageHeader
         title="Corpus"
-        description="Frozen Kubernetes and Azure set from corpus/MANIFEST.md (2026-09-05, 14 URLs). Ingest snapshots only those rows."
+        description="Eval freeze stays the 14 MANIFEST URLs. Add your own HTTPS page or a file (capped; gigabyte ingest is not this slice). Playground can retrieve both origins."
       />
 
       <StatCards
@@ -128,6 +177,7 @@ function CorpusPage() {
           { label: "Documents", value: String(stats.doc_count) },
           { label: "Pages", value: String(stats.page_count) },
           { label: "Chunks", value: String(stats.chunk_count) },
+          { label: "User docs", value: String(stats.user_doc_count ?? 0) },
           {
             label: "Last index",
             value: formatLastIndex(stats.last_index_time),
@@ -151,6 +201,51 @@ function CorpusPage() {
           </p>
         ) : null}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Your sources</CardTitle>
+          <CardDescription>
+            HTTPS URL or upload. Default cap is 64 MiB. Private/loopback hosts
+            are rejected. This does not replace the eval freeze.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <form
+            className="flex flex-col gap-2 sm:flex-row"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void addUrl();
+            }}
+          >
+            <Input
+              type="url"
+              required
+              placeholder="https://…"
+              value={sourceUrl}
+              disabled={busy}
+              onChange={(event) => setSourceUrl(event.target.value)}
+            />
+            <Button type="submit" disabled={busy}>
+              Index URL
+            </Button>
+          </form>
+          <div>
+            <input
+              type="file"
+              accept=".pdf,.html,.htm,text/html,application/pdf"
+              disabled={busy}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) {
+                  void addUpload(file);
+                }
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <details className="text-sm text-muted-foreground">
         <summary className="cursor-pointer font-medium text-foreground">

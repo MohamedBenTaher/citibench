@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
     failure_count INTEGER NOT NULL DEFAULT 0,
     error TEXT
 );
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT 'freeze';
 """
 
 
@@ -203,11 +205,14 @@ def ensure_schema(conn: psycopg.Connection) -> None:
 
 
 def wipe_index(conn: psycopg.Connection) -> None:
-    conn.execute("TRUNCATE chunks, documents RESTART IDENTITY CASCADE")
+    conn.execute("DELETE FROM documents WHERE origin = 'freeze'")
 
 
 def delete_unknown_documents(conn: psycopg.Connection, manifest_ids: Sequence[str]) -> None:
-    conn.execute("DELETE FROM documents WHERE NOT (id = ANY(%s))", (list(manifest_ids),))
+    conn.execute(
+        "DELETE FROM documents WHERE origin = 'freeze' AND NOT (id = ANY(%s))",
+        (list(manifest_ids),),
+    )
 
 
 def mark_document_failed(
@@ -220,6 +225,7 @@ def mark_document_failed(
     license: str,
     error: str | None,
     indexed_at: datetime | None,
+    origin: str = "freeze",
 ) -> None:
     """Record a failed snapshot without deleting last-good chunks."""
     updated = conn.execute(
@@ -236,9 +242,9 @@ def mark_document_failed(
         """
         INSERT INTO documents (
             id, title, source_url, version_or_snapshot, license,
-            sha256, content_type, snapshot_path, page_count, status, error, indexed_at
+            sha256, content_type, snapshot_path, page_count, status, error, indexed_at, origin
         ) VALUES (
-            %s, %s, %s, %s, %s, NULL, NULL, NULL, 0, 'failed', %s, %s
+            %s, %s, %s, %s, %s, NULL, NULL, NULL, 0, 'failed', %s, %s, %s
         )
         """,
         (
@@ -249,6 +255,7 @@ def mark_document_failed(
             license,
             error,
             indexed_at,
+            origin,
         ),
     )
 
@@ -268,15 +275,16 @@ def replace_document(
     status: str,
     error: str | None,
     indexed_at: datetime | None,
+    origin: str = "freeze",
 ) -> None:
     conn.execute("DELETE FROM documents WHERE id = %s", (doc_id,))
     conn.execute(
         """
         INSERT INTO documents (
             id, title, source_url, version_or_snapshot, license,
-            sha256, content_type, snapshot_path, page_count, status, error, indexed_at
+            sha256, content_type, snapshot_path, page_count, status, error, indexed_at, origin
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         """,
         (
@@ -292,6 +300,7 @@ def replace_document(
             status,
             error,
             indexed_at,
+            origin,
         ),
     )
 
@@ -372,6 +381,9 @@ def corpus_stats(conn: psycopg.Connection) -> dict[str, Any]:
         "SELECT COALESCE(SUM(page_count), 0) AS n FROM documents WHERE status = 'ok'"
     ).fetchone()
     chunks = conn.execute("SELECT COUNT(*) AS n FROM chunks").fetchone()
+    user_docs = conn.execute(
+        "SELECT COUNT(*) AS n FROM documents WHERE status = 'ok' AND origin = 'user'"
+    ).fetchone()
     last = conn.execute(
         """
         SELECT finished_at
@@ -394,6 +406,7 @@ def corpus_stats(conn: psycopg.Connection) -> dict[str, Any]:
         "doc_count": int(docs_ok["n"]) if docs_ok else 0,
         "page_count": int(pages["n"]) if pages else 0,
         "chunk_count": int(chunks["n"]) if chunks else 0,
+        "user_doc_count": int(user_docs["n"]) if user_docs else 0,
         "last_index_time": last_index_time.isoformat() if last_index_time else None,
         "failures": [
             {

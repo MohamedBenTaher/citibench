@@ -22,6 +22,7 @@ export type CorpusStats = {
   doc_count: number;
   page_count: number;
   chunk_count: number;
+  user_doc_count?: number;
   last_index_time: string | null;
   failures: FailureRow[];
   detail?: string;

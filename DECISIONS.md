@@ -61,9 +61,16 @@ ships until a model id is filled by a later change.
 
 Freeze date **2026-09-05**. Policy: public Kubernetes.io concept pages and
 public Microsoft Learn Azure pages only. Fourteen URLs are pinned in
-`corpus/MANIFEST.md`. No PDFs, no private runbooks, no InnovX or Acme fixtures
-in the index. Re-freeze requires a new date, a full URL list, and a decision-
-trail row. Ingest itself is C2.
+`corpus/MANIFEST.md`. Re-freeze requires a new date, a full URL list, and a
+decision-trail row.
+
+User-supplied URLs and uploads (`documents.origin = user`) are a workspace
+index, not a re-freeze. They must not be deleted by freeze re-index. They
+are HTTPS-only with a byte cap (`CITEBENCH_USER_SOURCE_MAX_BYTES`, default
+64 MiB). Gigabyte ingest, embedding quantization, and hierarchical layers
+are plan 008 later slices — not this binding.
+
+Ingest itself is C2.
 
 ## Arena references
 

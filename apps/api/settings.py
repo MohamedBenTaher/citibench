@@ -66,6 +66,7 @@ class Settings:
     trace_store_dir: Path = Path("/tmp/citebench-traces")
     allow_wipe: bool = False
     generate_max_per_minute: int = 30
+    user_source_max_bytes: int = 64 * 1024 * 1024
 
 
 def _embed_backend(raw: dict) -> str:
@@ -161,6 +162,7 @@ def load_settings() -> Settings:
         embed_backend=_embed_backend(raw),
         allow_wipe=_env_flag("CITEBENCH_ALLOW_WIPE"),
         generate_max_per_minute=_generate_rpm(),
+        user_source_max_bytes=_user_source_max_bytes(),
     )
 
 
@@ -175,6 +177,17 @@ def _generate_rpm() -> int:
     except ValueError:
         return 30
     return parsed if parsed >= 0 else 30
+
+
+def _user_source_max_bytes() -> int:
+    raw = os.environ.get("CITEBENCH_USER_SOURCE_MAX_BYTES", "").strip()
+    if not raw:
+        return 64 * 1024 * 1024
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return 64 * 1024 * 1024
+    return parsed if parsed > 0 else 64 * 1024 * 1024
 
 
 def require_groq_key(settings: Settings) -> str:

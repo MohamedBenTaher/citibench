@@ -19,6 +19,7 @@ Human-readable overview of both tracks: [PROGRAM.md](PROGRAM.md).
 | 005 | Bench visual direction (paper, ink, citation brackets) | P1 | M | — | DONE |
 | 006 | Reviewer information architecture (`/`, `/evals`, corpus copy) | P1 | M | 005 | DONE |
 | 007 | Playground, Traces, and API error interaction | P1 | M | — | DONE |
+| 008 | User-dictated workspace corpus (isolation + bounded ingest) | P1 | L | leftovers | IN PROGRESS |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -61,7 +62,7 @@ cd apps/web && npm run typecheck
 - **Dark-mode toggle / `next-themes`**: `.dark` tokens exist unused; a toggle is a generic SaaS default. Plan 005 retokens light (paper/ink) only.
 - **Chat homepage, suggested-prompt carousel as the `/` focal point, streaming chat UI**: forbidden by `DECISIONS.md`.
 - **Marketing analytics product**: still out of scope. The in-app `/metrics` Scoreboard is the C7 scrape rendered for reviewers (null stays unmeasured).
-- **Request-body SSRF**: ingest URLs come from `corpus/MANIFEST.md`, not `IngestRequest`.
+- **Request-body SSRF**: freeze ingest URLs still come from `corpus/MANIFEST.md`. User sources (`POST /corpus/sources`) are HTTPS-only and reject non-public resolved addresses; they are not the eval freeze.
 - **SQL injection on retrieve/ingest**: parameterized `%s`; embedding literals are floats.
 
 ## Audit leftovers (not planned)

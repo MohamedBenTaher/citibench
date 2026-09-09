@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
@@ -23,6 +23,7 @@ from embed import warmup_local_embed
 from generate import GenerateResult, generate
 from metrics import MetricsSnapshot, collect_metrics, render_prometheus
 from pipeline import IngestBusy, WipeDisabled, run_ingest
+from user_ingest import SourceRejected, ingest_user_upload, ingest_user_url
 from ratelimit import generate_window
 from rerank import warmup_ranker
 from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
@@ -160,6 +161,11 @@ class IngestRequest(BaseModel):
     )
 
 
+class SourceRequest(BaseModel):
+    url: str
+    title: str | None = None
+
+
 class RetrieveRequest(BaseModel):
     query: str
 
@@ -203,6 +209,80 @@ def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
         )
     except WipeDisabled as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except IngestBusy as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise _runtime_http_error(exc) from exc
+    except Exception as exc:
+        if is_database_error(exc):
+            raise HTTPException(
+                status_code=503,
+                detail=database_unavailable_detail(exc, settings.database_url),
+            ) from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/corpus/sources")
+def post_corpus_source(body: SourceRequest) -> dict[str, Any]:
+    settings = load_settings()
+    url = (body.url or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url is required")
+    try:
+        return ingest_user_url(settings, url, body.title)
+    except SourceRejected as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except IngestBusy as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise _runtime_http_error(exc) from exc
+    except Exception as exc:
+        if is_database_error(exc):
+            raise HTTPException(
+                status_code=503,
+                detail=database_unavailable_detail(exc, settings.database_url),
+            ) from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/corpus/uploads")
+def post_corpus_upload(
+    file: UploadFile,
+    title: str | None = Form(None),
+) -> dict[str, Any]:
+    settings = load_settings()
+    name = Path(file.filename or "upload.bin").name
+    if not name or name.startswith("."):
+        raise HTTPException(status_code=400, detail="upload filename is required")
+    incoming = settings.corpus_dir / "raw" / "incoming"
+    incoming.mkdir(parents=True, exist_ok=True)
+    dest = incoming / name
+    written = 0
+    try:
+        with dest.open("wb") as handle:
+            while True:
+                piece = file.file.read(64 * 1024)
+                if not piece:
+                    break
+                written += len(piece)
+                if written > settings.user_source_max_bytes:
+                    dest.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"source exceeds max bytes ({settings.user_source_max_bytes})",
+                    )
+                handle.write(piece)
+        return ingest_user_upload(
+            settings,
+            dest=dest,
+            filename=name,
+            title=title,
+            source_label=f"upload:{name}",
+        )
+    except HTTPException:
+        raise
+    except SourceRejected as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except IngestBusy as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
