@@ -45,7 +45,7 @@ from pydantic import BaseModel, Field
 
 from chat import ChatResult, groq_chat
 from retrieve import ChunkHit, RetrieveConfig, retrieve, retrieve_config_from_settings
-from settings import Settings, load_settings
+from settings import Settings, load_settings, require_groq_key
 from trace import (
     ChunkRef,
     CostEstimate,
@@ -123,6 +123,7 @@ class GraphState(TypedDict, total=False):
     prompt_tokens: int
     completion_tokens: int
     rerank_skipped: bool
+    chat_model: str
 
 
 def cost_method_string(settings: Settings) -> str:
@@ -242,6 +243,8 @@ def generate(
     config: RetrieveConfig | None = None,
 ) -> GenerateResult:
     resolved = settings if settings is not None else load_settings()
+    if chat_fn is None:
+        require_groq_key(resolved)
     cfg = config or retrieve_config_from_settings(resolved)
     query_text = query or ""
     run_id = str(uuid4())
@@ -266,6 +269,7 @@ def generate(
         "prompt_tokens": 0,
         "completion_tokens": 0,
         "rerank_skipped": False,
+        "chat_model": resolved.chat_model,
     }
     invoke_error: Exception | None = None
     final: GraphState = dict(initial)
@@ -280,6 +284,14 @@ def generate(
     embed_tokens = estimate_embed_tokens(query_text, resolved)
     prompt_tokens = int(final.get("prompt_tokens") or 0)
     completion_tokens = int(final.get("completion_tokens") or 0)
+    billed_model = str(final.get("chat_model") or resolved.chat_model)
+    if terminal_span:
+        attrs = terminal_span[0].get("attributes") or {}
+        if prompt_tokens == 0 and "prompt_tokens" in attrs:
+            prompt_tokens = int(attrs.get("prompt_tokens") or 0)
+            completion_tokens = int(attrs.get("completion_tokens") or 0)
+        if attrs.get("model"):
+            billed_model = str(attrs["model"])
     cost = CostEstimate(
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
@@ -308,7 +320,7 @@ def generate(
         abstain_reason=final.get("abstain_reason") if abstained else None,
         cost=cost,
         cost_method=cost_method_string(resolved),
-        model=resolved.chat_model,
+        model=billed_model,
         latency_ms=round(latency_ms, 3),
         rerank_skipped=rerank_skipped,
         stage_sink=stage_sink,
@@ -335,7 +347,7 @@ def generate(
         cost=cost,
         cost_method=cost_method_string(resolved),
         rerank_skipped=rerank_skipped,
-        model=resolved.chat_model,
+        model=billed_model,
         langfuse_trace_id=trace.langfuse_trace_id,
         trace_backend="langfuse" if trace.langfuse_trace_id else "local",
     )
@@ -391,26 +403,38 @@ def _compile_graph(
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": _user_prompt(state["query"], hits)},
         ]
+        chat_result = None
         try:
             chat_result = chat_fn(messages)
             payload = parse_model_payload(chat_result.content)
         except Exception as exc:
+            billed_model = settings.chat_model
+            attrs: dict[str, Any] = {"error": str(exc), "model": billed_model}
+            if chat_result is not None:
+                billed_model = chat_result.model or settings.chat_model
+                attrs = {
+                    "error": str(exc),
+                    "model": billed_model,
+                    "prompt_tokens": chat_result.prompt_tokens,
+                    "completion_tokens": chat_result.completion_tokens,
+                }
             terminal_span.append(
                 {
                     "kind": "generate",
                     "started_at": started,
                     "finished_at": utcnow(),
                     "status": "error",
-                    "attributes": {"error": str(exc), "model": settings.chat_model},
+                    "attributes": attrs,
                 }
             )
             raise
+        billed_model = chat_result.model or settings.chat_model
         model_abstain = bool(payload.get("abstain"))
         citation_ids = _citation_ids_from_payload(payload)
         citations = refs_for_ids(hits, citation_ids)
         path = [*(state.get("path") or []), "generate"]
         token_attrs = {
-            "model": settings.chat_model,
+            "model": billed_model,
             "prompt_tokens": chat_result.prompt_tokens,
             "completion_tokens": chat_result.completion_tokens,
         }
@@ -434,6 +458,7 @@ def _compile_graph(
                 "path": path,
                 "prompt_tokens": chat_result.prompt_tokens,
                 "completion_tokens": chat_result.completion_tokens,
+                "chat_model": billed_model,
             }
         answer = str(payload.get("answer") or "").strip() or ABSTAIN_ANSWER
         if answer == ABSTAIN_ANSWER:
@@ -455,6 +480,7 @@ def _compile_graph(
                 "path": path,
                 "prompt_tokens": chat_result.prompt_tokens,
                 "completion_tokens": chat_result.completion_tokens,
+                "chat_model": billed_model,
             }
         terminal_span.append(
             {
@@ -477,6 +503,7 @@ def _compile_graph(
             "path": path,
             "prompt_tokens": chat_result.prompt_tokens,
             "completion_tokens": chat_result.completion_tokens,
+            "chat_model": billed_model,
         }
 
     builder = StateGraph(GraphState)

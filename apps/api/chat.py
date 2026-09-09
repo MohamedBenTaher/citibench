@@ -26,10 +26,17 @@ class ChatError(RuntimeError):
 
 
 class ChatResult:
-    def __init__(self, content: str, prompt_tokens: int, completion_tokens: int) -> None:
+    def __init__(
+        self,
+        content: str,
+        prompt_tokens: int,
+        completion_tokens: int,
+        model: str = "",
+    ) -> None:
         self.content = content
         self.prompt_tokens = prompt_tokens
         self.completion_tokens = completion_tokens
+        self.model = model
 
 
 def reset_http_client() -> None:
@@ -127,11 +134,11 @@ def _post_chat(
         payload = response.json()
         if not isinstance(payload, dict):
             raise ChatError("Groq chat returned a non-object payload")
-        return _result_from_payload(payload)
+        return _result_from_payload(payload, model)
     raise ChatError(f"Groq chat failed after retries: {last_exc}")
 
 
-def _result_from_payload(payload: dict[str, Any]) -> ChatResult:
+def _result_from_payload(payload: dict[str, Any], requested_model: str) -> ChatResult:
     choices = payload.get("choices")
     if not isinstance(choices, list) or not choices:
         raise ChatError("Groq chat payload missing choices")
@@ -144,7 +151,14 @@ def _result_from_payload(payload: dict[str, Any]) -> ChatResult:
     usage = payload.get("usage") if isinstance(payload.get("usage"), dict) else {}
     prompt_tokens = _nonneg_int(usage.get("prompt_tokens"), 0)
     completion_tokens = _nonneg_int(usage.get("completion_tokens"), 0)
-    return ChatResult(content=content, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens)
+    stamped = payload.get("model")
+    used = stamped.strip() if isinstance(stamped, str) and stamped.strip() else requested_model
+    return ChatResult(
+        content=content,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        model=used,
+    )
 
 
 def _nonneg_int(value: Any, default: int) -> int:

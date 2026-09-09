@@ -260,6 +260,26 @@ def test_out_of_corpus_known_bad_abstains() -> None:
     assert result.path == ["retrieve", "generate"]
 
 
+def test_parse_failure_keeps_billed_tokens() -> None:
+    from trace import list_traces
+
+    def chat_fn(_messages: list[dict[str, str]]) -> ChatResult:
+        return ChatResult(
+            content="not-json",
+            prompt_tokens=11,
+            completion_tokens=5,
+            model="openai/gpt-oss-20b",
+        )
+
+    with pytest.raises(RuntimeError, match="non-JSON"):
+        run_generate(chat_fn=chat_fn)
+    traces = list_traces()
+    assert traces
+    assert traces[0].cost.prompt_tokens == 11
+    assert traces[0].cost.completion_tokens == 5
+    assert traces[0].model == "openai/gpt-oss-20b"
+
+
 def test_estimate_embed_tokens_caches_encoding(monkeypatch: pytest.MonkeyPatch) -> None:
     import generate as generate_mod
 
@@ -352,11 +372,14 @@ def test_chat_payload_reads_usage_and_content() -> None:
         {
             "choices": [{"message": {"role": "assistant", "content": '{"abstain": true}'}}],
             "usage": {"prompt_tokens": 9, "completion_tokens": 3},
-        }
+            "model": "openai/gpt-oss-20b",
+        },
+        "openai/gpt-oss-20b",
     )
     assert result.content == '{"abstain": true}'
     assert result.prompt_tokens == 9
     assert result.completion_tokens == 3
+    assert result.model == "openai/gpt-oss-20b"
 
 
 def test_parse_model_payload_accepts_fenced_json() -> None:

@@ -73,8 +73,9 @@ function AboutPage() {
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
             Ingest snapshots only those rows. Re-index replaces per MANIFEST id.{" "}
-            <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> clears documents and
-            chunks first.
+            <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> only
+            works when the API has <code>CITEBENCH_ALLOW_WIPE=1</code>. It then
+            clears documents and chunks.
           </p>
           <p>
             The browser talks to FastAPI at <code>VITE_API_URL</code> (default{" "}

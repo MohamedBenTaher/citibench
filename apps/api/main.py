@@ -22,7 +22,8 @@ from db import (
 from embed import warmup_local_embed
 from generate import GenerateResult, generate
 from metrics import MetricsSnapshot, collect_metrics, render_prometheus
-from pipeline import run_ingest
+from pipeline import IngestBusy, WipeDisabled, run_ingest
+from ratelimit import generate_window
 from rerank import warmup_ranker
 from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, Settings, load_settings
@@ -200,6 +201,10 @@ def post_ingest(body: IngestRequest | None = None) -> dict[str, Any]:
             wipe=req.wipe,
             simulate_failure_id=req.simulate_failure_id,
         )
+    except WipeDisabled as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except IngestBusy as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise _runtime_http_error(exc) from exc
     except Exception as exc:
@@ -230,8 +235,11 @@ def post_retrieve(body: RetrieveRequest) -> RetrieveResponse:
 @app.post("/generate")
 def post_generate(body: GenerateRequest) -> GenerateResult:
     settings = load_settings()
-    if not settings.groq_api_key:
-        raise HTTPException(status_code=503, detail=GROQ_KEY_HELP)
+    if not generate_window.allow(settings.generate_max_per_minute):
+        raise HTTPException(
+            status_code=429,
+            detail="generate rate limit exceeded; retry shortly",
+        )
     try:
         return generate(
             body.query or "",

@@ -185,9 +185,20 @@ def backfill_chunk_tsv(conn: psycopg.Connection) -> None:
     )
 
 
+def backfill_chunk_text_ref(conn: psycopg.Connection) -> None:
+    conn.execute(
+        """
+        UPDATE chunks
+        SET text_ref = doc_id || '#' || id
+        WHERE text_ref LIKE '%#chunk-%'
+        """
+    )
+
+
 def ensure_schema(conn: psycopg.Connection) -> None:
     conn.execute(SCHEMA_SQL)
     backfill_chunk_tsv(conn)
+    backfill_chunk_text_ref(conn)
     conn.commit()
 
 
@@ -197,6 +208,49 @@ def wipe_index(conn: psycopg.Connection) -> None:
 
 def delete_unknown_documents(conn: psycopg.Connection, manifest_ids: Sequence[str]) -> None:
     conn.execute("DELETE FROM documents WHERE NOT (id = ANY(%s))", (list(manifest_ids),))
+
+
+def mark_document_failed(
+    conn: psycopg.Connection,
+    *,
+    doc_id: str,
+    title: str,
+    source_url: str,
+    version_or_snapshot: str,
+    license: str,
+    error: str | None,
+    indexed_at: datetime | None,
+) -> None:
+    """Record a failed snapshot without deleting last-good chunks."""
+    updated = conn.execute(
+        """
+        UPDATE documents
+        SET status = 'failed', error = %s, indexed_at = %s, updated_at = now()
+        WHERE id = %s
+        """,
+        (error, indexed_at, doc_id),
+    )
+    if updated.rowcount:
+        return
+    conn.execute(
+        """
+        INSERT INTO documents (
+            id, title, source_url, version_or_snapshot, license,
+            sha256, content_type, snapshot_path, page_count, status, error, indexed_at
+        ) VALUES (
+            %s, %s, %s, %s, %s, NULL, NULL, NULL, 0, 'failed', %s, %s
+        )
+        """,
+        (
+            doc_id,
+            title,
+            source_url,
+            version_or_snapshot,
+            license,
+            error,
+            indexed_at,
+        ),
+    )
 
 
 def replace_document(

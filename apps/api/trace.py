@@ -20,6 +20,7 @@ log = logging.getLogger("citebench.trace")
 
 TRACE_NAME = "citebench.run"
 _TEXT_REF_RE = re.compile(r"^[A-Za-z0-9._:-]+#[A-Za-z0-9._:-]+$")
+_TRACE_ID_RE = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _BODY_KEYS = frozenset({"text", "body", "chunk_text", "passage", "content", "document"})
 _MEMORY: dict[str, "RunTrace"] = {}
 _MEMORY_LOCK = Lock()
@@ -327,7 +328,7 @@ def list_traces(*, settings: Any | None = None) -> list[RunTrace]:
 def get_trace(run_id: str, *, settings: Any | None = None) -> RunTrace | None:
     """Look up by ``run_id``, or by ``langfuse_trace_id`` when that id is set."""
     key = (run_id or "").strip()
-    if not key:
+    if not key or not _TRACE_ID_RE.match(key):
         return None
     with _MEMORY_LOCK:
         cached = _MEMORY.get(key)

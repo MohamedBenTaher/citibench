@@ -224,6 +224,8 @@ def test_langfuse_success_sets_id() -> None:
 def test_get_trace_empty_id_is_none() -> None:
     assert get_trace("") is None
     assert get_trace("   ") is None
+    assert get_trace("../secret") is None
+    assert get_trace("a/b") is None
 
 
 def test_get_trace_langfuse_id_from_disk_only() -> None:

@@ -65,6 +65,7 @@ def test_retired_llama_falls_back_to_gpt_oss(monkeypatch) -> None:
     )
     assert fake.models == ["llama-3.1-8b-instant", "openai/gpt-oss-20b"]
     assert result.completion_tokens == 2
+    assert result.model == "openai/gpt-oss-20b"
 
 
 def test_401_does_not_fallback(monkeypatch) -> None:

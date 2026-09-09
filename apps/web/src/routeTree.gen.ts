@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as CorpusRouteImport } from './routes/corpus'
 import { Route as EvalsRouteImport } from './routes/evals'
+import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as TracesRouteImport } from './routes/traces'
 import { Route as ApiMetricsRouteImport } from './routes/api/metrics'
@@ -40,6 +41,11 @@ const CorpusRoute = CorpusRouteImport.update({
 const EvalsRoute = EvalsRouteImport.update({
   id: '/evals',
   path: '/evals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlaygroundRoute = PlaygroundRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/corpus': typeof CorpusRoute
   '/evals': typeof EvalsRoute
+  '/metrics': typeof MetricsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
   '/api/metrics': typeof ApiMetricsRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/corpus': typeof CorpusRoute
   '/evals': typeof EvalsRoute
+  '/metrics': typeof MetricsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
   '/api/metrics': typeof ApiMetricsRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/corpus': typeof CorpusRoute
   '/evals': typeof EvalsRoute
+  '/metrics': typeof MetricsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
   '/api/metrics': typeof ApiMetricsRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/corpus'
     | '/evals'
+    | '/metrics'
     | '/playground'
     | '/traces'
     | '/api/metrics'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/corpus'
     | '/evals'
+    | '/metrics'
     | '/playground'
     | '/traces'
     | '/api/metrics'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/corpus'
     | '/evals'
+    | '/metrics'
     | '/playground'
     | '/traces'
     | '/api/metrics'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CorpusRoute: typeof CorpusRoute
   EvalsRoute: typeof EvalsRoute
+  MetricsRoute: typeof MetricsRoute
   PlaygroundRoute: typeof PlaygroundRoute
   TracesRoute: typeof TracesRoute
   ApiMetricsRoute: typeof ApiMetricsRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/evals'
       fullPath: '/evals'
       preLoaderRoute: typeof EvalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/playground': {
@@ -291,6 +311,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CorpusRoute: CorpusRoute,
   EvalsRoute: EvalsRoute,
+  MetricsRoute: MetricsRoute,
   PlaygroundRoute: PlaygroundRoute,
   TracesRoute: TracesRoute,
   ApiMetricsRoute: ApiMetricsRoute,

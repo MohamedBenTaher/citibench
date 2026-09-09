@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import threading
 from datetime import datetime, timezone
 from typing import Any
 
@@ -15,6 +16,7 @@ from db import (
     ensure_schema,
     finish_ingest_run,
     insert_chunks,
+    mark_document_failed,
     replace_document,
     start_ingest_run,
     wipe_index,
@@ -27,6 +29,19 @@ from snapshot import SnapshotError, build_http_client, snapshot_url
 
 log = logging.getLogger("citebench.ingest")
 _PAGE_MARK = re.compile(r"\[page (\d+)\]")
+_INGEST_LOCK = threading.Lock()
+
+
+class IngestBusy(RuntimeError):
+    pass
+
+
+class WipeDisabled(PermissionError):
+    pass
+
+
+def format_text_ref(doc_id: str, chunk_id: str) -> str:
+    return f"{doc_id}#{chunk_id}"
 
 
 def run_ingest(
@@ -34,6 +49,28 @@ def run_ingest(
     *,
     wipe: bool = False,
     simulate_failure_id: str | None = None,
+) -> dict[str, Any]:
+    if wipe and not settings.allow_wipe:
+        raise WipeDisabled(
+            "wipe is disabled. Set CITEBENCH_ALLOW_WIPE=1 on the API to allow a full index wipe."
+        )
+    if not _INGEST_LOCK.acquire(blocking=False):
+        raise IngestBusy("ingest already running")
+    try:
+        return _run_ingest_locked(
+            settings,
+            wipe=wipe,
+            simulate_failure_id=simulate_failure_id,
+        )
+    finally:
+        _INGEST_LOCK.release()
+
+
+def _run_ingest_locked(
+    settings: Settings,
+    *,
+    wipe: bool,
+    simulate_failure_id: str | None,
 ) -> dict[str, Any]:
     docs = parse_manifest(settings.manifest_path)
     raw_root = settings.corpus_dir / "raw"
@@ -66,7 +103,14 @@ def run_ingest(
                 except Exception as exc:
                     failed += 1
                     log.warning("ingest failed for %s: %s", doc.id, exc)
-                    _record_failure(settings, doc, now, exc)
+                    try:
+                        _record_failure(settings, doc, now, exc)
+                    except Exception as record_exc:
+                        log.exception(
+                            "could not record ingest failure for %s: %s",
+                            doc.id,
+                            record_exc,
+                        )
         with connect(settings.database_url) as conn:
             delete_unknown_documents(conn, [doc.id for doc in docs])
     except Exception as exc:
@@ -143,7 +187,7 @@ def _ingest_one(
                 "chunk_index": chunk.index,
                 "page": page,
                 "text": chunk.text,
-                "text_ref": f"{doc.id}#chunk-{chunk.index}",
+                "text_ref": format_text_ref(doc.id, f"{doc.id}:{chunk.index}"),
                 "token_count": chunk.token_count,
                 "embedding": vector,
             }
@@ -176,18 +220,13 @@ def _record_failure(
     exc: BaseException,
 ) -> None:
     with connect(settings.database_url) as conn:
-        replace_document(
+        mark_document_failed(
             conn,
             doc_id=doc.id,
             title=doc.title,
             source_url=doc.source_url,
             version_or_snapshot=doc.version_or_snapshot,
             license=doc.license,
-            sha256=None,
-            content_type=None,
-            snapshot_path=None,
-            page_count=0,
-            status="failed",
             error=_error_text(exc),
             indexed_at=now,
         )

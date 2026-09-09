@@ -204,9 +204,10 @@ library. MCP, redteam deploy, and dual eval frameworks stay out of scope.
 
 ## C7 metrics binding (2026-09-06)
 
-C7 is `GET /metrics` and a README table that only prints numbers we can
-reproduce. JSON is the default scrape; `?format=prometheus` is the text
-scrape. Null means unmeasured, not zero.
+C7 is `GET /metrics` (JSON scrape, `?format=prometheus` text scrape) plus
+the in-app Scoreboard at `/metrics`. Null means unmeasured, not zero. The
+UI must not invent scores. A second analytics product (charts over invented
+series, marketing gauges) stays out of scope.
 
 Latency p50/p95 is linear interpolation over `RunTrace.latency_ms` where
 `latency_ms > 0` (C5 local store + memory). Empty store → `null`.

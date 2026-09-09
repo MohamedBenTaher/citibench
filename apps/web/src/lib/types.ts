@@ -162,6 +162,41 @@ export type RedteamCase = {
   abstained?: boolean;
 };
 
+export type MetricsSnapshot = {
+  as_of: string;
+  latency_ms: {
+    p50: number | null;
+    p95: number | null;
+    n: number;
+    method: string;
+  };
+  cost_per_1k_queries_usd: {
+    usd: number | null;
+    n: number;
+    method: string;
+    cost_method: string;
+  };
+  faithfulness: {
+    value: number | null;
+    context_precision: number | null;
+    present: boolean;
+    mode: string | null;
+    source: string | null;
+    run_id: string | null;
+    split: string | null;
+    n_scored: number | null;
+    method: string;
+  };
+  corpus: {
+    docs: number | null;
+    pages: number | null;
+    chunks: number | null;
+    source: string;
+    measured_under: string | null;
+  };
+  detail?: string;
+};
+
 export type RedteamLatest = {
   present?: boolean;
   split?: string;

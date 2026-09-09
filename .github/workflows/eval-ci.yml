@@ -21,8 +21,22 @@ jobs:
           pip install -r apps/api/requirements.txt pytest
 
       - name: Pytest
-        working-directory: apps/api
-        run: pytest
+        env:
+          PYTHONPATH: apps/api
+        run: python -m pytest apps/api
+
+      - name: Web typecheck
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Typecheck web
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run typecheck
 
       - name: RAGAS CI gate
         env:

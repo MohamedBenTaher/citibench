@@ -2,11 +2,11 @@
 
 ## Direction
 
-Citebench is a frozen, inspectable citation bench — **not a chat product**. Reviewers sit at a laptop judging grounded retrieve: calm surfaces, legible hierarchy, evidence you can screenshot. No chat bubbles, no landing-page hero, no invented demo scores.
+Citebench is a frozen, inspectable citation bench — **not a chat product**. `/` is a research-gym index: identity first, then live board, then the circuit. Reviewers still screenshot `/evals` or a failing trace, not a chat bubble. No invented demo scores.
 
 ## Feel
 
-Paper and ink. Warm off-white canvas, near-black ink with a cool-blue bias, citation brackets as the signature motif. Serious bench chrome, not a SaaS dashboard or messaging app.
+Paper and ink. A gym for research: numbered stations (floor, set, log, weigh-in), not neon or gamification. Warm off-white canvas, near-black ink with a cool-blue bias, citation brackets as the signature motif. Serious bench chrome, not a SaaS dashboard or messaging app.
 
 ## Palette
 
@@ -40,11 +40,12 @@ Canvas = paper. Cards share the same family (paper + 1px border), not a second h
 
 ## Signature
 
-Citation brackets from `CitebenchMark` — reuse as a 2px ink rule or bracket motif on the header underline / page title. Never a decorative gradient.
+Citation brackets from `CitebenchMark` — reuse as a 2px ink rule, corner brackets on the gym hero, and header underline. Never a decorative gradient. Circuit copy: Floor / Set / Log / Weigh-in.
 
 ## Forbidden
 
 - Chat homepage or message-thread layout
+- Startup orange/blue palette or a second display font (keep Geist)
 - Second component library (shadcn + TanStack stay)
 - Invented metrics, trend deltas, or demo scores
 - Purple SaaS accent, Inter, dark-mode toggle

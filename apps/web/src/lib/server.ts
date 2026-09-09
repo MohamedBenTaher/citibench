@@ -2,10 +2,14 @@ import { fetchApiJson } from "./fetch-api";
 import type {
   CorpusStats,
   EvalLatest,
+  MetricsSnapshot,
   RedteamLatest,
   RunTrace,
   TraceList,
 } from "./types";
+export function getMetrics() {
+  return fetchApiJson<MetricsSnapshot>("/metrics");
+}
 
 export function getCorpusStats() {
   return fetchApiJson<CorpusStats>("/corpus/stats");

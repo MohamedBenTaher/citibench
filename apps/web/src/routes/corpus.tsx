@@ -160,7 +160,8 @@ function CorpusPage() {
           Re-index is idempotent (replace per MANIFEST id). Browser calls
           FastAPI at <code>VITE_API_URL</code> (default{" "}
           <code>http://localhost:8000</code>). <code>POST /ingest</code> with{" "}
-          <code>{`{"wipe": true}`}</code> wipes documents and chunks first.
+          <code>{`{"wipe": true}`}</code> only wipes when{" "}
+          <code>CITEBENCH_ALLOW_WIPE=1</code> is set on the API.
           Embeddings are local <code>nomic-embed-text-v1.5</code> (Groq no
           longer hosts that model). First ingest downloads the ONNX weights
           (~0.5&nbsp;GB) into <code>NOMIC_CACHE_DIR</code>.

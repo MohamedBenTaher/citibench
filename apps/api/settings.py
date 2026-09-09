@@ -64,6 +64,8 @@ class Settings:
     langfuse_secret_key: str = ""
     langfuse_host: str = ""
     trace_store_dir: Path = Path("/tmp/citebench-traces")
+    allow_wipe: bool = False
+    generate_max_per_minute: int = 30
 
 
 def _embed_backend(raw: dict) -> str:
@@ -157,7 +159,22 @@ def load_settings() -> Settings:
         manifest_path=corpus_dir / "MANIFEST.md",
         groq_api_key=os.environ.get("GROQ_API_KEY", "").strip(),
         embed_backend=_embed_backend(raw),
+        allow_wipe=_env_flag("CITEBENCH_ALLOW_WIPE"),
+        generate_max_per_minute=_generate_rpm(),
     )
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes"}
+
+
+def _generate_rpm() -> int:
+    raw = os.environ.get("CITEBENCH_GENERATE_RPM", "30").strip()
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return 30
+    return parsed if parsed >= 0 else 30
 
 
 def require_groq_key(settings: Settings) -> str:

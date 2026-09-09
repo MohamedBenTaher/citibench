@@ -6,7 +6,6 @@ import { ErrorAlert } from "@/components/error-alert";
 import { RouteError, RoutePending } from "@/components/status";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { publicApiBase } from "@/lib/client-api";
 import { getCorpusStats, getEvalLatest } from "@/lib/server";
 import type { CorpusStats, EvalLatest } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -47,6 +46,13 @@ const stations = [
     station: "Weigh-in",
     title: "Evals",
     body: "Public RAGAS gate and redteam. Screenshot destination for reviewers.",
+  },
+  {
+    n: "05",
+    to: "/metrics" as const,
+    station: "Scoreboard",
+    title: "Metrics",
+    body: "p50/p95, cost per 1k, last faithfulness. Unmeasured when empty.",
   },
 ] as const;
 
@@ -107,7 +113,6 @@ function IndexPage() {
   const hasEval = Boolean(latest?.present && latest.metrics);
   const faithfulness = formatFaithfulness(latest);
   const threshold = latest?.threshold_faithfulness ?? 0.7;
-  const metricsUrl = `${publicApiBase()}/metrics`;
   const gate = gateLabel(hasEval, latest?.gate_passed);
 
   return (
@@ -151,14 +156,14 @@ function IndexPage() {
               Run a set
             </Link>
             <Link
-              to="/about"
+              to="/metrics"
               preload="intent"
               className={cn(
-                buttonVariants({ variant: "link" }),
-                "h-9 px-2 text-muted-foreground",
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "min-h-11 px-4",
               )}
             >
-              What this is not
+              Scoreboard
             </Link>
           </div>
         </div>
@@ -244,24 +249,6 @@ function IndexPage() {
           ))}
         </ul>
       </section>
-
-      <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer font-medium text-foreground">
-          Metrics scrape
-        </summary>
-        <p className="mt-2">
-          JSON only — not a dashboard.{" "}
-          <a
-            href={metricsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
-          >
-            Open GET /metrics
-          </a>{" "}
-          at <code>{metricsUrl}</code>
-        </p>
-      </details>
     </>
   );
 }
