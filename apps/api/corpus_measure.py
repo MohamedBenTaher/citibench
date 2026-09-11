@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+import argparse
 import json
+import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from chunking import chunk_text
+from chunking import chunk_text_dynamic
 from manifest import ManifestDoc, parse_manifest
 from parse_doc import parse_snapshot
 from settings import Settings, load_settings
 from snapshot import SnapshotError, build_http_client, snapshot_url
+
+_FREEZE_RE = re.compile(r"Freeze date:\s*\*\*(.+?)\*\*")
 
 
 def measure_corpus(
@@ -23,7 +28,7 @@ def measure_corpus(
     """Count docs/pages/chunks from local snapshots, optionally fetching HTML."""
     resolved = settings if settings is not None else load_settings()
     docs = parse_manifest(resolved.manifest_path)
-    root = raw_root if raw_root is not None else resolved.corpus_dir / "raw"
+    root = raw_root if raw_root is not None else resolved.manifest_path.parent / "raw"
     per_doc: list[dict[str, Any]] = []
     pages = 0
     chunks = 0
@@ -55,14 +60,14 @@ def measure_corpus(
         "measured_at": datetime.now(timezone.utc).isoformat(),
         "measured_under": measured_under,
         "method": {
-            "docs": "count of pinned URLs in corpus/MANIFEST.md",
+            "docs": f"count of pinned URLs in {resolved.manifest_path.name}",
             "pages": "HTML snapshot = 1 page; PDF = PdfReader page count",
             "chunks": (
                 f"tiktoken {resolved.tokenizer} windows of "
                 f"{resolved.chunk_size}/{resolved.chunk_overlap}"
             ),
         },
-        "freeze_date": "2026-09-05",
+        "freeze_date": _freeze_date(resolved.manifest_path),
         "docs": len(docs),
         "pages": pages if len(missing) == 0 else None,
         "chunks": chunks if len(missing) == 0 else None,
@@ -117,7 +122,7 @@ def _measure_one(
         fetched = True
 
     parsed = parse_snapshot(local, "")
-    pieces = chunk_text(
+    pieces = chunk_text_dynamic(
         parsed.text,
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
@@ -142,3 +147,39 @@ def _existing_snapshot(dest_dir: Path) -> Path | None:
         if path.is_file():
             return path
     return None
+
+
+def _freeze_date(manifest_path: Path) -> str | None:
+    try:
+        text = manifest_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = _FREEZE_RE.search(text)
+    return match.group(1).strip() if match else None
+
+
+def _default_dest() -> Path:
+    env = os.environ.get("EVAL_STORE_DIR", "").strip()
+    if env:
+        return Path(env) / "corpus.json"
+    return Path(__file__).resolve().parents[2] / "evals" / "results" / "corpus.json"
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Measure the corpus without embedding.")
+    parser.add_argument("--fetch-missing", action="store_true", help="fetch snapshots not on disk")
+    parser.add_argument("--dest", default=str(_default_dest()))
+    parser.add_argument("--no-write", action="store_true")
+    args = parser.parse_args(argv)
+
+    payload = measure_corpus(fetch_missing=args.fetch_missing)
+    summary = {key: payload[key] for key in ("docs", "pages", "chunks", "missing", "measured_under", "freeze_date")}
+    print(json.dumps(summary, indent=2))
+    if not args.no_write:
+        write_corpus_artifact(payload, Path(args.dest))
+        print(f"wrote {args.dest}")
+    return 0 if not payload["missing"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
