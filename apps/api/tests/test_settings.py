@@ -37,3 +37,17 @@ def test_load_settings_binds_groq_chat_model() -> None:
     assert settings.chat_prompt_usd_per_1m == 0.075
     assert settings.chat_completion_usd_per_1m == 0.30
     assert settings.embed_backend == "local"
+
+
+def test_manifest_env_override(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = tmp_path / "MANIFEST.md"
+    manifest.write_text("# empty\n", encoding="utf-8")
+    monkeypatch.setenv("CITEBENCH_MANIFEST", str(manifest))
+    assert load_settings().manifest_path == manifest
+
+
+def test_snapshot_only_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CITEBENCH_SNAPSHOT_ONLY", "1")
+    assert load_settings().snapshot_only is True
+    monkeypatch.delenv("CITEBENCH_SNAPSHOT_ONLY", raising=False)
+    assert load_settings().snapshot_only is False

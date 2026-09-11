@@ -61,3 +61,46 @@ def test_database_unavailable_detail_names_host() -> None:
 def test_is_database_error_matches_dns() -> None:
     assert is_database_error(OSError(-2, "Name or service not known"))
     assert not is_database_error(ValueError("bad chunk"))
+
+
+def test_insert_chunks_writes_metadata_columns() -> None:
+    import db
+
+    captured: list[str] = []
+
+    class _Cursor:
+        def execute(self, sql: str, params: object) -> None:
+            captured.append(sql)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc: object) -> bool:
+            return False
+
+    class _Conn:
+        def cursor(self) -> _Cursor:
+            return _Cursor()
+
+    db.insert_chunks(
+        _Conn(),
+        [
+            {
+                "id": "k8s-pods:0",
+                "doc_id": "k8s-pods",
+                "chunk_index": 0,
+                "page": 1,
+                "section": "A",
+                "section_path": "A",
+                "url": "https://example.invalid/pods",
+                "text": "body",
+                "text_ref": "k8s-pods#k8s-pods:0",
+                "token_count": 1,
+                "embedding": [0.0, 0.0],
+            }
+        ],
+    )
+    assert captured
+    sql = captured[0]
+    for column in ("section", "section_path", "url"):
+        assert column in sql

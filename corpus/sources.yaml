@@ -1,0 +1,67 @@
+# Citebench freeze sources. The crawler (scripts/crawl_manifest.py) turns these
+# into corpus/MANIFEST.md rows. Licenses were verified on 2026-09-10; re-check
+# before a re-freeze.
+freeze_version: "2026-09-10"
+sources:
+  - key: k8s
+    product: Kubernetes
+    source: kubernetes.io
+    doc_type: concept
+    license: "CC BY 4.0"
+    seeds:
+      - https://kubernetes.io/docs/
+    allow_prefixes:
+      - https://kubernetes.io/docs/
+    max_pages: 1100
+
+  - key: azure
+    product: Azure
+    source: learn.microsoft.com
+    doc_type: reference
+    license: "CC BY 4.0"
+    seeds:
+      - https://learn.microsoft.com/en-us/azure/aks/
+      - https://learn.microsoft.com/en-us/azure/storage/blobs/
+      - https://learn.microsoft.com/en-us/azure/azure-monitor/
+      - https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/
+    allow_prefixes:
+      - https://learn.microsoft.com/en-us/azure/aks/
+      - https://learn.microsoft.com/en-us/azure/storage/blobs/
+      - https://learn.microsoft.com/en-us/azure/azure-monitor/
+      - https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/
+    max_pages: 300
+
+  - key: postgres
+    product: PostgreSQL
+    source: postgresql.org
+    doc_type: manual
+    license: "PostgreSQL License"
+    seeds:
+      - https://www.postgresql.org/docs/current/
+    allow_prefixes:
+      - https://www.postgresql.org/docs/current/
+    max_pages: 250
+
+  - key: fastapi
+    product: FastAPI
+    source: fastapi.tiangolo.com
+    doc_type: guide
+    license: "MIT"
+    seeds:
+      - https://fastapi.tiangolo.com/
+    allow_prefixes:
+      - https://fastapi.tiangolo.com/
+    max_pages: 150
+
+  # C5 replacement for OSTEP (copyrighted; authors ask for links, not copies).
+  # xv6 book sources are MIT-licensed (mit-pdos/xv6-book): multi-page PDF.
+  - key: xv6
+    product: xv6
+    source: pdos.csail.mit.edu
+    doc_type: book
+    license: "MIT (xv6 book sources)"
+    kind: pdf
+    pdfs:
+      - https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf
+    titles:
+      https://pdos.csail.mit.edu/6.828/2024/xv6/book-riscv-rev4.pdf: "xv6: a simple, Unix-like teaching operating system (riscv rev4)"

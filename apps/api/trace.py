@@ -47,6 +47,16 @@ class ChunkRef(BaseModel):
     text_ref: str
     score: float | None = None
     rank: int | None = None
+    # Display metadata only. text_ref stays pointer-only; no chunk body.
+    title: str | None = None
+    source: str | None = None
+    product: str | None = None
+    doc_type: str | None = None
+    version: str | None = None
+    license: str | None = None
+    page: int | None = None
+    section: str | None = None
+    url: str | None = None
 
     @field_validator("text_ref")
     @classmethod
@@ -144,6 +154,15 @@ def chunk_ref_for_hit(
     doc_id: str,
     score: float | None,
     rank: int | None,
+    title: str | None = None,
+    source: str | None = None,
+    product: str | None = None,
+    doc_type: str | None = None,
+    version: str | None = None,
+    license: str | None = None,
+    page: int | None = None,
+    section: str | None = None,
+    url: str | None = None,
 ) -> ChunkRef:
     return ChunkRef(
         chunk_id=chunk_id,
@@ -151,6 +170,15 @@ def chunk_ref_for_hit(
         text_ref=f"{doc_id}#{chunk_id}",
         score=score,
         rank=rank,
+        title=title,
+        source=source,
+        product=product,
+        doc_type=doc_type,
+        version=version,
+        license=license,
+        page=page,
+        section=section,
+        url=url,
     )
 
 
@@ -163,6 +191,15 @@ def refs_from_hits(hits: list[Any]) -> list[ChunkRef]:
                 doc_id=str(getattr(hit, "doc_id", "")),
                 score=getattr(hit, "score", None),
                 rank=getattr(hit, "rank", index),
+                title=getattr(hit, "title", None),
+                source=getattr(hit, "source", None),
+                product=getattr(hit, "product", None),
+                doc_type=getattr(hit, "doc_type", None),
+                version=getattr(hit, "version", None),
+                license=getattr(hit, "license", None),
+                page=getattr(hit, "page", None),
+                section=getattr(hit, "section", None),
+                url=getattr(hit, "url", None),
             )
         )
     return refs

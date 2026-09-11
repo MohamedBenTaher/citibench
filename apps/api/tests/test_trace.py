@@ -438,3 +438,28 @@ def _assert_no_corpus_dump(trace: RunTrace) -> None:
 
 def body_not_in(text_ref: str, bodies: set[str]) -> bool:
     return all(body not in text_ref for body in bodies)
+
+
+def test_refs_from_hits_carry_metadata_but_not_body() -> None:
+    from trace import refs_from_hits
+
+    class _Hit:
+        chunk_id = "k8s-pods:0"
+        doc_id = "k8s-pods"
+        score = 0.9
+        rank = 1
+        title = "Pods"
+        source = "kubernetes.io"
+        product = "Kubernetes"
+        doc_type = "concept"
+        version = "v0-2026-09-10"
+        license = "CC BY 4.0"
+        page = 2
+        section = "A > B"
+        url = "https://kubernetes.io/docs/concepts/workloads/pods/"
+
+    ref = refs_from_hits([_Hit()])[0]
+    assert ref.product == "Kubernetes"
+    assert ref.section == "A > B"
+    assert ref.page == 2
+    assert ref.text_ref == "k8s-pods#k8s-pods:0"

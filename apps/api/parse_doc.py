@@ -66,6 +66,11 @@ def _parse_html(data: bytes) -> ParsedDocument:
         or soup.body
         or soup
     )
+    for heading in root.find_all(["h1", "h2", "h3", "h4"]):
+        level = int(heading.name[1])
+        marker = "#" * level + " " + heading.get_text(" ", strip=True)
+        heading.clear()
+        heading.append(marker)
     text = root.get_text("\n", strip=True)
     text = _collapse_blank_lines(text)
     if not text:

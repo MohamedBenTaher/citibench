@@ -9,10 +9,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 from generate import COST_METHOD_NAME
+from manifest import parse_manifest
 from metrics import collect_metrics, percentile, render_prometheus
 from settings import load_settings
 from test_trace import valid_trace
 from trace import emit_trace
+
+
+def _manifest_doc_count() -> int:
+    return len(parse_manifest(load_settings().manifest_path))
 
 
 @pytest.fixture
@@ -62,7 +67,7 @@ def test_metrics_null_when_no_traces_or_eval(eval_store: Path) -> None:
     assert snapshot.cost_per_1k_queries_usd.n == 0
     assert snapshot.faithfulness.present is False
     assert snapshot.faithfulness.value is None
-    assert snapshot.corpus.docs == 14
+    assert snapshot.corpus.docs == _manifest_doc_count()
 
 
 def test_metrics_percentiles_and_cost_from_traces(eval_store: Path) -> None:
@@ -136,7 +141,7 @@ def test_metrics_endpoint_json_and_prometheus(eval_store: Path) -> None:
     assert "citebench_cost_per_1k_usd" in text
     assert 'citebench_faithfulness{mode="mock"} 0.9' in text
     assert "citebench_latency_sample_n 1" in text
-    assert "citebench_corpus_docs 14" in text
+    assert f"citebench_corpus_docs {_manifest_doc_count()}" in text
 
 
 def test_prometheus_omits_null_gauges(eval_store: Path) -> None:
@@ -169,8 +174,8 @@ def test_corpus_measure_from_local_html(tmp_path: Path, monkeypatch: pytest.Monk
         (dest / "page.html").write_text(html, encoding="utf-8")
 
     payload = measure_corpus(settings=settings, fetch_missing=False, raw_root=raw)
-    assert payload["docs"] == 14
-    assert payload["pages"] == 14
-    assert payload["chunks"] is not None and payload["chunks"] >= 14
+    assert payload["docs"] == len(docs)
+    assert payload["pages"] == len(docs)
+    assert payload["chunks"] is not None and payload["chunks"] >= len(docs)
     assert payload["missing"] == []
     assert payload["measured_under"] == "local-snapshots"

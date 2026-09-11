@@ -16,6 +16,7 @@ apps/web/.nitro/
 apps/web/node_modules/
 apps/web/tsconfig.tsbuildinfo
 pgdata/
+plans/
 corpus/raw/*
 !corpus/raw/.gitkeep
 

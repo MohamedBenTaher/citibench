@@ -360,3 +360,29 @@ def test_retrieve_module_does_not_import_ensure_schema() -> None:
     import retrieve as retrieve_mod
 
     assert not hasattr(retrieve_mod, "ensure_schema")
+
+
+def test_scored_from_row_carries_display_metadata() -> None:
+    from retrieve import _scored_from_row
+
+    row = {
+        "id": "k8s-pods:0",
+        "doc_id": "k8s-pods",
+        "text": "A Pod is the smallest deployable unit.",
+        "vector_score": 0.75,
+        "title": "Pods",
+        "source": "kubernetes.io",
+        "product": "Kubernetes",
+        "doc_type": "concept",
+        "version": "v0-2026-09-10",
+        "license": "CC BY 4.0",
+        "page": 2,
+        "section": "A > B",
+        "url": "https://kubernetes.io/docs/concepts/workloads/pods/",
+    }
+    scored = _scored_from_row(row, "vector_score")
+    assert scored.score == pytest.approx(0.75)
+    assert scored.product == "Kubernetes"
+    assert scored.section == "A > B"
+    assert scored.page == 2
+    assert scored.license == "CC BY 4.0"

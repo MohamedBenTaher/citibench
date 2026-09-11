@@ -11,7 +11,7 @@ WEB     ?= http://127.0.0.1:$(WEB_PORT)
 VENV    := .venv
 PY      := $(VENV)/bin/python
 
-.PHONY: help setup start up stop down logs status ingest evals test mcp-smoke
+.PHONY: help setup start up stop down logs status ingest evals smoke test mcp-smoke
 
 help:
 	@echo "Citebench"
@@ -20,6 +20,7 @@ help:
 	@echo "  make start      docker compose up --build (api :8000, TanStack Start web :$(WEB_PORT), db)"
 	@echo "  make ingest     POST /ingest (local nomic embeddings; first run downloads ONNX)"
 	@echo "  make evals      pytest + mock RAGAS + mock redteam (local, before provision)"
+	@echo "  make smoke      offline corpus-v0 smoke: ingest from disk + mock evals (scratch DB)"
 	@echo "  make test       pytest only (uses .venv)"
 	@echo "  make status     health + corpus stats"
 	@echo "  make logs       follow Compose logs"
@@ -81,6 +82,17 @@ ingest:
 
 evals: $(PY)
 	./scripts/local-evals.sh
+
+# Offline corpus-v0 smoke loop. Uses a scratch DB (citebench_v0) so it never
+# wipes the big freeze. Never fetches documents (CITEBENCH_SNAPSHOT_ONLY=1).
+smoke: $(PY)
+	@$(COMPOSE) exec -T db psql -U citebench -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='citebench_v0'" | grep -q 1 || \
+		$(COMPOSE) exec -T db createdb -U citebench citebench_v0
+	CITEBENCH_MANIFEST=corpus/v0/MANIFEST.md \
+	CITEBENCH_SNAPSHOT_ONLY=1 \
+	CITEBENCH_ALLOW_WIPE=1 \
+	DATABASE_URL=postgresql://citebench:citebench@127.0.0.1:5432/citebench_v0 \
+	$(PY) scripts/smoke.py
 
 test: $(PY)
 	$(PY) -m pip install -q -r apps/api/requirements-dev.txt

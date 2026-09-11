@@ -17,6 +17,9 @@ class ManifestDoc:
     source_url: str
     version_or_snapshot: str
     license: str
+    doc_type: str | None = None
+    product: str | None = None
+    source: str | None = None
 
 
 def parse_manifest(path: Path) -> list[ManifestDoc]:
@@ -65,12 +68,20 @@ def parse_manifest(path: Path) -> list[ManifestDoc]:
                 source_url=row["source_url"],
                 version_or_snapshot=row["version_or_snapshot"],
                 license=row["license"],
+                doc_type=_opt(row.get("doc_type")),
+                product=_opt(row.get("product")),
+                source=_opt(row.get("source")),
             )
         )
 
     if not docs:
         raise ValueError(f"{path} pinned document table is empty")
     return docs
+
+
+def _opt(value: object) -> str | None:
+    text = str(value or "").strip()
+    return text or None
 
 
 def _split_row(line: str) -> list[str]:

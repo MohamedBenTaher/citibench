@@ -1,0 +1,9 @@
+{
+  "id": "k8s-configmaps",
+  "source_url": "https://kubernetes.io/docs/concepts/configuration/configmap/",
+  "sha256": "c97de4ee6e43779896ad163a8d2807c0ebdabeb30a440da3bfb394ae0c624fd0",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 536637,
+  "fetched_at": "2026-09-10T21:36:10.612928+00:00"
+}

@@ -53,6 +53,7 @@ from trace import (
     Span,
     SpanKind,
     SpanStatus,
+    chunk_ref_for_hit,
     emit_trace,
     new_span_id,
     refs_from_hits,
@@ -194,12 +195,20 @@ def refs_for_ids(hits: Sequence[ChunkHit], chunk_ids: Sequence[str]) -> list[Chu
         seen.add(chunk_id)
         hit = by_id[chunk_id]
         refs.append(
-            ChunkRef(
+            chunk_ref_for_hit(
                 chunk_id=hit.chunk_id,
                 doc_id=hit.doc_id,
-                text_ref=f"{hit.doc_id}#{hit.chunk_id}",
                 score=hit.score,
                 rank=hit.rank,
+                title=getattr(hit, "title", None),
+                source=getattr(hit, "source", None),
+                product=getattr(hit, "product", None),
+                doc_type=getattr(hit, "doc_type", None),
+                version=getattr(hit, "version", None),
+                license=getattr(hit, "license", None),
+                page=getattr(hit, "page", None),
+                section=getattr(hit, "section", None),
+                url=getattr(hit, "url", None),
             )
         )
     return refs

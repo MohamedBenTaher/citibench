@@ -1,0 +1,9 @@
+{
+  "id": "k8s-secrets",
+  "source_url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+  "sha256": "ee76c9d4e7df4e92d92b625ce659ac4c4e892bcbb7c32dc5db199a78ea8d5d7f",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 570212,
+  "fetched_at": "2026-09-10T21:36:11.088335+00:00"
+}

@@ -2,14 +2,14 @@
 
 Citebench is a **citation-grounded retrieval bench**, not a chat product.
 
-It answers questions about a **frozen public corpus** (14 Kubernetes and Azure docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
+It answers questions about a **frozen public corpus** (~1,800 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
 
 The homepage is an index. The interesting surfaces are **Corpus**, **Playground**, **Traces**, and **Evals**. First screenshot for a reviewer: `/evals` or a failing `/traces` row, not a chat bubble.
 
 ## How it fits together
 
 ```
-  14 pinned public URLs (corpus/MANIFEST.md, freeze 2026-09-05)
+  pinned public docs (corpus/MANIFEST.md, freeze 2026-09-10; smoke corpus in corpus/v0/)
                  │
                  ▼
          ingest ──► Postgres 16 + pgvector
@@ -45,7 +45,7 @@ You need Docker (Compose) and Python 3.12+. A Groq key is required for Playgroun
 make setup          # .env + .venv + pip install
 # edit .env → GROQ_API_KEY=...
 make start          # api :8000, web :3000, Postgres
-make ingest         # index the 14 MANIFEST URLs
+make ingest         # index the MANIFEST URLs
 ```
 
 Open [http://localhost:3000/](http://localhost:3000/) (index), then `/corpus`, `/playground`, `/traces`, `/evals`, `/about`. The `web` service is **TanStack Start** (Vite + Nitro) with **shadcn/ui** (Start template, Nova preset), not Next.js. Compose builds `apps/web` and serves `node .output/server/index.mjs` on container port 3000. Tab loaders call FastAPI directly: Nitro SSR uses `API_URL=http://api:8000`, the browser uses `VITE_API_URL` (Compose build-arg, default `http://localhost:8000`). Do not route those reads through TanStack `createServerFn` — Start's GET RPC returns 401/500 on client navigations (CSRF/origin), which is what made Corpus stats and Traces look broken. `VITE_API_URL` replaces unused `NEXT_PUBLIC_API_URL`.
@@ -103,12 +103,26 @@ curl -sS -X POST http://localhost:8000/ingest -H 'Content-Type: application/json
 
 Do **not** run bare `pytest` on system Python (`No module named 'fastapi'`). macOS often has `python3` and no `python`. Use `make evals` or `.venv/bin/python -m pytest apps/api`.
 
+## Smoke corpus (corpus-v0)
+
+`corpus/v0/` is a committed 14-URL snapshot used for fast, offline smoke loops.
+It is selected with `CITEBENCH_MANIFEST=corpus/v0/MANIFEST.md` and ingested with
+`CITEBENCH_SNAPSHOT_ONLY=1`, which reads `corpus/v0/raw/` from disk and never
+calls the network. `make smoke` ingests it into a scratch database
+(`citebench_v0`) so it cannot wipe the big freeze, then runs the mock evals.
+
+```bash
+make smoke        # offline corpus-v0 ingest + mock evals (needs Compose db)
+```
+
+The big freeze lives in `corpus/MANIFEST.md`; corpus-v0 is immutable.
+
 ## What each tab is
 
 | Route | What you see |
 | --- | --- |
 | `/` | Boring index. Not a chat homepage. |
-| `/corpus` | Freeze + counts. Ingest / re-index the 14 public docs. |
+| `/corpus` | Freeze + counts. Ingest / re-index the public docs. |
 | `/playground` | Ask UI: answer, citations, abstain, latency, estimated cost. Still not a chat product. |
 | `/traces` | One `RunTrace` per ask: retrieve → rerank → generate\|abstain. Charts for latency/cost and outcome mix when runs exist. |
 | `/evals` | Last RAGAS artifact + 10 redteam cases, with metric and attack-type charts. Public; no login wall. |
@@ -156,9 +170,9 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 
 | Metric | Value | Method |
 | --- | --- | --- |
-| Corpus docs | 14 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-05). |
-| Corpus pages | 14 | One HTML snapshot is one page. All 14 URLs are HTML. |
-| Corpus chunks | 148 | `measured-under-live-html-fetch-2026-09-06`. tiktoken 512/64. After ingest, prefer `GET /corpus/stats`. |
+| Corpus docs | 1800 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
+| Corpus pages | — | Unmeasured until re-ingest (plan 013). HTML snapshot = 1 page; PDF = page count. |
+| Corpus chunks | — | Unmeasured until re-ingest (plan 013). tiktoken cl100k_base 512/64. Prefer `GET /corpus/stats`. |
 | Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 3 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
 | Context precision | 0.833 | Same mock artifact (`evals/results/latest.json`). |
 | p95 latency | — | Unmeasured until traces with `latency_ms > 0` exist. |

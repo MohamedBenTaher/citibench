@@ -1,0 +1,9 @@
+{
+  "id": "k8s-ingress",
+  "source_url": "https://kubernetes.io/docs/concepts/services-networking/ingress/",
+  "sha256": "f41ba6a48e51c2145e0e92ff96cfc9e1347c61e803ce04c1e1400127c9d999e8",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 586032,
+  "fetched_at": "2026-09-10T21:36:11.305808+00:00"
+}

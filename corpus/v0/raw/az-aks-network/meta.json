@@ -1,0 +1,9 @@
+{
+  "id": "az-aks-network",
+  "source_url": "https://learn.microsoft.com/en-us/azure/aks/concepts-network",
+  "sha256": "446d69cc69e2b6a2527d6902162b639c297bab1f6863c220c169fd12feed7f38",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 60546,
+  "fetched_at": "2026-09-10T21:36:14.197914+00:00"
+}

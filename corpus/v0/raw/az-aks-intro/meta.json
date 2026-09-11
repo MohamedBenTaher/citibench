@@ -1,0 +1,9 @@
+{
+  "id": "az-aks-intro",
+  "source_url": "https://learn.microsoft.com/en-us/azure/aks/intro-kubernetes",
+  "sha256": "8df5e0e633d138ad2c62169556218b44b12df39912c412abbf9cf95cb05a9799",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 64542,
+  "fetched_at": "2026-09-10T21:36:13.015815+00:00"
+}

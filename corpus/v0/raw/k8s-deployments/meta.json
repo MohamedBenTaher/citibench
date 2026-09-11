@@ -1,0 +1,9 @@
+{
+  "id": "k8s-deployments",
+  "source_url": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+  "sha256": "dd347810593e19c44d3460598edf3b9b94e2efb4a988e0c5c8bd0be342c8fc3a",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 592476,
+  "fetched_at": "2026-09-10T21:36:09.746635+00:00"
+}

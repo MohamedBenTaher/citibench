@@ -43,6 +43,16 @@ class ChunkHit(BaseModel):
     fts_score: float | None = None
     fused_score: float | None = None
     rerank_score: float | None = None
+    # Display metadata (C6). Never used for ranking; pools stay private.
+    title: str | None = None
+    source: str | None = None
+    product: str | None = None
+    doc_type: str | None = None
+    version: str | None = None
+    license: str | None = None
+    page: int | None = None
+    section: str | None = None
+    url: str | None = None
 
 
 class ScoredChunk(BaseModel):
@@ -50,6 +60,15 @@ class ScoredChunk(BaseModel):
     doc_id: str
     text: str
     score: float | None = None
+    title: str | None = None
+    source: str | None = None
+    product: str | None = None
+    doc_type: str | None = None
+    version: str | None = None
+    license: str | None = None
+    page: int | None = None
+    section: str | None = None
+    url: str | None = None
 
 
 class FusedChunk(BaseModel):
@@ -59,6 +78,15 @@ class FusedChunk(BaseModel):
     vector_score: float | None = None
     fts_score: float | None = None
     fused_score: float = 0.0
+    title: str | None = None
+    source: str | None = None
+    product: str | None = None
+    doc_type: str | None = None
+    version: str | None = None
+    license: str | None = None
+    page: int | None = None
+    section: str | None = None
+    url: str | None = None
 
 
 class EmbedQueryFn(Protocol):
@@ -108,6 +136,15 @@ def rrf_fuse(
                 chunk_id=hit.chunk_id,
                 doc_id=hit.doc_id,
                 text=hit.text,
+                title=hit.title,
+                source=hit.source,
+                product=hit.product,
+                doc_type=hit.doc_type,
+                version=hit.version,
+                license=hit.license,
+                page=hit.page,
+                section=hit.section,
+                url=hit.url,
             )
             by_id[hit.chunk_id] = current
         match kind:
@@ -271,6 +308,15 @@ def _chunk_pointers(hits: Sequence[ChunkHit]) -> list[dict[str, Any]]:
             "text_ref": f"{hit.doc_id}#{hit.chunk_id}",
             "score": hit.score,
             "rank": hit.rank,
+            "title": hit.title,
+            "source": hit.source,
+            "product": hit.product,
+            "doc_type": hit.doc_type,
+            "version": hit.version,
+            "license": hit.license,
+            "page": hit.page,
+            "section": hit.section,
+            "url": hit.url,
         }
         for hit in hits
     ]
@@ -342,6 +388,15 @@ def _to_hit(
         fts_score=item.fts_score,
         fused_score=item.fused_score,
         rerank_score=rerank_score,
+        title=item.title,
+        source=item.source,
+        product=item.product,
+        doc_type=item.doc_type,
+        version=item.version,
+        license=item.license,
+        page=item.page,
+        section=item.section,
+        url=item.url,
     )
 
 
@@ -377,24 +432,19 @@ def search_vector(conn, query_vec: Sequence[float], k: int) -> list[ScoredChunk]
     literal = _vector_literal(query_vec)
     rows = conn.execute(
         """
-        SELECT id, doc_id, text,
-               1 - (embedding <=> %s::vector) AS vector_score
-        FROM chunks
-        WHERE embedding IS NOT NULL
-        ORDER BY embedding <=> %s::vector, id
+        SELECT c.id, c.doc_id, c.text, c.page, c.section, c.url,
+               d.title, d.source, d.product, d.doc_type, d.license,
+               COALESCE(d.version, d.version_or_snapshot) AS version,
+               1 - (c.embedding <=> %s::vector) AS vector_score
+        FROM chunks c
+        JOIN documents d ON d.id = c.doc_id
+        WHERE c.embedding IS NOT NULL
+        ORDER BY c.embedding <=> %s::vector, c.id
         LIMIT %s
         """,
         (literal, literal, k),
     ).fetchall()
-    return [
-        ScoredChunk(
-            chunk_id=row["id"],
-            doc_id=row["doc_id"],
-            text=row["text"],
-            score=float(row["vector_score"]) if row["vector_score"] is not None else None,
-        )
-        for row in rows
-    ]
+    return [_scored_from_row(row, "vector_score") for row in rows]
 
 
 def search_fts(conn, query: str, k: int) -> list[ScoredChunk]:
@@ -402,25 +452,39 @@ def search_fts(conn, query: str, k: int) -> list[ScoredChunk]:
         return []
     rows = conn.execute(
         """
-        SELECT id, doc_id, text,
-               ts_rank_cd(tsv, plainto_tsquery('english', %s)) AS fts_score
-        FROM chunks
-        WHERE tsv IS NOT NULL
-          AND tsv @@ plainto_tsquery('english', %s)
-        ORDER BY fts_score DESC, id
+        SELECT c.id, c.doc_id, c.text, c.page, c.section, c.url,
+               d.title, d.source, d.product, d.doc_type, d.license,
+               COALESCE(d.version, d.version_or_snapshot) AS version,
+               ts_rank_cd(c.tsv, plainto_tsquery('english', %s)) AS fts_score
+        FROM chunks c
+        JOIN documents d ON d.id = c.doc_id
+        WHERE c.tsv IS NOT NULL
+          AND c.tsv @@ plainto_tsquery('english', %s)
+        ORDER BY fts_score DESC, c.id
         LIMIT %s
         """,
         (query, query, k),
     ).fetchall()
-    return [
-        ScoredChunk(
-            chunk_id=row["id"],
-            doc_id=row["doc_id"],
-            text=row["text"],
-            score=float(row["fts_score"]) if row["fts_score"] is not None else None,
-        )
-        for row in rows
-    ]
+    return [_scored_from_row(row, "fts_score") for row in rows]
+
+
+def _scored_from_row(row: dict[str, Any], score_key: str) -> ScoredChunk:
+    raw_score = row.get(score_key)
+    return ScoredChunk(
+        chunk_id=row["id"],
+        doc_id=row["doc_id"],
+        text=row["text"],
+        score=float(raw_score) if raw_score is not None else None,
+        title=row.get("title"),
+        source=row.get("source"),
+        product=row.get("product"),
+        doc_type=row.get("doc_type"),
+        version=row.get("version"),
+        license=row.get("license"),
+        page=row.get("page"),
+        section=row.get("section"),
+        url=row.get("url"),
+    )
 
 
 def _vector_literal(values: Sequence[float]) -> str:

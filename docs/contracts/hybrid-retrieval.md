@@ -58,8 +58,14 @@ a contract violation.
 | `rank` | int | 1-based after the last stage. |
 | `rerank_skipped` | bool | Must match the run-level flag. |
 | `text` | string \| null | Null in C1. C2 may fill for generation only. |
+| `vector_score` / `fts_score` / `fused_score` / `rerank_score` | float \| null | Stage diagnostics. |
+| `title` / `source` / `product` / `doc_type` / `version` / `license` | string \| null | Display metadata from `documents` (C6). |
+| `page` | int \| null | Page from the PDF `[page N]` marker. |
+| `section` | string \| null | Nearest heading path (`A > B`) or page label. |
+| `url` | string \| null | Page URL; anchors are not resolved yet. |
 
 `text` is not a citation. Citations use `ChunkRef.text_ref` (Contract B).
+Display metadata is for UI/traces only and is never used for ranking.
 
 ## Out of scope
 

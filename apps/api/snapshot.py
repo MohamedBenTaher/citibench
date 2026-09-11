@@ -141,6 +141,34 @@ def snapshot_url_streamed(
     )
 
 
+def load_snapshot(*, raw_root: Path, doc_id: str) -> SnapshotResult:
+    """Return the committed snapshot for doc_id without fetching (offline ingest)."""
+    dest_dir = raw_root / doc_id
+    meta_path = dest_dir / "meta.json"
+    if not meta_path.is_file():
+        raise SnapshotError(f"no committed snapshot for {doc_id}: {meta_path} missing")
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise SnapshotError(f"invalid snapshot meta for {doc_id}: {exc}") from exc
+    filename = str(meta.get("filename") or "").strip()
+    if not filename:
+        raise SnapshotError(f"snapshot meta for {doc_id} has no filename")
+    path = dest_dir / filename
+    if not path.is_file():
+        raise SnapshotError(f"snapshot body missing for {doc_id}: {path}")
+    digest = str(meta.get("sha256") or "").strip()
+    if not digest:
+        raise SnapshotError(f"snapshot meta for {doc_id} has no sha256")
+    return SnapshotResult(
+        path=path,
+        sha256=digest,
+        content_type=str(meta.get("content_type") or _guess_type(filename)),
+        filename=filename,
+        bytes_len=int(meta.get("bytes") or path.stat().st_size),
+    )
+
+
 def build_http_client() -> httpx.Client:
     return httpx.Client(
         timeout=DEFAULT_TIMEOUT,

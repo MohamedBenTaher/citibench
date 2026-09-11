@@ -24,6 +24,7 @@ class TextChunk:
     text: str
     token_count: int
     start_token: int
+    section: str | None = None
 
 
 def encoding_for(name: str = DEFAULT_TOKENIZER) -> tiktoken.Encoding:
@@ -76,19 +77,34 @@ def chunk_text_dynamic(
     chunk_overlap: int = DEFAULT_CHUNK_OVERLAP,
     tokenizer: str = DEFAULT_TOKENIZER,
 ) -> list[TextChunk]:
-    """Split on headings / page marks, then apply the 512/64 window per section."""
+    """Split on headings / page marks, then apply the 512/64 window per section.
+
+    Each produced chunk carries the nearest heading path (e.g. ``A > B``) as
+    ``section``; PDF page markers become the section label when no heading is
+    active.
+    """
     sections = _sections(text)
     if len(sections) <= 1:
-        return chunk_text(
-            text,
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            tokenizer=tokenizer,
-        )
+        section = sections[0][0] if sections else None
+        return [
+            TextChunk(
+                index=piece.index,
+                text=piece.text,
+                token_count=piece.token_count,
+                start_token=piece.start_token,
+                section=section,
+            )
+            for piece in chunk_text(
+                text,
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+                tokenizer=tokenizer,
+            )
+        ]
     pieces: list[TextChunk] = []
     index = 0
     start_token = 0
-    for section in sections:
+    for section_path, section in sections:
         for piece in chunk_text(
             section,
             chunk_size=chunk_size,
@@ -101,6 +117,7 @@ def chunk_text_dynamic(
                     text=piece.text,
                     token_count=piece.token_count,
                     start_token=start_token,
+                    section=section_path,
                 )
             )
             start_token += piece.token_count
@@ -115,18 +132,39 @@ def chunk_text_dynamic(
     return pieces
 
 
-def _sections(text: str) -> list[str]:
-    parts: list[str] = []
+def _sections(text: str) -> list[tuple[str | None, str]]:
+    """Return (heading_path, body) blocks split on ``#`` headings / ``[page N]``."""
+    parts: list[tuple[str | None, str]] = []
     buf: list[str] = []
+    stack: list[tuple[int, str]] = []
+
+    def current_section() -> str | None:
+        return " > ".join(title for _level, title in stack) or None
+
+    def flush() -> None:
+        body = "".join(buf).strip()
+        if body:
+            parts.append((current_section(), body))
+
     for line in (text or "").splitlines(keepends=True):
         stripped = line.lstrip()
-        boundary = stripped.startswith("#") or stripped.startswith("[page ")
-        if boundary and buf:
-            parts.append("".join(buf).strip())
-            buf = [line]
+        if stripped.startswith("#"):
+            flush()
+            buf.clear()
+            level = len(stripped) - len(stripped.lstrip("#"))
+            title = stripped.lstrip("#").strip()
+            stack[:] = [item for item in stack if item[0] < level]
+            stack.append((level, title))
+            buf.append(line)
+        elif stripped.startswith("[page "):
+            flush()
+            buf.clear()
+            label = stripped.split("]", 1)[0].lstrip("[") if "]" in stripped else stripped.strip()
+            if not stack or stack[-1][0] == 0:
+                stack[:] = [(0, label)]
+            buf.append(line)
         else:
             buf.append(line)
-    if buf:
-        parts.append("".join(buf).strip())
-    return [part for part in parts if part]
+    flush()
+    return parts
 

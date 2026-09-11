@@ -31,9 +31,15 @@ exists. If not `abstained` then exactly one `generate` span exists and
 | `text_ref` | string | Pointer only: `doc_id#chunk_id` or equivalent. |
 | `score` | float \| null | Rerank score, or RRF score if `rerank_skipped`. |
 | `rank` | int \| null | 1-based rank after the last ranking stage. |
+| `title` / `source` / `product` / `doc_type` / `version` / `license` | string \| null | Display metadata (C6). |
+| `page` | int \| null | Page for PDF chunks. |
+| `section` | string \| null | Heading path or page label. |
+| `url` | string \| null | Source URL. |
 
 `text_ref` must not embed the chunk body. Traces stay small; the body lives
 in Postgres after C2 ingest. UI and Langfuse render by resolving `text_ref`.
+The optional metadata above is allowed precisely because it is not the body;
+`validate_run_trace` still rejects any `text`/body key in span attributes.
 
 ## CostEstimate
 

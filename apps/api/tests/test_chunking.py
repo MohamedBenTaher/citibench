@@ -1,4 +1,10 @@
-from chunking import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE, chunk_text, encoding_for
+from chunking import (
+    DEFAULT_CHUNK_OVERLAP,
+    DEFAULT_CHUNK_SIZE,
+    chunk_text,
+    chunk_text_dynamic,
+    encoding_for,
+)
 
 
 def test_chunk_windows_are_512_with_64_overlap() -> None:
@@ -30,3 +36,17 @@ def test_short_document_is_single_chunk() -> None:
     assert len(chunks) == 1
     assert chunks[0].index == 0
     assert chunks[0].start_token == 0
+
+
+def test_dynamic_chunking_sets_heading_section_path() -> None:
+    text = "# A\nintro text\n## B\ndetails here\n# C\nclosing"
+    chunks = chunk_text_dynamic(text)
+    sections = [chunk.section for chunk in chunks]
+    assert "A" in sections
+    assert "A > B" in sections
+
+
+def test_page_marker_becomes_section_without_heading() -> None:
+    text = "[page 1]\nalpha\n[page 2]\nbeta"
+    chunks = chunk_text_dynamic(text)
+    assert [chunk.section for chunk in chunks] == ["page 1", "page 2"]

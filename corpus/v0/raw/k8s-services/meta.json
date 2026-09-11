@@ -1,0 +1,9 @@
+{
+  "id": "k8s-services",
+  "source_url": "https://kubernetes.io/docs/concepts/services-networking/service/",
+  "sha256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 590646,
+  "fetched_at": "2026-09-10T21:36:10.130550+00:00"
+}

@@ -8,7 +8,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Any
 
-from chunking import chunk_text
+from chunking import chunk_text_dynamic
 from db import (
     connect,
     corpus_stats,
@@ -25,7 +25,7 @@ from embed import EmbedError, embed_texts
 from manifest import ManifestDoc, parse_manifest
 from parse_doc import parse_snapshot
 from settings import Settings
-from snapshot import SnapshotError, build_http_client, snapshot_url
+from snapshot import SnapshotError, build_http_client, load_snapshot, snapshot_url
 
 log = logging.getLogger("citebench.ingest")
 _PAGE_MARK = re.compile(r"\[page (\d+)\]")
@@ -73,7 +73,7 @@ def _run_ingest_locked(
     simulate_failure_id: str | None,
 ) -> dict[str, Any]:
     docs = parse_manifest(settings.manifest_path)
-    raw_root = settings.corpus_dir / "raw"
+    raw_root = settings.manifest_path.parent / "raw"
     raw_root.mkdir(parents=True, exist_ok=True)
 
     with connect(settings.database_url) as conn:
@@ -156,14 +156,17 @@ def _ingest_one(
     if simulate_failure_id and doc.id == simulate_failure_id:
         raise SnapshotError(f"simulated unreachable snapshot for {doc.id}")
 
-    snap = snapshot_url(
-        doc_id=doc.id,
-        source_url=doc.source_url,
-        raw_root=raw_root,
-        client=client,
-    )
+    if settings.snapshot_only:
+        snap = load_snapshot(raw_root=raw_root, doc_id=doc.id)
+    else:
+        snap = snapshot_url(
+            doc_id=doc.id,
+            source_url=doc.source_url,
+            raw_root=raw_root,
+            client=client,
+        )
     parsed = parse_snapshot(snap.path, snap.content_type)
-    chunks = chunk_text(
+    chunks = chunk_text_dynamic(
         parsed.text,
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
@@ -186,6 +189,9 @@ def _ingest_one(
                 "doc_id": doc.id,
                 "chunk_index": chunk.index,
                 "page": page,
+                "section": chunk.section,
+                "section_path": chunk.section,
+                "url": doc.source_url,
                 "text": chunk.text,
                 "text_ref": format_text_ref(doc.id, f"{doc.id}:{chunk.index}"),
                 "token_count": chunk.token_count,
@@ -209,6 +215,9 @@ def _ingest_one(
             status="ok",
             error=None,
             indexed_at=now,
+            doc_type=doc.doc_type,
+            product=doc.product,
+            source=doc.source,
         )
         insert_chunks(conn, rows)
 
@@ -229,6 +238,9 @@ def _record_failure(
             license=doc.license,
             error=_error_text(exc),
             indexed_at=now,
+            doc_type=doc.doc_type,
+            product=doc.product,
+            source=doc.source,
         )
 
 

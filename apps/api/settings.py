@@ -67,6 +67,7 @@ class Settings:
     allow_wipe: bool = False
     generate_max_per_minute: int = 30
     user_source_max_bytes: int = 64 * 1024 * 1024
+    snapshot_only: bool = False
 
 
 def _embed_backend(raw: dict) -> str:
@@ -106,6 +107,14 @@ def _resolve_corpus_dir() -> Path:
     raise FileNotFoundError(
         f"corpus dir not found at {DEFAULT_CORPUS_DIR} or {_LOCAL_CORPUS}"
     )
+
+
+def _resolve_manifest_path(corpus_dir: Path) -> Path:
+    """CITEBENCH_MANIFEST selects a manifest (e.g. corpus/v0); default is corpus/MANIFEST.md."""
+    override = os.environ.get("CITEBENCH_MANIFEST", "").strip()
+    if override:
+        return Path(override)
+    return corpus_dir / "MANIFEST.md"
 
 
 def load_settings() -> Settings:
@@ -157,12 +166,13 @@ def load_settings() -> Settings:
             "postgresql://citebench:citebench@127.0.0.1:5432/citebench",
         ),
         corpus_dir=corpus_dir,
-        manifest_path=corpus_dir / "MANIFEST.md",
+        manifest_path=_resolve_manifest_path(corpus_dir),
         groq_api_key=os.environ.get("GROQ_API_KEY", "").strip(),
         embed_backend=_embed_backend(raw),
         allow_wipe=_env_flag("CITEBENCH_ALLOW_WIPE"),
         generate_max_per_minute=_generate_rpm(),
         user_source_max_bytes=_user_source_max_bytes(),
+        snapshot_only=_env_flag("CITEBENCH_SNAPSHOT_ONLY"),
     )
 
 

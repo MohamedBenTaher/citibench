@@ -1,0 +1,9 @@
+{
+  "id": "k8s-storage",
+  "source_url": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+  "sha256": "d5829f99552b2a57ad97f7b9e756c2eb7c7a8d06fb5eb4dd1a6aa146cf1c6bca",
+  "content_type": "text/html",
+  "filename": "page.html",
+  "bytes": 603726,
+  "fetched_at": "2026-09-10T21:36:11.657600+00:00"
+}

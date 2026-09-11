@@ -29,6 +29,10 @@ CREATE TABLE IF NOT EXISTS documents (
     source_url TEXT NOT NULL,
     version_or_snapshot TEXT NOT NULL,
     license TEXT NOT NULL,
+    doc_type TEXT,
+    product TEXT,
+    source TEXT,
+    version TEXT,
     sha256 TEXT,
     content_type TEXT,
     snapshot_path TEXT,
@@ -45,6 +49,9 @@ CREATE TABLE IF NOT EXISTS chunks (
     doc_id TEXT NOT NULL REFERENCES documents (id) ON DELETE CASCADE,
     chunk_index INTEGER NOT NULL,
     page INTEGER,
+    section TEXT,
+    section_path TEXT,
+    url TEXT,
     text TEXT NOT NULL,
     text_ref TEXT NOT NULL,
     token_count INTEGER NOT NULL,
@@ -70,6 +77,13 @@ CREATE TABLE IF NOT EXISTS ingest_runs (
 );
 
 ALTER TABLE documents ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT 'freeze';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_type TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS product TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS source TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS version TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS section TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS section_path TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS url TEXT;
 """
 
 
@@ -226,6 +240,9 @@ def mark_document_failed(
     error: str | None,
     indexed_at: datetime | None,
     origin: str = "freeze",
+    doc_type: str | None = None,
+    product: str | None = None,
+    source: str | None = None,
 ) -> None:
     """Record a failed snapshot without deleting last-good chunks."""
     updated = conn.execute(
@@ -242,9 +259,12 @@ def mark_document_failed(
         """
         INSERT INTO documents (
             id, title, source_url, version_or_snapshot, license,
+            doc_type, product, source, version,
             sha256, content_type, snapshot_path, page_count, status, error, indexed_at, origin
         ) VALUES (
-            %s, %s, %s, %s, %s, NULL, NULL, NULL, 0, 'failed', %s, %s, %s
+            %s, %s, %s, %s, %s,
+            %s, %s, %s, %s,
+            NULL, NULL, NULL, 0, 'failed', %s, %s, %s
         )
         """,
         (
@@ -253,6 +273,10 @@ def mark_document_failed(
             source_url,
             version_or_snapshot,
             license,
+            doc_type,
+            product,
+            source,
+            version_or_snapshot,
             error,
             indexed_at,
             origin,
@@ -276,15 +300,19 @@ def replace_document(
     error: str | None,
     indexed_at: datetime | None,
     origin: str = "freeze",
+    doc_type: str | None = None,
+    product: str | None = None,
+    source: str | None = None,
 ) -> None:
     conn.execute("DELETE FROM documents WHERE id = %s", (doc_id,))
     conn.execute(
         """
         INSERT INTO documents (
             id, title, source_url, version_or_snapshot, license,
+            doc_type, product, source, version,
             sha256, content_type, snapshot_path, page_count, status, error, indexed_at, origin
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         """,
         (
@@ -293,6 +321,10 @@ def replace_document(
             source_url,
             version_or_snapshot,
             license,
+            doc_type,
+            product,
+            source,
+            version_or_snapshot,
             sha256,
             content_type,
             snapshot_path,
@@ -318,9 +350,11 @@ def insert_chunks(
             cur.execute(
                 """
                 INSERT INTO chunks (
-                    id, doc_id, chunk_index, page, text, text_ref, token_count, embedding, tsv
+                    id, doc_id, chunk_index, page, section, section_path, url,
+                    text, text_ref, token_count, embedding, tsv
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s::vector, to_tsvector('english', %s)
+                    %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s::vector, to_tsvector('english', %s)
                 )
                 """,
                 (
@@ -328,6 +362,9 @@ def insert_chunks(
                     row["doc_id"],
                     row["chunk_index"],
                     row["page"],
+                    row.get("section"),
+                    row.get("section_path"),
+                    row.get("url"),
                     row["text"],
                     row["text_ref"],
                     row["token_count"],

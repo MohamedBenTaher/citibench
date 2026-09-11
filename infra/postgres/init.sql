@@ -8,6 +8,10 @@ CREATE TABLE IF NOT EXISTS documents (
     source_url TEXT NOT NULL,
     version_or_snapshot TEXT NOT NULL,
     license TEXT NOT NULL,
+    doc_type TEXT,
+    product TEXT,
+    source TEXT,
+    version TEXT,
     sha256 TEXT,
     content_type TEXT,
     snapshot_path TEXT,
@@ -24,6 +28,9 @@ CREATE TABLE IF NOT EXISTS chunks (
     doc_id TEXT NOT NULL REFERENCES documents (id) ON DELETE CASCADE,
     chunk_index INTEGER NOT NULL,
     page INTEGER,
+    section TEXT,
+    section_path TEXT,
+    url TEXT,
     text TEXT NOT NULL,
     text_ref TEXT NOT NULL,
     token_count INTEGER NOT NULL,
@@ -36,6 +43,15 @@ CREATE INDEX IF NOT EXISTS chunks_doc_id_idx ON chunks (doc_id);
 ALTER TABLE chunks ADD COLUMN IF NOT EXISTS tsv tsvector;
 CREATE INDEX IF NOT EXISTS chunks_tsv_gin ON chunks USING GIN (tsv);
 UPDATE chunks SET tsv = to_tsvector('english', text) WHERE tsv IS NULL;
+
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT 'freeze';
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS doc_type TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS product TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS source TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS version TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS section TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS section_path TEXT;
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS url TEXT;
 
 CREATE TABLE IF NOT EXISTS ingest_runs (
     id SERIAL PRIMARY KEY,
