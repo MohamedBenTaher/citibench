@@ -25,19 +25,23 @@ def eval_store(tmp_path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return store
 
 
-def test_ci_jsonl_is_small_real_contract_a() -> None:
+def test_ci_jsonl_is_grounded_contract_a() -> None:
     from citebench.eval.loader import load_eval_jsonl
 
     rows = load_eval_jsonl(str(CI_SPLIT))
-    assert 2 <= len(rows) <= 8
+    assert 16 <= len(rows) <= 32
     ids = [row.id for row in rows]
     assert len(ids) == len(set(ids))
+    tags = {tag for row in rows for tag in row.tags}
+    assert {"single-hop", "compare", "abstain"} <= tags
     for row in rows:
         assert row.known_bad is False
-        assert row.abstain is False
-        assert row.must_cite is True
         assert row.question
         assert row.expected
+        if row.abstain:
+            assert row.must_cite is False
+        else:
+            assert row.must_cite is True
         assert not hasattr(row, "contexts") or "contexts" not in row.model_dump()
 
 

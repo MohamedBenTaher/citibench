@@ -7,6 +7,7 @@ Do not invent extra fields in loaders without a decision-trail row.
 
 | Path | Role |
 | --- | --- |
+| `evals/splits/ci.jsonl` | RAGAS CI split. Grounded single-hop, compare, and abstain rows. |
 | `evals/splits/known_bad.jsonl` | Anti-theater split. Required in C1. |
 | `evals/splits/dev.jsonl` | Future development split. Absent in C1. |
 | `evals/splits/test.jsonl` | Future held-out split. Absent in C1. |
@@ -73,6 +74,17 @@ Before any RAGAS metric is computed, the runner must execute
   score and call itself grounded.
 
 C1 does not run this phase. The file is present so C2 cannot “forget” it.
+
+## CI split categories
+
+`evals/splits/ci.jsonl` tags every row with its category:
+
+- `single-hop` — answerable from one frozen document.
+- `compare` — the answer names two frozen documents.
+- `abstain` — plausible but outside the freeze; `abstain: true`, `must_cite: false`.
+
+Non-abstain rows use `must_cite: true`. Redteam rows use `redteam` plus the
+`attack_type`. The categories are labels, not a second schema.
 
 ## RAGAS and the 0.7 CI gate
 

@@ -173,8 +173,8 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 | Corpus docs | 1487 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
 | Corpus pages | 1600 | HTML snapshot = 1 page; xv6 PDF = 114. `measured-under-local-snapshots`. |
 | Corpus chunks | 31288 | `measured-under-live-ingest-2026-09-12`. tiktoken cl100k_base 512/64; `GET /corpus/stats`. |
-| Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 3 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
-| Context precision | 0.833 | Same mock artifact (`evals/results/latest.json`). |
+| Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 20 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
+| Context precision | 1.000 | Same mock artifact (`evals/results/latest.json`). |
 | p95 latency | — | Unmeasured until traces with `latency_ms > 0` exist. |
 | Cost / 1k queries | — | Unmeasured. When traces exist: mean `citebench.cost.v1` USD × 1000. |
 

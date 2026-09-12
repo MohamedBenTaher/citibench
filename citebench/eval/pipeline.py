@@ -33,55 +33,76 @@ class SupportsAnswer(Protocol):
     def __call__(self, question: str, row_id: str) -> EvalAnswer: ...
 
 
+def _fixture(answer: str, doc_ids: list[str]) -> dict[str, Any]:
+    return {
+        "answer": answer,
+        "contexts": [answer],
+        "citations": [
+            {"chunk_id": f"{doc}:0", "doc_id": doc, "text_ref": f"{doc}#{doc}:0"}
+            for doc in doc_ids
+        ],
+    }
+
+
+# Grounded mock answers for evals/splits/ci.jsonl (C6 mock CI). Live mode (015)
+# calls the real generate() and ignores these.
 CI_FIXTURES: dict[str, dict[str, Any]] = {
-    "ci-001": {
-        "answer": (
-            "The kube-scheduler assigns unscheduled Pods to nodes using filters "
-            "and scoring plugins."
-        ),
-        "contexts": [
-            "kube-scheduler assigns unscheduled Pods to nodes using filters and scoring plugins.",
-            "A Pod is the smallest deployable unit in Kubernetes. The control plane schedules each Pod onto a node.",
-        ],
-        "citations": [
-            {
-                "chunk_id": "k8s-scheduler:0",
-                "doc_id": "k8s-scheduler",
-                "text_ref": "k8s-scheduler#k8s-scheduler:0",
-            }
-        ],
-    },
-    "ci-002": {
-        "answer": (
-            "A Pod is the smallest deployable unit in Kubernetes. The control "
-            "plane schedules each Pod onto a node."
-        ),
-        "contexts": [
-            "A Pod is the smallest deployable unit in Kubernetes. The control plane schedules each Pod onto a node."
-        ],
-        "citations": [
-            {
-                "chunk_id": "k8s-pods:0",
-                "doc_id": "k8s-pods",
-                "text_ref": "k8s-pods#k8s-pods:0",
-            }
-        ],
-    },
-    "ci-003": {
-        "answer": (
-            "A Service exposes a set of Pods. It does not schedule workloads onto nodes."
-        ),
-        "contexts": [
-            "A Service exposes a set of Pods. It does not schedule workloads onto nodes."
-        ],
-        "citations": [
-            {
-                "chunk_id": "k8s-services:0",
-                "doc_id": "k8s-services",
-                "text_ref": "k8s-services#k8s-services:0",
-            }
-        ],
-    },
+    "ci-001": _fixture(
+        "The kube-scheduler assigns unscheduled Pods to nodes using filtering and scoring plugins.",
+        ["k8s-docs-reference-command-line-tools-reference-kube-scheduler"],
+    ),
+    "ci-002": _fixture(
+        "A Pod is the smallest deployable unit, one or more containers scheduled together onto a node.",
+        ["k8s-docs-concepts-workloads-pods"],
+    ),
+    "ci-003": _fixture(
+        "A Service exposes a set of Pods behind a stable virtual IP and endpoint, and does not schedule them.",
+        ["k8s-docs-concepts-services-networking-service"],
+    ),
+    "ci-004": _fixture(
+        "Ingress manages external HTTP(S) access to Services in a cluster using rules.",
+        ["k8s-docs-concepts-services-networking-ingress"],
+    ),
+    "ci-005": _fixture(
+        "Secrets hold sensitive data such as passwords and tokens, kept separately from Pod specs and mounted or exposed to containers.",
+        ["k8s-docs-concepts-configuration-secret"],
+    ),
+    "ci-006": _fixture(
+        "Changes are written to the PostgreSQL write-ahead log before the data files, so the database can recover after a crash.",
+        ["postgres-docs-current-wal.html"],
+    ),
+    "ci-007": _fixture(
+        "Path parameters are declared as function arguments with Python type hints, and FastAPI validates and converts them.",
+        ["fastapi-tutorial-path-params"],
+    ),
+    "ci-008": _fixture(
+        "AKS is a managed Kubernetes service that runs the control plane on Azure.",
+        ["azure-en-us-azure-aks-what-is-aks"],
+    ),
+    "ci-009": _fixture(
+        "Managed identities give Azure resources an identity in Microsoft Entra ID so code can authenticate without storing credentials.",
+        ["azure-en-us-entra-identity-managed-identities-azure-resources-overview"],
+    ),
+    "ci-010": _fixture(
+        "A trap transfers control from user space to the kernel, where usertrap and syscall dispatch handle the request.",
+        ["xv6-6.828-2024-xv6-book-riscv-rev4.pdf"],
+    ),
+    "ci-020": _fixture(
+        "ConfigMaps hold non-confidential configuration, while Secrets hold sensitive data such as credentials and tokens.",
+        ["k8s-docs-concepts-configuration-configmap", "k8s-docs-concepts-configuration-secret"],
+    ),
+    "ci-021": _fixture(
+        "A Service exposes Pods on a stable endpoint inside the cluster, while Ingress routes external HTTP(S) traffic to Services.",
+        ["k8s-docs-concepts-services-networking-service", "k8s-docs-concepts-services-networking-ingress"],
+    ),
+    "ci-022": _fixture(
+        "Path parameters are part of the URL path and required, while query parameters follow ?key=value and are optional by default.",
+        ["fastapi-tutorial-path-params", "fastapi-tutorial-query-params"],
+    ),
+    "ci-023": _fixture(
+        "xv6 logs file-system operations for crash consistency, and PostgreSQL writes changes to the write-ahead log before data files for recovery.",
+        ["xv6-6.828-2024-xv6-book-riscv-rev4.pdf", "postgres-docs-current-wal.html"],
+    ),
 }
 
 

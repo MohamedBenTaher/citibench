@@ -1,7 +1,7 @@
 {
-  "run_id": "eval-a240ffc5ed25",
-  "started_at": "2026-09-06T16:11:19.341118+00:00",
-  "finished_at": "2026-09-06T16:11:19.447841+00:00",
+  "run_id": "eval-dfaee957c965",
+  "started_at": "2026-09-12T17:56:29.374512+00:00",
+  "finished_at": "2026-09-12T17:56:29.520885+00:00",
   "split": "evals/splits/ci.jsonl",
   "known_bad_split": "evals/splits/known_bad.jsonl",
   "mode": "mock",
@@ -12,27 +12,27 @@
   "loader_error": null,
   "metrics": {
     "faithfulness": 1.0,
-    "context_precision": 0.8333333333333334,
-    "answer_relevancy": 0.7111111111111111
+    "context_precision": 1.0,
+    "answer_relevancy": 0.5630952380952381
   },
   "known_bad": {
     "clean": true,
     "rows": [
       {
         "id": "bad-001",
-        "run_id": "7b31e93a-a5d7-4dc1-bc63-e36b81cb3e3a",
+        "run_id": "7108d300-712f-4ae7-b175-d6b141d7c397",
         "required_assert_failed": true,
         "abstained": true
       },
       {
         "id": "bad-002",
-        "run_id": "d7876c4f-d387-4172-93e2-421a7aa7bde0",
+        "run_id": "f7c5a4e0-dc5b-41bf-8c13-36cdd9288606",
         "required_assert_failed": true,
         "abstained": true
       },
       {
         "id": "bad-003",
-        "run_id": "2193d649-956f-4619-b850-9daefd4b5d15",
+        "run_id": "e069cc4d-4df7-428d-b5e6-eaa38600130a",
         "required_assert_failed": true,
         "abstained": true
       }
@@ -46,7 +46,7 @@
   },
   "diff": {
     "faithfulness": 0.0,
-    "context_precision": 0.0,
-    "answer_relevancy": 0.0
+    "context_precision": 0.16666666666666663,
+    "answer_relevancy": -0.14801587301587305
   }
 }

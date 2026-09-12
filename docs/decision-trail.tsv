@@ -19,3 +19,4 @@ date	action	detail	result
 2026-09-10	c6-chunk-metadata	documents doc_type/product/source/version; chunks section/section_path/url; retrieve hits + trace ChunkRefs carry metadata; contracts updated	PASS
 2026-09-12	c7-reingest	Full freeze ingested: 1487 docs/1600 pages/31288 chunks; README counts == /corpus/stats; corpus_measure (local snapshots) matches; 0 failures	PASS
 2026-09-12	c2-freeze-trim	Excluded k8s _print/generated API schema trees (large, duplicate); freeze 1487 docs; incremental low-pressure background ingest tooling	PASS
+2026-09-12	e1-eval-splits	ci.jsonl re-grounded (20 rows: 10 single-hop/4 compare/6 abstain) on the 1487-doc freeze; known-bad + 10 redteam re-verified; mock CI/gate green	PASS
