@@ -51,6 +51,17 @@ labels, and a bracket node on the ordered station rail on `/`. Everything else
 stays quiet. Never a decorative gradient. Circuit copy: Floor / Set / Log /
 Weigh-in / Scoreboard — a real ordered sequence, not a card grid.
 
+## Motion
+
+Bench-precise and quiet: motion confirms state, never performs. One easing token
+`--ease-standard: cubic-bezier(0.2, 0, 0, 1)`.
+
+- State (hover / focus / press): **120–150ms**, `ease-standard`, transform + color/opacity only.
+- Staged enters: **≤200ms**. Exits shorter than enters. No bounce/elastic.
+- Charts read immediately (`isAnimationActive={false}`); no first-paint animation.
+- The only loop is the indeterminate loaders (`animate-pulse` / `animate-spin`).
+- Everything has a reduced-motion fallback; the global guard lives in `styles.css`.
+
 ## Anti-slop bans (unslop pass)
 
 - No Inter / Roboto / Arial / system-ui as the brand voice (Geist stays)

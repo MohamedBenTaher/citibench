@@ -135,6 +135,7 @@ export function TraceCharts({ traces }: { traces: TraceRow[] }) {
                 stroke="var(--color-latency)"
                 strokeWidth={2}
                 dot={{ r: 2 }}
+                isAnimationActive={false}
               />
               <Line
                 yAxisId="cost"
@@ -143,6 +144,7 @@ export function TraceCharts({ traces }: { traces: TraceRow[] }) {
                 stroke="var(--color-cost)"
                 strokeWidth={2}
                 dot={{ r: 2 }}
+                isAnimationActive={false}
               />
             </LineChart>
           </ChartContainer>
@@ -164,7 +166,7 @@ export function TraceCharts({ traces }: { traces: TraceRow[] }) {
               <XAxis dataKey="outcome" tickLine={false} axisLine={false} />
               <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-              <Bar dataKey="count" radius={4} />
+              <Bar dataKey="count" radius={4} isAnimationActive={false} />
             </BarChart>
           </ChartContainer>
         </CardContent>

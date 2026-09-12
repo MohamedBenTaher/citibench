@@ -123,7 +123,10 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               </div>
             </div>
             {isNavigating ? (
-              <div className="h-0.5 origin-left animate-pulse bg-primary" aria-hidden="true" />
+              <div
+                className="h-px origin-left animate-pulse bg-primary/60 motion-reduce:hidden"
+                aria-hidden="true"
+              />
             ) : null}
           </header>
           <main

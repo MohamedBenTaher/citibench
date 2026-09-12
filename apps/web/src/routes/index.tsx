@@ -153,7 +153,7 @@ function IndexPage() {
             >
               Run a set
               <ArrowRightIcon
-                className="size-3.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+                className="size-3.5 transition-transform duration-150 ease-standard group-hover:translate-x-0.5 motion-reduce:transition-none"
                 aria-hidden="true"
               />
             </Link>
@@ -222,7 +222,7 @@ function IndexPage() {
                 preload="intent"
                 className={cn(
                   "group grid grid-cols-[2.75rem_1fr_auto] items-center gap-3 px-4 py-3.5",
-                  "transition-colors duration-200 ease-out",
+                  "transition-colors duration-150 ease-standard",
                   "hover:bg-card focus-visible:bg-card",
                   "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50",
                   "motion-reduce:transition-none",
@@ -251,7 +251,7 @@ function IndexPage() {
                   </span>
                 </span>
                 <ArrowRightIcon
-                  className="size-4 text-muted-foreground opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+                  className="size-4 text-muted-foreground opacity-0 transition-opacity duration-150 ease-standard group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
                   aria-hidden="true"
                 />
               </Link>

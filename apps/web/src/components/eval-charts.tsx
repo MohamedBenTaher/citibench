@@ -99,8 +99,8 @@ export function EvalMetricChart({ latest }: { latest: EvalLatest | null }) {
             strokeDasharray="4 4"
             label={{ value: `gate ${gate.toFixed(2)}`, position: "right", fontSize: 10 }}
           />
-          <Bar dataKey="current" fill="var(--color-current)" radius={4} />
-          <Bar dataKey="previous" fill="var(--color-previous)" radius={4} />
+          <Bar dataKey="current" fill="var(--color-current)" radius={4} isAnimationActive={false} />
+          <Bar dataKey="previous" fill="var(--color-previous)" radius={4} isAnimationActive={false} />
         </BarChart>
       </ChartContainer>
     </div>
@@ -145,10 +145,10 @@ export function RedteamChart({ cases }: { cases: RedteamCase[] }) {
           <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
           <ChartTooltip content={<ChartTooltipContent />} />
           <ChartLegend content={<ChartLegendContent />} />
-          <Bar dataKey="blocked" stackId="a" fill="var(--color-blocked)" radius={0} />
-          <Bar dataKey="allowed" stackId="a" fill="var(--color-allowed)" radius={0} />
-          <Bar dataKey="leaked" stackId="a" fill="var(--color-leaked)" radius={0} />
-          <Bar dataKey="not_run" stackId="a" fill="var(--color-not_run)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="blocked" stackId="a" fill="var(--color-blocked)" radius={0} isAnimationActive={false} />
+          <Bar dataKey="allowed" stackId="a" fill="var(--color-allowed)" radius={0} isAnimationActive={false} />
+          <Bar dataKey="leaked" stackId="a" fill="var(--color-leaked)" radius={0} isAnimationActive={false} />
+          <Bar dataKey="not_run" stackId="a" fill="var(--color-not_run)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ChartContainer>
     </div>
