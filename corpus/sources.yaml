@@ -12,6 +12,14 @@ sources:
       - https://kubernetes.io/docs/
     allow_prefixes:
       - https://kubernetes.io/docs/
+    # _print/ aggregates whole sections (duplicate content, 6-12 MB each);
+    # generated/kubernetes-api and reference/kubernetes-api are auto-generated
+    # API schema trees (hundreds of ~0.5 MB pages, ~200 chunks each). Excluded
+    # so the freeze is distinct concept/task/reference pages, not generated dumps.
+    exclude_patterns:
+      - "/_print/"
+      - "/docs/reference/generated/kubernetes-api/"
+      - "/docs/reference/kubernetes-api/"
     max_pages: 1100
 
   - key: azure

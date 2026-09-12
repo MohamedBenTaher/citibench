@@ -102,7 +102,7 @@ Planned at commit `028fa3e`, 2026-09-10.
 | 010 | C2/C3/C4: Grow the freeze (K8s, Azure, Postgres, FastAPI) | P1 | L | 009 | DONE (manifest 1800 rows; crawl cached; pytest 139 pass) |
 | 011 | C5: OSTEP PDFs with real multi-page parse | P1 | M | 010 | DONE — OSTEP rejected (copyright); substituted MIT xv6 book, 114-page parse verified |
 | 012 | C6: Chunk metadata (source/doc_type/product/version/section/page/url/license) | P1 | L | 010, 011 | DONE (schema + parse + chunk + retrieve + traces; 148 tests pass) |
-| 013 | C7: Full re-ingest; README counts match `/corpus/stats` | P1 | M | 012 | TODO |
+| 013 | C7: Full re-ingest; README counts match `/corpus/stats` | P1 | M | 012 | DONE (1487 docs/1600 pages/31288 chunks; README == stats) |
 | 014 | E1/E2: Re-ground `ci.jsonl`, known-bad, redteam in the big freeze | P1 | M | 013 | TODO |
 | 015 | E3/E4: Live RAGAS + method-tagged metrics | P1 | L | 014 | TODO |
 | 016 | E5: CI faithfulness gate (live if secrets) | P1 | M | 015 | TODO |

@@ -2,7 +2,7 @@
 
 Citebench is a **citation-grounded retrieval bench**, not a chat product.
 
-It answers questions about a **frozen public corpus** (~1,800 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
+It answers questions about a **frozen public corpus** (~1,500 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
 
 The homepage is an index. The interesting surfaces are **Corpus**, **Playground**, **Traces**, and **Evals**. First screenshot for a reviewer: `/evals` or a failing `/traces` row, not a chat bubble.
 
@@ -170,9 +170,9 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 
 | Metric | Value | Method |
 | --- | --- | --- |
-| Corpus docs | 1800 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
-| Corpus pages | — | Unmeasured until re-ingest (plan 013). HTML snapshot = 1 page; PDF = page count. |
-| Corpus chunks | — | Unmeasured until re-ingest (plan 013). tiktoken cl100k_base 512/64. Prefer `GET /corpus/stats`. |
+| Corpus docs | 1487 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
+| Corpus pages | 1600 | HTML snapshot = 1 page; xv6 PDF = 114. `measured-under-local-snapshots`. |
+| Corpus chunks | 31288 | `measured-under-live-ingest-2026-09-12`. tiktoken cl100k_base 512/64; `GET /corpus/stats`. |
 | Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 3 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
 | Context precision | 0.833 | Same mock artifact (`evals/results/latest.json`). |
 | p95 latency | — | Unmeasured until traces with `latency_ms > 0` exist. |

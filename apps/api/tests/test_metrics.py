@@ -25,6 +25,11 @@ def eval_store(tmp_path, monkeypatch: pytest.MonkeyPatch) -> Path:
     store = tmp_path / "eval-results"
     store.mkdir()
     monkeypatch.setenv("EVAL_STORE_DIR", str(store))
+    # No live Postgres in tests (AGENTS.md): force the manifest fallback even if
+    # a developer has a local citebench DB running.
+    import metrics
+
+    monkeypatch.setattr(metrics, "_try_corpus_stats", lambda *_args, **_kwargs: None)
     return store
 
 

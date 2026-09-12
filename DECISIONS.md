@@ -35,7 +35,7 @@ on the retrieve span and on each `ChunkHit`. Silent skip is a contract violation
 
 ## Why not fine-tune
 
-The frozen corpus is 14 public pages. Fine-tuning an embedder or reranker on
+The frozen corpus is ~1,500 public pages. Fine-tuning an embedder or reranker on
 that set would leak eval into the index and manufacture theater scores. We use
 off-the-shelf nomic + MiniLM and measure them. Domain adaptation is out of
 scope until the corpus and splits are large enough that train/eval leakage can
@@ -59,10 +59,12 @@ ships until a model id is filled by a later change.
 
 ## Corpus freeze (Kubernetes + Azure)
 
-Freeze date **2026-09-05**. Policy: public Kubernetes.io concept pages and
-public Microsoft Learn Azure pages only. Fourteen URLs are pinned in
-`corpus/MANIFEST.md`. Re-freeze requires a new date, a full URL list, and a
-decision-trail row.
+Freeze date **2026-09-10**. Policy: freely redistributable public docs only —
+Kubernetes.io (CC BY 4.0, minus `_print/` and generated API trees), Microsoft
+Learn Azure (CC BY 4.0), the PostgreSQL manual (PostgreSQL License), FastAPI
+(MIT), and the MIT xv6 book PDF. The 14-URL smoke corpus is preserved under
+`corpus/v0/`. Re-freeze requires a new date, a full URL list, a license
+re-check, and a decision-trail row.
 
 User-supplied URLs and uploads (`documents.origin = user`) are a workspace
 index, not a re-freeze. They must not be deleted by freeze re-index. They
@@ -233,15 +235,21 @@ faithfulness 1.0, context precision 0.833. Tag:
 `measured-under-mock-ragas-judge`. Not a live ragas/Groq number. The CI
 gate stays 0.7. Missing file → `null`.
 
-Corpus: 14 MANIFEST URLs (freeze 2026-09-05). Pages = 1 per HTML snapshot.
-Chunks = tiktoken `cl100k_base` 512 / 64. No frozen `corpus/raw` sha256
-tree and no pgvector ingest in this environment, so chunks were counted
-from a live HTML fetch on 2026-09-06: 148, tagged
-`measured-under-live-html-fetch-2026-09-06` in `evals/results/corpus.json`.
-After ingest, `/metrics` prefers `/corpus/stats`.
+Corpus: 1487 MANIFEST URLs (freeze 2026-09-10) across Kubernetes, Microsoft
+Learn Azure, the PostgreSQL manual, FastAPI, and the MIT xv6 book. Pages =
+HTML snapshot 1, PDF = page count (xv6 = 114): 1600 total. Chunks = tiktoken
+`cl100k_base` 512 / 64, ingested into pgvector on 2026-09-12: 31288, tagged
+`measured-under-live-ingest-2026-09-12`. `evals/results/corpus.json` is the
+offline measure (`measured-under-local-snapshots`) and matches `/corpus/stats`
+exactly; `/metrics` prefers `/corpus/stats` when the DB is reachable.
+
+The freeze excludes Kubernetes `_print/` aggregations, generated API dumps,
+and the `/docs/reference/kubernetes-api/` schema tree (huge, duplicate,
+low-value pages). OSTEP was rejected as copyrighted; the MIT xv6 book is the
+multi-page PDF source instead.
 
 C1–C5 bindings are unchanged: Postgres 16 + pgvector, chunk 512 / 64,
-FlashRank MiniLM top-50 → top-8, no fine-tune on the 14-page freeze,
+FlashRank MiniLM top-50 → top-8, no fine-tune on the frozen corpus,
 Langfuse as the named trace backend, Groq as the only generation provider.
 
 C8 redteam + deploy is this slice. A chat homepage and connectors stay

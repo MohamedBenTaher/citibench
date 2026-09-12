@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import threading
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -49,6 +51,8 @@ def run_ingest(
     *,
     wipe: bool = False,
     simulate_failure_id: str | None = None,
+    only_missing: bool = False,
+    limit: int | None = None,
 ) -> dict[str, Any]:
     if wipe and not settings.allow_wipe:
         raise WipeDisabled(
@@ -61,6 +65,8 @@ def run_ingest(
             settings,
             wipe=wipe,
             simulate_failure_id=simulate_failure_id,
+            only_missing=only_missing,
+            limit=limit,
         )
     finally:
         _INGEST_LOCK.release()
@@ -71,8 +77,11 @@ def _run_ingest_locked(
     *,
     wipe: bool,
     simulate_failure_id: str | None,
+    only_missing: bool = False,
+    limit: int | None = None,
 ) -> dict[str, Any]:
     docs = parse_manifest(settings.manifest_path)
+    manifest_ids = [doc.id for doc in docs]
     raw_root = settings.manifest_path.parent / "raw"
     raw_root.mkdir(parents=True, exist_ok=True)
 
@@ -80,9 +89,21 @@ def _run_ingest_locked(
         ensure_schema(conn)
         if wipe:
             wipe_index(conn)
+        if only_missing and not wipe:
+            existing = {
+                row["id"]
+                for row in conn.execute(
+                    "SELECT id FROM documents WHERE status = 'ok'"
+                ).fetchall()
+            }
+            docs = [doc for doc in docs if doc.id not in existing]
+        pending_total = len(docs)
+        if limit is not None and limit > 0:
+            docs = docs[:limit]
         run_id = start_ingest_run(conn)
 
     now = datetime.now(timezone.utc)
+    pause = _ingest_pause()
     ok = 0
     failed = 0
     run_error: str | None = None
@@ -111,8 +132,10 @@ def _run_ingest_locked(
                             doc.id,
                             record_exc,
                         )
+                if pause:
+                    time.sleep(pause)
         with connect(settings.database_url) as conn:
-            delete_unknown_documents(conn, [doc.id for doc in docs])
+            delete_unknown_documents(conn, manifest_ids)
     except Exception as exc:
         run_error = str(exc)
         log.exception("ingest run failed")
@@ -141,7 +164,22 @@ def _run_ingest_locked(
 
     stats["run_status"] = "failed" if run_error else ("partial" if failed else "ok")
     stats["run_error"] = run_error
+    stats["processed_count"] = ok + failed
+    stats["failed_count"] = failed
+    stats["pending_after"] = max(0, pending_total - (ok + failed))
     return stats
+
+
+def _ingest_pause() -> float:
+    """CITEBENCH_INGEST_PAUSE seconds between documents (default 0)."""
+    raw = os.environ.get("CITEBENCH_INGEST_PAUSE", "").strip()
+    if not raw:
+        return 0.0
+    try:
+        value = float(raw)
+    except ValueError:
+        return 0.0
+    return value if value > 0 else 0.0
 
 
 def _ingest_one(

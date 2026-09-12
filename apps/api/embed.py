@@ -209,8 +209,33 @@ def _load_local_model() -> Any:
                 "fastembed is required for local nomic-embed-text-v1.5. "
                 "Install apps/api/requirements.txt"
             )
-        _local_model = TextEmbedding(model_name=_LOCAL_NOMIC, cache_dir=str(_cache_dir()))
+        _local_model = TextEmbedding(
+            model_name=_LOCAL_NOMIC,
+            cache_dir=str(_cache_dir()),
+            threads=_model_threads(),
+            providers=_model_providers(),
+        )
         return _local_model
+
+
+def _model_threads() -> int | None:
+    """FASTEMBED_THREADS overrides onnxruntime intra-op threads (default: library default)."""
+    raw = os.environ.get("FASTEMBED_THREADS", "").strip()
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
+
+
+def _model_providers() -> list[str] | None:
+    """FASTEMBED_PROVIDERS comma list, e.g. 'CoreMLExecutionProvider,CPUExecutionProvider'."""
+    raw = os.environ.get("FASTEMBED_PROVIDERS", "").strip()
+    if not raw:
+        return None
+    return [part.strip() for part in raw.split(",") if part.strip()]
 
 
 def _embed_local(

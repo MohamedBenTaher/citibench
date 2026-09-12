@@ -85,13 +85,25 @@ def _fetch(client: httpx.Client, url: str, *, retries: int, backoff: float) -> s
     return None
 
 
-def _extract(page_url: str, html: str, prefixes: tuple[str, ...]) -> tuple[str, list[str]]:
+def _excluded(url: str, patterns: tuple[str, ...]) -> bool:
+    # Link resolution can leave double slashes (reference//kubernetes-api);
+    # collapse them so exclusion patterns match either form.
+    probe = re.sub(r"/{2,}", "/", url)
+    return any(pattern in url or pattern in probe for pattern in patterns)
+
+
+def _extract(
+    page_url: str,
+    html: str,
+    prefixes: tuple[str, ...],
+    excludes: tuple[str, ...] = (),
+) -> tuple[str, list[str]]:
     soup = BeautifulSoup(html, "lxml")
     title = soup.title.get_text(strip=True) if soup.title else ""
     links: list[str] = []
     for anchor in soup.find_all("a", href=True):
         nxt = normalize(urljoin(page_url, anchor["href"]))
-        if nxt not in links and allowed(nxt, prefixes):
+        if nxt not in links and allowed(nxt, prefixes) and not _excluded(nxt, excludes):
             links.append(nxt)
     return title, links
 
@@ -108,6 +120,7 @@ def crawl_source(
 ) -> tuple[list[dict], bool]:
     key = str(source["key"])
     prefixes = tuple(source["allow_prefixes"])
+    excludes = tuple(source.get("exclude_patterns", []))
     cap = int(max_pages or source.get("max_pages", 500))
     robots = _robots(client, source["seeds"][0])
 
@@ -126,6 +139,8 @@ def crawl_source(
             continue
         seen.add(url)
         if not allowed(url, prefixes):
+            continue
+        if _excluded(url, excludes):
             continue
         path = urlparse(url).path
         if any(path.endswith(suffix) for suffix in SKIP_SUFFIXES):
@@ -152,7 +167,7 @@ def crawl_source(
                     break
                 continue
             consecutive_errors = 0
-            title, links = _extract(url, html, prefixes)
+            title, links = _extract(url, html, prefixes, excludes)
             cached = {"title": title, "links": links}
             cache[url] = cached
             fetched += 1

@@ -17,3 +17,5 @@ date	action	detail	result
 2026-09-10	c5-ostep	REJECTED: OSTEP is copyrighted ("free ... does not mean open source"); authors ask for links not local copies; excluded from the freeze	BLOCKED
 2026-09-10	c5-xv6	Substituted MIT xv6 book for OSTEP; official pdos.csail.mit.edu PDF (riscv rev4); real multi-page parse 114 pages verified	PASS
 2026-09-10	c6-chunk-metadata	documents doc_type/product/source/version; chunks section/section_path/url; retrieve hits + trace ChunkRefs carry metadata; contracts updated	PASS
+2026-09-12	c7-reingest	Full freeze ingested: 1487 docs/1600 pages/31288 chunks; README counts == /corpus/stats; corpus_measure (local snapshots) matches; 0 failures	PASS
+2026-09-12	c2-freeze-trim	Excluded k8s _print/generated API schema trees (large, duplicate); freeze 1487 docs; incremental low-pressure background ingest tooling	PASS
