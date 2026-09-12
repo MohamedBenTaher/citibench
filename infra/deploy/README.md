@@ -11,6 +11,13 @@
 That stamp is written only after pytest, mock RAGAS, and mock redteam pass.
 Do not deploy a demo that has not blocked the 10 redteam cases locally.
 
+**Before tagging a public release**, run the live gate on the full freeze:
+`make evals-live` (needs `GROQ_API_KEY` and `.venv-eval` from
+`apps/api/requirements-eval.txt`). CI runs the same live gate on `main`/manual
+dispatch when the `GROQ_API_KEY` secret is set. Do not publish with a mock
+`latest.json`; the live artifact is `evals/results/live.json` (`mode=live`,
+`judge_model`, `measured_at`).
+
 Playground (`/playground`) and Evals (`/evals`) are public application
 routes. Do not put a login wall in front of Evals only. If you need one
 password for a public host, use the optional Caddy `basic_auth` block and

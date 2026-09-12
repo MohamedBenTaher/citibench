@@ -323,3 +323,12 @@ def test_evals_api_returns_last_run_and_diff(eval_store: Path) -> None:
     assert "answer_relevancy" in body["metrics"]
     assert body["previous"] is not None
     assert "faithfulness" in body["diff"]
+
+
+def test_committed_live_artifact_is_not_mock() -> None:
+    live = REPO_ROOT / "evals" / "results" / "live.json"
+    if not live.exists():
+        return
+    payload = json.loads(live.read_text(encoding="utf-8"))
+    assert payload.get("mode") == "live"
+    assert payload.get("judge_model")

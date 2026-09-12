@@ -21,3 +21,4 @@ date	action	detail	result
 2026-09-12	c2-freeze-trim	Excluded k8s _print/generated API schema trees (large, duplicate); freeze 1487 docs; incremental low-pressure background ingest tooling	PASS
 2026-09-12	e1-eval-splits	ci.jsonl re-grounded (20 rows: 10 single-hop/4 compare/6 abstain) on the 1487-doc freeze; known-bad + 10 redteam re-verified; mock CI/gate green	PASS
 2026-09-12	e3-live-ragas	Decoupled live RAGAS: runtime (.venv) collects live answers+contexts; isolated .venv-eval scores with ragas 0.2.15 (Groq judge + nomic). Smoke 4 rows faithfulness 1.0, gate ok. Full run blocked: Groq daily TPD (200k) exhausted	BLOCKED
+2026-09-12	e5-ci-gate	Mock CI always (pytest+web+mock RAGAS+redteam); live gate (gate+live-eval on main/dispatch when GROQ_API_KEY secret set) over corpus-v0 with decoupled ragas; make evals-live; guard test that a committed live artifact is mode=live	PASS

@@ -11,7 +11,7 @@ WEB     ?= http://127.0.0.1:$(WEB_PORT)
 VENV    := .venv
 PY      := $(VENV)/bin/python
 
-.PHONY: help setup start up stop down logs status ingest evals smoke test mcp-smoke
+.PHONY: help setup start up stop down logs status ingest evals evals-live smoke test mcp-smoke
 
 help:
 	@echo "Citebench"
@@ -20,6 +20,7 @@ help:
 	@echo "  make start      docker compose up --build (api :8000, TanStack Start web :$(WEB_PORT), db)"
 	@echo "  make ingest     POST /ingest (local nomic embeddings; first run downloads ONNX)"
 	@echo "  make evals      pytest + mock RAGAS + mock redteam (local, before provision)"
+	@echo "  make evals-live live RAGAS (Groq judge) + live redteam; required before a public tag"
 	@echo "  make smoke      offline corpus-v0 smoke: ingest from disk + mock evals (scratch DB)"
 	@echo "  make test       pytest only (uses .venv)"
 	@echo "  make status     health + corpus stats"
@@ -82,6 +83,11 @@ ingest:
 
 evals: $(PY)
 	./scripts/local-evals.sh
+
+# Live RAGAS + redteam. Needs GROQ_API_KEY and .venv-eval (requirements-eval.txt).
+# Mandatory before a public tag; CI runs the same live gate when the secret exists.
+evals-live: $(PY)
+	./scripts/live-evals.sh
 
 # Offline corpus-v0 smoke loop. Uses a scratch DB (citebench_v0) so it never
 # wipes the big freeze. Never fetches documents (CITEBENCH_SNAPSHOT_ONLY=1).

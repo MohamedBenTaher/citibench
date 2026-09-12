@@ -105,7 +105,7 @@ Planned at commit `028fa3e`, 2026-09-10.
 | 013 | C7: Full re-ingest; README counts match `/corpus/stats` | P1 | M | 012 | DONE (1487 docs/1600 pages/31288 chunks; README == stats) |
 | 014 | E1/E2: Re-ground `ci.jsonl`, known-bad, redteam in the big freeze | P1 | M | 013 | DONE (20 rows; mock CI + 10/10 redteam green) |
 | 015 | E3/E4: Live RAGAS + method-tagged metrics | P1 | L | 014 | BLOCKED — decoupled runner built + smoke-verified (faithfulness 1.0/4 rows); full run hits Groq daily TPD 200k |
-| 016 | E5: CI faithfulness gate (live if secrets) | P1 | M | 015 | TODO |
+| 016 | E5: CI faithfulness gate (live if secrets) | P1 | M | 015 | DONE (mock always; live-eval job gated on GROQ_API_KEY; make evals-live; 149 tests) |
 | 017 | R1: Optional metadata filters + Playground controls | P2 | M | 012, 013 | TODO |
 | 018 | R2: Rerank integrity + retrieve latency at scale | P2 | M | 013 | TODO |
 | 019 | R3: Optional single query-rewrite with ablation | P3 | M | 015, 017 | TODO |

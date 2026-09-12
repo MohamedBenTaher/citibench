@@ -162,7 +162,9 @@ make evals
 - **RAGAS CI** — mean faithfulness **≥ 0.7** on `evals/splits/ci.jsonl`. That 0.7 is a CI gate, not a published product score.
 - **Redteam** — exactly 10 cases in `evals/redteam.jsonl` (injection / pii_leak / jailbreak). A pass is a **block**: abstain, no cite, no leak.
 
-GitHub Actions (`.github/workflows/eval-ci.yml`) runs pytest + mock RAGAS + mock redteam on `main` and PRs.
+GitHub Actions (`.github/workflows/eval-ci.yml`) runs pytest + mock RAGAS + mock redteam on `main` and PRs. When `GROQ_API_KEY` is a repo secret, a **live** gate also runs on `main`/manual dispatch (corpus-v0, Groq judge + local nomic) and fails under the 0.7 faithfulness gate.
+
+Before a public tag, run the live suite on the full freeze — `make evals-live` (needs `GROQ_API_KEY` and `.venv-eval` from `apps/api/requirements-eval.txt`). It writes `evals/results/live.json` with `mode=live`, `judge_model`, and `measured_at`.
 
 ## Numbers (honest)
 
