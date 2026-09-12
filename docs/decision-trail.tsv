@@ -20,3 +20,4 @@ date	action	detail	result
 2026-09-12	c7-reingest	Full freeze ingested: 1487 docs/1600 pages/31288 chunks; README counts == /corpus/stats; corpus_measure (local snapshots) matches; 0 failures	PASS
 2026-09-12	c2-freeze-trim	Excluded k8s _print/generated API schema trees (large, duplicate); freeze 1487 docs; incremental low-pressure background ingest tooling	PASS
 2026-09-12	e1-eval-splits	ci.jsonl re-grounded (20 rows: 10 single-hop/4 compare/6 abstain) on the 1487-doc freeze; known-bad + 10 redteam re-verified; mock CI/gate green	PASS
+2026-09-12	e3-live-ragas	Decoupled live RAGAS: runtime (.venv) collects live answers+contexts; isolated .venv-eval scores with ragas 0.2.15 (Groq judge + nomic). Smoke 4 rows faithfulness 1.0, gate ok. Full run blocked: Groq daily TPD (200k) exhausted	BLOCKED

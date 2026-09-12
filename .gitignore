@@ -3,6 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 .venv/
+.venv-eval/
 venv/
 dist/
 .DS_Store

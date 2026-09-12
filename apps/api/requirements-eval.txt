@@ -1,0 +1,17 @@
+# Live eval only — installed into a SEPARATE virtualenv (.venv-eval), never the
+# runtime env (.venv) and never CI. ragas pulls langchain/langgraph 1.x, which
+# conflicts with the runtime's pinned langgraph==0.6.11. Keep them apart:
+#
+#   python3 -m venv .venv-eval
+#   .venv-eval/bin/pip install -r apps/api/requirements-eval.txt
+#
+# The scorer only needs this venv; answers are collected in the runtime env by
+# `python -m citebench.eval.answers` (see scripts/live-evals.sh).
+ragas==0.2.15
+langchain==0.3.30
+langchain-core==0.3.86
+langchain-community==0.3.31
+langchain-groq==0.3.8
+langchain-text-splitters==0.3.11
+datasets==5.0.1
+fastembed==0.7.4

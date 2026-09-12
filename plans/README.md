@@ -104,7 +104,7 @@ Planned at commit `028fa3e`, 2026-09-10.
 | 012 | C6: Chunk metadata (source/doc_type/product/version/section/page/url/license) | P1 | L | 010, 011 | DONE (schema + parse + chunk + retrieve + traces; 148 tests pass) |
 | 013 | C7: Full re-ingest; README counts match `/corpus/stats` | P1 | M | 012 | DONE (1487 docs/1600 pages/31288 chunks; README == stats) |
 | 014 | E1/E2: Re-ground `ci.jsonl`, known-bad, redteam in the big freeze | P1 | M | 013 | DONE (20 rows; mock CI + 10/10 redteam green) |
-| 015 | E3/E4: Live RAGAS + method-tagged metrics | P1 | L | 014 | TODO |
+| 015 | E3/E4: Live RAGAS + method-tagged metrics | P1 | L | 014 | BLOCKED — decoupled runner built + smoke-verified (faithfulness 1.0/4 rows); full run hits Groq daily TPD 200k |
 | 016 | E5: CI faithfulness gate (live if secrets) | P1 | M | 015 | TODO |
 | 017 | R1: Optional metadata filters + Playground controls | P2 | M | 012, 013 | TODO |
 | 018 | R2: Rerank integrity + retrieve latency at scale | P2 | M | 013 | TODO |
