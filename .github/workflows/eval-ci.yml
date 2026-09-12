@@ -18,10 +18,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.11"
+
       - name: Install
-        run: |
-          python -m pip install -U pip
-          pip install -r apps/api/requirements.txt pytest
+        run: uv pip install --system -r apps/api/requirements.txt pytest
 
       - name: Pytest
         env:
@@ -127,11 +129,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.11"
+
       - name: Runtime venv
         run: |
-          python -m venv .venv
-          .venv/bin/pip install -U pip
-          .venv/bin/pip install -r apps/api/requirements.txt
+          uv venv .venv --python 3.12
+          uv pip install --python .venv/bin/python -r apps/api/requirements.txt
 
       - name: Ingest corpus-v0 (offline)
         run: |
@@ -146,9 +151,8 @@ jobs:
 
       - name: Eval venv (ragas)
         run: |
-          python -m venv .venv-eval
-          .venv-eval/bin/pip install -U pip
-          .venv-eval/bin/pip install -r apps/api/requirements-eval.txt
+          uv venv .venv-eval --python 3.12
+          uv pip install --python .venv-eval/bin/python -r apps/api/requirements-eval.txt
 
       - name: Live RAGAS faithfulness gate
         run: |

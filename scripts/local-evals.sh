@@ -16,20 +16,30 @@ elif [[ -n "${1:-}" ]]; then
   exit 2
 fi
 
+UV="${UV:-uv}"
+
 if [[ -x "${ROOT}/.venv/bin/python" ]]; then
+  PY="${ROOT}/.venv/bin/python"
+elif command -v "$UV" >/dev/null 2>&1; then
+  echo "creating ${ROOT}/.venv with uv"
+  "$UV" venv "${ROOT}/.venv"
   PY="${ROOT}/.venv/bin/python"
 elif command -v python3 >/dev/null 2>&1; then
   echo "creating ${ROOT}/.venv (system python has no fastapi/tiktoken/psycopg)"
   python3 -m venv "${ROOT}/.venv"
   PY="${ROOT}/.venv/bin/python"
 else
-  echo "python3 not found. Install Python 3.12+ and retry." >&2
+  echo "uv or python3 not found. Install uv (https://docs.astral.sh/uv/) and retry." >&2
   exit 2
 fi
 
 echo "interpreter: $PY"
-"$PY" -m pip install -q -U pip
-"$PY" -m pip install -q -r apps/api/requirements-dev.txt
+if command -v "$UV" >/dev/null 2>&1; then
+  "$UV" pip install --python "$PY" -r apps/api/requirements-dev.txt
+else
+  "$PY" -m pip install -q -U pip
+  "$PY" -m pip install -q -r apps/api/requirements-dev.txt
+fi
 
 export PYTHONPATH="${ROOT}:${ROOT}/apps/api${PYTHONPATH:+:$PYTHONPATH}"
 export EVAL_STORE_DIR="${EVAL_STORE_DIR:-${ROOT}/evals/results}"

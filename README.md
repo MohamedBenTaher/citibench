@@ -39,10 +39,10 @@ Groq is the only billed LLM (chat / generate). Embeddings are the same open `nom
 
 ## Quick start
 
-You need Docker (Compose) and Python 3.12+. A Groq key is required for Playground generate ([console.groq.com/keys](https://console.groq.com/keys)). Ingest and retrieve embed locally.
+You need Docker (Compose) and Python 3.12+. Python packaging uses [uv](https://docs.astral.sh/uv/) (`uv venv` / `uv pip`) for the venv, the Docker api image, and CI. A Groq key is required for Playground generate ([console.groq.com/keys](https://console.groq.com/keys)). Ingest and retrieve embed locally.
 
 ```bash
-make setup          # .env + .venv + pip install
+make setup          # .env + .venv + uv pip install
 # edit .env → GROQ_API_KEY=...
 make start          # api :8000, web :3000, Postgres
 make ingest         # index the MANIFEST URLs

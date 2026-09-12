@@ -4,6 +4,7 @@
 #   make ingest  — index the frozen 14-doc corpus (local nomic-embed-text-v1.5)
 
 PYTHON  ?= python3
+UV      ?= uv
 COMPOSE ?= docker compose
 WEB_PORT ?= 3000
 API     ?= http://127.0.0.1:8000
@@ -32,8 +33,7 @@ help:
 	@echo "After setup, put GROQ_API_KEY in .env (https://console.groq.com/keys)."
 
 setup: .env $(PY)
-	$(PY) -m pip install -q -U pip
-	$(PY) -m pip install -q -r apps/api/requirements-dev.txt
+	$(UV) pip install --python $(PY) -r apps/api/requirements-dev.txt
 	@echo
 	@echo "Setup done. Next:"
 	@echo "  1. Set GROQ_API_KEY in .env (Playground generate)"
@@ -46,7 +46,7 @@ setup: .env $(PY)
 	@echo "Wrote .env from .env.example — add GROQ_API_KEY before ingest/retrieve/generate."
 
 $(PY):
-	$(PYTHON) -m venv $(VENV)
+	$(UV) venv $(VENV)
 
 start up: .env
 	@echo "Citebench web → $(WEB)  (not Gotenberg; that API also uses :3000)"
@@ -101,7 +101,7 @@ smoke: $(PY)
 	$(PY) scripts/smoke.py
 
 test: $(PY)
-	$(PY) -m pip install -q -r apps/api/requirements-dev.txt
+	$(UV) pip install --python $(PY) -r apps/api/requirements-dev.txt
 	cd apps/api && $(CURDIR)/$(PY) -m pytest
 
 mcp-smoke: $(PY)
