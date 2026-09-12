@@ -45,7 +45,21 @@ Canvas = paper. Cards share the same family (paper + 1px border), not a second h
 
 ## Signature
 
-Citation brackets from `CitebenchMark` — reuse as a 2px ink rule, corner brackets on the gym hero, and header underline. Never a decorative gradient. Circuit copy: Floor / Set / Log / Weigh-in.
+The citation bracket is the one signature, used **structurally**: corner brackets
+on the hero, a bracket-framed eyebrow on `PageHeader`, a bracket tick on data
+labels, and a bracket node on the ordered station rail on `/`. Everything else
+stays quiet. Never a decorative gradient. Circuit copy: Floor / Set / Log /
+Weigh-in / Scoreboard — a real ordered sequence, not a card grid.
+
+## Anti-slop bans (unslop pass)
+
+- No Inter / Roboto / Arial / system-ui as the brand voice (Geist stays)
+- No purple/indigo "AI product" gradients
+- No warm cream canvas as a default premium move (dark is default; light is secondary)
+- No identical numbered card grids — the circuit is an ordered rail
+- No broadsheet hairline rules or zero-radius used as decoration
+- No bounce/elastic easing, hover-scale, or scattered decorative micro-animation
+- No card-inside-card nesting; no decorative blur; no 999 z-index
 
 ## Forbidden
 

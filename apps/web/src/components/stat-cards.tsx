@@ -15,9 +15,15 @@ export function StatCards({ items }: { items: StatItem[] }) {
       {items.map((item) => (
         <Card key={item.label} size="sm">
           <CardHeader className="gap-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              {item.label}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-0.5 bg-foreground/60"
+                aria-hidden="true"
+              />
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                {item.label}
+              </p>
+            </div>
             <p
               title={item.title}
               className={cn(

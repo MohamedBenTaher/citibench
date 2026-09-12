@@ -125,6 +125,7 @@ function EvalsPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Weigh-in"
         title="Evals"
         description="Public scores and traces — no login wall. Demo screenshots should start here or on a failing trace."
       />

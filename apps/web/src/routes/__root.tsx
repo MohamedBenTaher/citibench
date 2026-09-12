@@ -74,6 +74,12 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       </head>
       <body>
         <ThemeProvider>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:border focus:border-border focus:bg-card focus:px-3 focus:py-2 focus:text-sm"
+          >
+            Skip to content
+          </a>
           <header className="sticky top-0 z-10 border-b border-border bg-background">
             <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-2.5">
               <Link
@@ -120,7 +126,13 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
               <div className="h-0.5 origin-left animate-pulse bg-primary" aria-hidden="true" />
             ) : null}
           </header>
-          <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">{children}</main>
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8 outline-none"
+          >
+            {children}
+          </main>
           <ThemedToaster />
           <Scripts />
         </ThemeProvider>

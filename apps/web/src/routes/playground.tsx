@@ -86,6 +86,7 @@ function PlaygroundPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Set"
         title="Playground"
         description="Single-ask generate over the frozen corpus: retrieve, then citations or abstain. This is not a chat surface and does not keep a thread."
       />

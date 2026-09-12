@@ -60,7 +60,8 @@ function MetricsPage() {
   return (
     <>
       <PageHeader
-        title="Scoreboard"
+        eyebrow="Scoreboard"
+        title="Metrics"
         description="The same C7 scrape the README quotes: ask latency, cost per 1k, last-eval faithfulness, freeze size. Null stays unmeasured."
       />
 

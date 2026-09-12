@@ -168,8 +168,9 @@ function CorpusPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Floor"
         title="Corpus"
-        description="Eval freeze stays the 14 MANIFEST URLs. Add your own HTTPS page or a file (capped; gigabyte ingest is not this slice). Playground can retrieve both origins."
+        description="The eval freeze is the pinned MANIFEST list. Add your own HTTPS page or a file (capped; gigabyte ingest is not this slice). Playground can retrieve both origins."
       />
 
       <StatCards

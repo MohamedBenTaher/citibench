@@ -18,6 +18,7 @@ function AboutPage() {
       <div className="flex items-start gap-3">
         <CitebenchMark className="mt-1 size-10" />
         <PageHeader
+          eyebrow="Gym"
           title="About Citebench"
           description="A citation-grounded retrieval bench for a frozen public corpus. It is not a chat product and does not keep a thread."
         />

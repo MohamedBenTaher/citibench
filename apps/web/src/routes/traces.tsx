@@ -169,6 +169,7 @@ function TracesPage() {
   return (
     <>
       <PageHeader
+        eyebrow="Log"
         title="Traces"
         description="One RunTrace per generate/ask run. Langfuse is the named backend (citebench.run + nested retrieve → rerank → generate|abstain). This tab is the local fallback view and stays available if Langfuse is down or unconfigured."
       />

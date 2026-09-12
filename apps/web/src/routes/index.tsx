@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { ArrowRightIcon } from "lucide-react";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { CornerBrackets } from "@/components/corner-brackets";
 import { ErrorAlert } from "@/components/error-alert";
@@ -24,7 +25,7 @@ const stations = [
     to: "/corpus" as const,
     station: "Floor",
     title: "Corpus",
-    body: "The freeze: 14 Kubernetes and Azure docs. Counts, last index, failures.",
+    body: "The freeze: pinned public docs, licenses, last index, failures.",
   },
   {
     n: "02",
@@ -45,7 +46,7 @@ const stations = [
     to: "/evals" as const,
     station: "Weigh-in",
     title: "Evals",
-    body: "Public RAGAS gate and redteam. Screenshot destination for reviewers.",
+    body: "Public RAGAS gate and redteam. The weigh-in reviewers screenshot.",
   },
   {
     n: "05",
@@ -137,33 +138,24 @@ function IndexPage() {
               chunks.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             <Link
               to="/evals"
               preload="intent"
-              className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-4")}
+              className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
             >
               Open the weigh-in
             </Link>
             <Link
               to="/playground"
               preload="intent"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "min-h-11 px-4",
-              )}
+              className="group inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               Run a set
-            </Link>
-            <Link
-              to="/metrics"
-              preload="intent"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "min-h-11 px-4",
-              )}
-            >
-              Scoreboard
+              <ArrowRightIcon
+                className="size-3.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+                aria-hidden="true"
+              />
             </Link>
           </div>
         </div>
@@ -219,35 +211,53 @@ function IndexPage() {
         <p className="text-sm text-muted-foreground">
           Four stations. Walk them in order, or jump to the weigh-in.
         </p>
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ol className="border border-border">
           {stations.map((station) => (
-            <li key={station.to}>
+            <li
+              key={station.to}
+              className="border-b border-border last:border-b-0"
+            >
               <Link
                 to={station.to}
                 preload="intent"
                 className={cn(
-                  "flex min-h-28 flex-col gap-2 border border-border bg-card p-4",
+                  "group grid grid-cols-[2.75rem_1fr_auto] items-center gap-3 px-4 py-3.5",
                   "transition-colors duration-200 ease-out",
-                  "hover:border-foreground",
-                  "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                  "hover:bg-card focus-visible:bg-card",
+                  "focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50",
                   "motion-reduce:transition-none",
                 )}
               >
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
-                    {station.n} {station.station}
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-4 w-1 border-y-2 border-l-2 border-foreground/70"
+                    aria-hidden="true"
+                  />
+                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {station.n}
                   </span>
-                  <span className="font-heading text-sm font-medium tracking-tight">
-                    {station.title}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-heading text-sm font-medium tracking-tight">
+                      {station.title}
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                      {station.station}
+                    </span>
                   </span>
-                </div>
-                <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-                  {station.body}
-                </p>
+                  <span className="mt-0.5 block text-pretty text-sm leading-relaxed text-muted-foreground">
+                    {station.body}
+                  </span>
+                </span>
+                <ArrowRightIcon
+                  className="size-4 text-muted-foreground opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"
+                  aria-hidden="true"
+                />
               </Link>
             </li>
           ))}
-        </ul>
+        </ol>
       </section>
     </>
   );
