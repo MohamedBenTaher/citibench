@@ -239,6 +239,7 @@ def test_rerank_skipped_does_not_use_score_gate() -> None:
     )
     assert result.abstained is False
     assert result.terminal == "generate"
+    assert result.rerank_skipped is True
     assert [ref.chunk_id for ref in result.citations] == ["k8s-scheduler:0"]
 
 

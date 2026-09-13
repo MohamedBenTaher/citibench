@@ -182,7 +182,9 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 | False-abstain rate | 0.000 | Retrieval confidence gate on 26 answerable questions. |
 | Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 20 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
 | Context precision | 1.000 | Same mock artifact (`evals/results/latest.json`). |
-| p95 latency | — | Unmeasured until traces with `latency_ms > 0` exist. |
+| Retrieve latency p50 | 2401 ms | Retrieve-only, 31,288 chunks, n=50 (`scripts/bench-retrieve.py` → `evals/results/retrieve-bench.json`). `measured-under-retrieve-bench-2026-09-13`. Rerank ≈2180 ms of it. |
+| Retrieve latency p95 | 2548 ms | Same run. Over the 400 ms budget, but rerank-bound, so ANN is deferred (see `DECISIONS.md`). |
+| Ask latency p95 | — | Unmeasured; full `/generate` trace latency once enough runs exist. |
 | Cost / 1k queries | — | Unmeasured. When traces exist: mean `citebench.cost.v1` USD × 1000. |
 
 ```bash

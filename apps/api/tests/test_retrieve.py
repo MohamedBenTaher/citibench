@@ -426,3 +426,18 @@ def test_filter_sql_is_parameterized() -> None:
     clause3, params3 = _filter_sql(Filters(product="O'Brien"))
     assert "O'Brien" not in clause3
     assert params3 == ["O'Brien"]
+
+
+def test_rerank_failure_records_error_stage() -> None:
+    fixture = load_5doc()
+    sink: list[dict] = []
+
+    def boom(_query: str, _hits: list[FusedChunk]) -> list[float]:
+        raise RuntimeError("FlashRank failed to load")
+
+    hits = run_retrieve(fixture, rerank_fn=boom, stage_sink=sink)
+    assert all(hit.rerank_skipped for hit in hits)
+    rerank_stages = [stage for stage in sink if stage["kind"] == "rerank"]
+    assert rerank_stages
+    assert rerank_stages[-1]["status"] == "error"
+    assert rerank_stages[-1]["attributes"]["rerank_skipped"] is True

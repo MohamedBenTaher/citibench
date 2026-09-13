@@ -33,6 +33,20 @@ If FlashRank fails to load or score, the pipeline must not invent order. It
 falls back to the RRF list, truncated to 8, and records `rerank_skipped=true`
 on the retrieve span and on each `ChunkHit`. Silent skip is a contract violation.
 
+## Retrieve latency at scale (2026-09-13)
+
+`scripts/bench-retrieve.py` measures retrieve-only latency on the frozen corpus
+(31,288 chunks, n=50, `evals/results/retrieve-bench.json`): **p50 2401 ms, p95
+2548 ms** (`measured-under-retrieve-bench-2026-09-13`). The stage breakdown is
+the decision: FlashRank over the 50-hit pool is **~2180 ms** of that, while the
+dense scan is ~140 ms, FTS ~5 ms, and query embedding ~19 ms.
+
+An ANN index (HNSW/IVFFlat) is therefore **not** the fix here — even at zero
+scan cost, p95 stays reranker-bound. ANN stays deferred; a separate plan targets
+the cross-encoder cost (pool size, ONNX threads/quantization, or a lighter
+model). Re-run the bench after that plan, or after filters (plan 017) change
+pool sizes.
+
 ## Why not fine-tune
 
 The frozen corpus is ~1,500 public pages. Fine-tuning an embedder or reranker on

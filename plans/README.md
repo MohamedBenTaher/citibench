@@ -53,7 +53,7 @@ cd apps/web && npm run typecheck
 
 ## Findings considered and rejected
 
-- **pgvector HNSW/IVFFlat index**: corpus is ~148 chunks (`evals/results/corpus.json`). Sequential `ORDER BY embedding <=>` is the right plan; an ANN index would add ingest complexity for no measurable ask latency.
+- **pgvector HNSW/IVFFlat index**: re-checked at 31,288 chunks (plan 018). The dense scan is ~140 ms while the cross-encoder is ~2180 ms, so an ANN index would trim a small slice and leave p95 rerank-bound. Sequential `ORDER BY embedding <=>` stays; rerank cost is the target (plan 023). Revisit only if a future bench shows the scan dominating.
 - **Fine-tune embedder/reranker on the freeze**: forbidden by `DECISIONS.md` (“Why not fine-tune”).
 - **Second chat or embed vendor**: forbidden; Groq is generation-only; nomic ONNX is the same open weights, not a second billed embed provider.
 - **Chat-as-homepage / connector marketplace**: out of product scope (`DECISIONS.md` C4/C8/C9).
@@ -106,12 +106,13 @@ Planned at commit `028fa3e`, 2026-09-10.
 | 014 | E1/E2: Re-ground `ci.jsonl`, known-bad, redteam in the big freeze | P1 | M | 013 | DONE (20 rows; mock CI + 10/10 redteam green) |
 | 015 | E3/E4: Live RAGAS + method-tagged metrics | P1 | L | 014 | BLOCKED — decoupled runner built + smoke-verified (faithfulness 1.0/4 rows); full run hits Groq daily TPD 200k |
 | 016 | E5: CI faithfulness gate (live if secrets) | P1 | M | 015 | DONE (mock always; live-eval job gated on GROQ_API_KEY; make evals-live; 149 tests) |
-| 017 | R1: Optional metadata filters + Playground controls | P2 | M | 012, 013 | TODO |
-| 018 | R2: Rerank integrity + retrieve latency at scale | P2 | M | 013 | TODO |
+| 017 | R1: Optional metadata filters + Playground controls | P2 | M | 012, 013 | DONE (`Filters` on retrieve/generate; Playground product + doc-type selects; 164 tests) |
+| 018 | R2: Rerank integrity + retrieve latency at scale | P2 | M | 013 | DONE — tests pass; measured p95 2548 ms at 31,288 chunks, rerank is ~86% of it → STOP, ANN deferred (see 023) |
 | 019 | R3: Optional single query-rewrite with ablation | P3 | M | 015, 017 | TODO |
 | 020 | R4: User uploads stay in a separate namespace | P3 | S | 008 | TODO |
 | 021 | S1: Public repo/demo hygiene, topics, no secrets | P2 | S | 016 | TODO |
 | 022 | S2/S3/S4: Screenshot, resume bullets, pin + site blurb | P2 | S | 015, 021 | TODO |
+| 023 | R2b: Make rerank fit the retrieve latency budget | P2 | M | 013, 018 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -127,4 +128,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - 017 after 012/013: filters query metadata that must exist and be populated.
 - 019 is a spike that may be **deleted**: keep only if the ablation improves metrics.
 - 020 is independent of I3 and must be cut if it delays I3.
+- 023 follows 018's STOP: rerank (not the vector scan) dominates latency, so
+  ANN is deferred and the cross-encoder cost is attacked instead; quality is
+  gated on the committed qrels.
 
