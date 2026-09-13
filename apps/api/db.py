@@ -738,6 +738,35 @@ def corpus_suggestions(conn: psycopg.Connection, limit: int = 6) -> dict[str, An
     return {"suggestions": suggestions[:limit], "source": "corpus"}
 
 
+def corpus_macro(conn: psycopg.Connection, per_product: int = 6) -> dict[str, Any]:
+    """A compact summary of what the corpus covers, for LLM question generation."""
+    rows = conn.execute(
+        """
+        SELECT product, title
+        FROM documents
+        WHERE status = 'ok' AND origin = 'freeze' AND product IS NOT NULL
+        ORDER BY product, id
+        """
+    ).fetchall()
+    grouped: dict[str, list[str]] = {}
+    for row in rows:
+        topic = clean_topic(row["product"], row["title"])
+        lowered = topic.lower()
+        if not (5 <= len(topic) <= 80) or lowered in _GENERIC_TOPICS:
+            continue
+        if lowered.endswith("documentation") or re.match(r"^\w+\s+\d", lowered):
+            continue
+        bucket = grouped.setdefault(str(row["product"]), [])
+        if len(bucket) < per_product and topic not in bucket:
+            bucket.append(topic)
+    stats = corpus_stats(conn)
+    return {
+        "docs": stats["doc_count"],
+        "chunks": stats["chunk_count"],
+        "products": grouped,
+    }
+
+
 def corpus_stats(conn: psycopg.Connection) -> dict[str, Any]:
     docs_ok = conn.execute(
         "SELECT COUNT(*) AS n FROM documents WHERE status = 'ok'"

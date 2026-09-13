@@ -17,7 +17,6 @@ from db import (
     connect,
     corpus_facets,
     corpus_stats,
-    corpus_suggestions,
     database_unavailable_detail,
     ensure_schema,
     get_chunks_by_ids,
@@ -25,6 +24,7 @@ from db import (
     is_database_error,
     list_documents,
 )
+from suggestions import generate_suggestions
 from embed import warmup_local_embed
 from generate import GenerateResult, generate
 from metrics import MetricsSnapshot, collect_metrics, render_prometheus
@@ -235,11 +235,11 @@ def get_corpus_facets() -> dict[str, Any]:
 def get_corpus_suggestions(
     limit: int = Query(default=6, ge=1, le=12),
 ) -> dict[str, Any]:
-    """Question suggestions generated from the corpus's own document titles."""
+    """Corpus-grounded question suggestions (LLM over corpus macro, template fallback)."""
     settings = load_settings()
     try:
         with connect(settings.database_url) as conn:
-            return corpus_suggestions(conn, limit=limit)
+            return generate_suggestions(settings, conn, limit=limit)
     except Exception as exc:
         raise HTTPException(
             status_code=503,
