@@ -1,13 +1,20 @@
-import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowUpIcon, ExternalLinkIcon, Loader2Icon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ExternalLinkIcon, Loading03Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { ErrorAlert } from "@/components/error-alert";
 import { Markdown } from "@/components/markdown";
 import { StatusPill } from "@/components/status-pill";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientApiJson } from "@/lib/client-api";
 import { getCitedChunks, getCorpusSuggestions } from "@/lib/server";
@@ -49,6 +56,20 @@ function SearchBar({
   compact?: boolean;
   autoFocus?: boolean;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) {
+      return;
+    }
+    const lineHeight = Number.parseFloat(getComputedStyle(el).lineHeight) || 26;
+    const maxHeight = lineHeight * 6;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [value]);
+
   function handleKey(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -58,7 +79,7 @@ function SearchBar({
 
   return (
     <form
-      className={cn("w-full", compact ? "max-w-3xl" : "max-w-2xl")}
+      className="w-full max-w-3xl"
       onSubmit={(event: FormEvent) => {
         event.preventDefault();
         onSubmit();
@@ -67,32 +88,39 @@ function SearchBar({
       <div
         className={cn(
           "flex items-end gap-2 rounded-2xl border border-border bg-card shadow-sm transition-shadow duration-150 ease-standard focus-within:border-ring/60 focus-within:shadow-md focus-within:ring-4 focus-within:ring-ring/10",
-          compact ? "p-1.5 pl-4" : "p-2 pl-5",
+          compact ? "p-2 pl-4" : "p-2.5 pl-5",
         )}
       >
         <textarea
+          ref={textareaRef}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={handleKey}
-          rows={1}
+          rows={2}
           autoFocus={autoFocus}
           aria-label="Ask a question"
           placeholder="Ask anything about the corpus…"
-          className="max-h-40 min-h-0 flex-1 resize-none bg-transparent px-0 py-2.5 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+          className="min-h-[3.5rem] flex-1 resize-none bg-transparent px-0 py-2 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
         />
-        <Button
+        <button
           type="submit"
-          size="icon"
           disabled={busy || !value.trim()}
           aria-label="Ask"
-          className={cn("shrink-0 rounded-xl", compact ? "size-9" : "size-10")}
+          className={cn(
+            "inline-flex shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors duration-150 ease-standard hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40",
+            compact ? "size-10" : "size-11",
+          )}
         >
           {busy ? (
-            <Loader2Icon className="size-4 animate-spin motion-reduce:animate-none" />
+            <HugeiconsIcon
+              icon={Loading03Icon}
+              size={compact ? 18 : 20}
+              className="animate-spin motion-reduce:animate-none"
+            />
           ) : (
-            <ArrowUpIcon className="size-4" />
+            <HugeiconsIcon icon={Search01Icon} size={compact ? 18 : 22} strokeWidth={2} />
           )}
-        </Button>
+        </button>
       </div>
     </form>
   );
@@ -432,7 +460,7 @@ function SourceCard({
             rel="noreferrer noopener"
             className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
           >
-            <ExternalLinkIcon className="size-3" aria-hidden />
+            <HugeiconsIcon icon={ExternalLinkIcon} size={13} aria-hidden />
             source
           </a>
         ) : null}
