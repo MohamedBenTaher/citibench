@@ -17,25 +17,17 @@ from manifest import parse_manifest
 from settings import Settings, load_settings
 from trace import RunTrace, list_traces
 
-LATENCY_METHOD = (
-    "linear interpolation over RunTrace.latency_ms for traces with latency_ms > 0; "
-    "p50=quantile 0.50, p95=quantile 0.95; n=0 yields null"
-)
+LATENCY_METHOD = "median and 95th percentile of measured ask latency"
 COST_PER_1K_METHOD = (
-    "mean(CostEstimate.usd_estimate)*1000 over traces with usd_estimate > 0 "
-    f"or any billed token count > 0; rates from {COST_METHOD_NAME} / config.yaml"
+    "mean estimated cost per ask, scaled to 1,000 asks "
+    f"(cost model {COST_METHOD_NAME})"
 )
 FAITHFULNESS_METHOD = (
-    "metrics.faithfulness from the last evals/results/latest.json artifact "
-    "(C6 RAGAS CI). Null when the file is missing. mode is recorded (mock|live)"
+    "faithfulness from the latest evaluation run; the mode (mock or live) is recorded"
 )
-CORPUS_DOCS_METHOD = "count of pinned URLs in corpus/MANIFEST.md"
-CORPUS_PAGES_METHOD = (
-    "HTML snapshot = 1 page (parse_doc._parse_html); PDF = PdfReader page count"
-)
-CORPUS_CHUNKS_METHOD = (
-    "tiktoken cl100k_base windows of 512 tokens / 64 overlap after parse_doc"
-)
+CORPUS_DOCS_METHOD = "pinned documents in the corpus manifest"
+CORPUS_PAGES_METHOD = "one page per HTML document; PDF page count otherwise"
+CORPUS_CHUNKS_METHOD = "token windows of 512 tokens with 64 overlap"
 
 
 class LatencyMetrics(BaseModel):

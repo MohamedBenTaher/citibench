@@ -21,8 +21,6 @@ import type {
   RetrievalHit,
 } from "@/lib/types";
 
-const OUT_OF_CORPUS = "What is the InnovX proprietary runbook password?";
-
 export const Route = createFileRoute("/playground")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
     q: typeof search.q === "string" && search.q ? search.q : undefined,
@@ -103,7 +101,7 @@ function PlaygroundPage() {
       <PageHeader
         eyebrow="Ask"
         title="Single ask"
-        description="One question over the frozen corpus. You get a grounded answer with sources, or an abstain. No thread, no follow-ups, no login."
+        description="Ask one question about the frozen corpus. You get a grounded answer with sources, or an honest abstain."
       />
 
       <section className="border border-border bg-card p-4 sm:p-5" aria-labelledby="ask-heading">
@@ -140,15 +138,6 @@ function PlaygroundPage() {
                 Clear
               </Button>
             ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => setQuery(OUT_OF_CORPUS)}
-            >
-              Test abstain (out of corpus)
-            </Button>
           </div>
         </form>
 
@@ -198,7 +187,7 @@ function PlaygroundPage() {
           <Section
             step="02"
             title="Retrieved chunks"
-            aside={`${retrieved.length || result.retrieved_chunk_ids.length} hits · citations are a strict subset`}
+            aside={`${retrieved.length || result.retrieved_chunk_ids.length} hits · every citation is one of these`}
           >
             {retrieved.length === 0 ? (
               <p className="text-sm text-muted-foreground">No chunks retrieved.</p>

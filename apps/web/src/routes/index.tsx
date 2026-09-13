@@ -129,9 +129,8 @@ function IndexPage() {
               A bench for grounded retrieve.
             </h1>
             <p className="max-w-2xl text-pretty text-[15px] leading-relaxed text-muted-foreground">
-              Frozen corpus, hybrid retrieve, then generate or abstain by policy.
-              No chat thread. The score that matters is whether the answer stayed on
-              retrieved chunks.
+              Frozen corpus, hybrid retrieve, then generate or abstain by policy. The
+              score that matters is whether the answer stayed on retrieved chunks.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -172,7 +171,7 @@ function IndexPage() {
             }
           />
           <StatusCell term="Last ingest" value={formatWhen(stats.last_index_time)} mono />
-          <StatusCell term="CI gate" value={hasEval ? (latest?.gate_passed ? "passed" : "failed") : "unmeasured"} tone={hasEval ? (latest?.gate_passed ? "success" : "danger") : "neutral"}>
+          <StatusCell term="Gate" value={hasEval ? (latest?.gate_passed ? "passed" : "failed") : "unmeasured"} tone={hasEval ? (latest?.gate_passed ? "success" : "danger") : "neutral"}>
             <span className="font-mono text-[11px] text-muted-foreground">
               threshold {threshold.toFixed(1)}
             </span>

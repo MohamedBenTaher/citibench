@@ -20,7 +20,7 @@ function AboutPage() {
         <PageHeader
           eyebrow="Gym"
           title="About Citebench"
-          description="A citation-grounded retrieval bench for a frozen public corpus. It is not a chat product and does not keep a thread."
+          description="A citation-grounded retrieval bench over a frozen public corpus."
         />
       </div>
 
@@ -34,7 +34,7 @@ function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            The homepage is a research-gym index, not a chat. The circuit is{" "}
+            The circuit is{" "}
             <Link to="/corpus" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
               Corpus
             </Link>
@@ -44,9 +44,9 @@ function AboutPage() {
               preload="intent"
               className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
             >
-              Playground
-            </Link>{" "}
-            (single ask),{" "}
+              Ask
+            </Link>
+            ,{" "}
             <Link to="/traces" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
               Traces
             </Link>
@@ -54,11 +54,12 @@ function AboutPage() {
             <Link to="/evals" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
               Evals
             </Link>
-            . Demo screenshots should start on Evals or a failing trace, not a chat bubble.
+            . Every step is inspectable: retrieved chunks, scores, citations, and the
+            final decision.
           </p>
           <p>
-            If the corpus cannot support the question, the system must abstain. It must not invent
-            a password, a payroll row, or a citation.
+            If the corpus cannot support the question, Citebench abstains. It never
+            invents a password, a payroll row, or a citation.
           </p>
         </CardContent>
       </Card>
@@ -67,20 +68,18 @@ function AboutPage() {
         <CardHeader>
           <CardTitle>Frozen corpus</CardTitle>
           <CardDescription>
-            14 Kubernetes and Azure URLs pinned in <code>corpus/MANIFEST.md</code> (freeze
-            2026-09-05).
+            Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 documentation.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            Ingest snapshots only those rows. Re-index replaces per MANIFEST id.{" "}
-            <code>POST /ingest</code> with <code>{`{"wipe": true}`}</code> only
-            works when the API has <code>CITEBENCH_ALLOW_WIPE=1</code>. It then
-            clears documents and chunks.
+            The corpus is a pinned snapshot: documents are fetched once, hashed, and
+            indexed with their license recorded. Re-indexing replaces the pinned
+            documents; a full wipe is opt-in.
           </p>
           <p>
-            The browser talks to FastAPI at <code>VITE_API_URL</code> (default{" "}
-            <code>http://localhost:8000</code>). Compose SSR uses <code>API_URL=http://api:8000</code>.
+            You can add your own HTTPS page or file from the Corpus tab. A source that
+            cannot be fetched is reported, and the last good copy stays indexed.
           </p>
         </CardContent>
       </Card>
@@ -88,22 +87,21 @@ function AboutPage() {
       <Card>
         <CardHeader>
           <CardTitle>Models and cost</CardTitle>
-          <CardDescription>Groq is the only billed LLM. Embeddings are local.</CardDescription>
+          <CardDescription>Groq is the only billed LLM. Embeddings run locally.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            Chat / generate uses Groq <code>openai/gpt-oss-20b</code> (override with{" "}
-            <code>GROQ_CHAT_MODEL</code>). A live <code>GROQ_API_KEY</code> is required for
-            Playground generate, not for ingest or retrieve.
+            Answers are generated with Groq <code>openai/gpt-oss-20b</code>. A live key is
+            required to generate; ingest and retrieve run without it.
           </p>
           <p>
-            Embeddings are local <code>nomic-embed-text-v1.5</code> (768-d ONNX via fastembed).
-            Groq no longer hosts that model. First ingest downloads the weights (~0.5&nbsp;GB) into{" "}
-            <code>NOMIC_CACHE_DIR</code>.
+            Embeddings are local <code>nomic-embed-text-v1.5</code> (768-d). The first
+            ingest downloads the weights once into a local cache.
           </p>
           <p>
-            Retrieve is hybrid: dense + FTS, RRF <code>k=60</code>, FlashRank 50→8. Citations are
-            always a subset of retrieved chunk ids.
+            Retrieval is hybrid: dense vectors plus full-text search, fused with
+            Reciprocal Rank Fusion, then re-ranked by a cross-encoder down to the top
+            results. Citations are always a subset of the retrieved chunks.
           </p>
         </CardContent>
       </Card>
@@ -111,21 +109,21 @@ function AboutPage() {
       <Card>
         <CardHeader>
           <CardTitle>Evals and traces</CardTitle>
-          <CardDescription>Public scores. No login wall. No invented metrics.</CardDescription>
+          <CardDescription>Public scores. No login. No invented metrics.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            RAGAS CI gates faithfulness at 0.7. That number is a CI threshold, not a published
-            Citebench score. Companion metrics (context precision, answer relevancy) are logged
-            only.
+            Faithfulness is checked against a 0.7 gate. Context precision and answer
+            relevancy are logged alongside it. Unmeasured values are shown as such —
+            never estimated.
           </p>
           <p>
-            Redteam is 10 Contract A cases (injection / pii_leak / jailbreak). The runner reuses
-            generate → abstain.
+            Redteam runs ten attack cases covering prompt injection, PII leaks, and
+            jailbreaks; a pass is a refusal.
           </p>
           <p>
-            Langfuse is optional. Missing or rejected keys keep a local RunTrace store so{" "}
-            <code>/traces</code> still works.
+            Every ask writes a trace. Traces are stored locally and an external tracing
+            backend can be connected.
           </p>
         </CardContent>
       </Card>

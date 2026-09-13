@@ -62,7 +62,7 @@ function MetricsPage() {
       <PageHeader
         eyebrow="Scoreboard"
         title="Metrics"
-        description="The same C7 scrape the README quotes: ask latency, cost per 1k, last-eval faithfulness, freeze size. Null stays unmeasured."
+        description="Ask latency, cost per 1k, last-eval faithfulness, and corpus size for this instance. Unmeasured values are shown as such."
       />
 
       {loadError ? <ErrorAlert title="Metrics" message={loadError} /> : null}
@@ -146,15 +146,15 @@ function MetricsPage() {
         <CardHeader>
           <CardTitle>Last weigh-in</CardTitle>
           <CardDescription>
-            Faithfulness from evals/results/latest.json. The CI gate is 0.7; that is
-            not a published Citebench score. Companion metrics are logged only.
+            Faithfulness from the latest evaluation, with context precision and answer
+            relevancy alongside. The 0.7 gate applies to faithfulness.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {noEval ? (
             <p className="text-sm text-muted-foreground">
-              No eval artifact yet. Open Evals after CI writes latest.json. Charts stay
-              empty rather than inventing scores.
+              No eval run yet. Scores appear here after an evaluation completes — nothing
+              is estimated.
             </p>
           ) : null}
           <StatCards
@@ -163,21 +163,18 @@ function MetricsPage() {
                 label: "Faithfulness",
                 value: measured(faith?.value ?? null),
                 hint: faith?.present
-                  ? [faith.mode, faith.split, faith.run_id]
-                      .filter(Boolean)
-                      .join(" · ")
-                  : "missing latest.json",
+                  ? [faith.mode, faith.run_id].filter(Boolean).join(" · ")
+                  : "not measured",
               },
               {
                 label: "Context precision",
                 value: measured(faith?.context_precision ?? null),
-                hint: "logged only; does not gate CI",
+                hint: "logged only",
               },
               {
                 label: "Rows scored",
                 value:
                   faith?.n_scored == null ? "unmeasured" : String(faith.n_scored),
-                hint: faith?.source ?? undefined,
               },
             ]}
           />
@@ -187,10 +184,7 @@ function MetricsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Floor</CardTitle>
-          <CardDescription>
-            Freeze size. Docs come from MANIFEST. Pages and chunks prefer live
-            /corpus/stats after ingest.
-          </CardDescription>
+          <CardDescription>Corpus size for this instance.</CardDescription>
         </CardHeader>
         <CardContent>
           <StatCards
@@ -198,7 +192,6 @@ function MetricsPage() {
               {
                 label: "Docs",
                 value: corpus?.docs == null ? "unmeasured" : String(corpus.docs),
-                hint: corpus?.source,
               },
               {
                 label: "Pages",
@@ -207,7 +200,6 @@ function MetricsPage() {
               {
                 label: "Chunks",
                 value: corpus?.chunks == null ? "unmeasured" : String(corpus.chunks),
-                hint: corpus?.measured_under ?? undefined,
               },
             ]}
           />
@@ -223,11 +215,7 @@ function MetricsPage() {
           <li>Cost: {cost?.method ?? "—"}</li>
           <li>Faithfulness: {faith?.method ?? "—"}</li>
         </ul>
-        <p className="mt-2">
-          Machine scrape remains <code>GET /metrics</code> and{" "}
-          <code>GET /metrics?format=prometheus</code>. This page does not add a second
-          formula.
-        </p>
+        <p className="mt-2">Values are read from the live metrics endpoint; nothing is estimated.</p>
       </details>
     </>
   );

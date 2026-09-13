@@ -25,12 +25,6 @@ const METRICS: { key: MetricName; label: string }[] = [
   { key: "answer_relevancy", label: "Answer relevancy" },
 ];
 
-const RAGAS_CLI =
-  "python -m citebench.eval.ci --split evals/splits/ci.jsonl --known-bad evals/splits/known_bad.jsonl --threshold-faithfulness 0.7";
-
-const REDTEAM_CLI =
-  "python -m citebench.eval.redteam --split evals/redteam.jsonl --mock";
-
 function metricLabel(key: MetricName): string {
   switch (key) {
     case "faithfulness":
@@ -127,26 +121,24 @@ function EvalsPage() {
       <PageHeader
         eyebrow="Weigh-in"
         title="Evals"
-        description="Public scores and traces — no login wall. Demo screenshots should start here or on a failing trace."
+        description="How well answers stay grounded in retrieved chunks, plus redteam refusals. Public — no login."
       />
 
       {loadError ? <ErrorAlert title="Evals" message={loadError} /> : null}
 
       <Card>
         <CardHeader>
-          <CardTitle>RAGAS CI</CardTitle>
+          <CardTitle>Answer quality</CardTitle>
           <CardDescription>
-            Last CI run of the RAGAS gate. Faithfulness {threshold.toFixed(1)} is the CI
-            threshold, not a published Citebench score. Companion metrics are logged only. See{" "}
-            <code>evals/splits/ci.jsonl</code>, <code>evals/splits/known_bad.jsonl</code>, and{" "}
-            <code>docs/contracts/eval-jsonl.md</code>.
+            Latest faithfulness, context precision, and answer relevancy over the frozen
+            evaluation set. The {threshold.toFixed(1)} gate applies to faithfulness.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="space-y-1">
               <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Faithfulness (CI gate)
+                Faithfulness
               </p>
               <p className="font-mono text-4xl font-semibold tabular-nums">
                 {hasRun ? formatScore(metrics?.faithfulness) : "unmeasured"}
@@ -165,7 +157,7 @@ function EvalsPage() {
                   : "unmeasured"}
               </p>
               {hasRun && latest?.gate_reason ? <p>{latest.gate_reason}</p> : null}
-              <p>Threshold {threshold.toFixed(1)} gates faithfulness only.</p>
+              <p>The {threshold.toFixed(1)} gate applies to faithfulness.</p>
             </div>
           </div>
 
@@ -181,19 +173,10 @@ function EvalsPage() {
             </Button>
           </div>
 
-          <details className="text-sm text-muted-foreground">
-            <summary className="cursor-pointer font-medium text-foreground">
-              How this was run
-            </summary>
-            <p className="mt-2">
-              Command: <code>{RAGAS_CLI}</code>
-            </p>
-          </details>
-
           {!hasRun ? (
             <p className="text-sm text-muted-foreground">
-              No CI run artifact yet. Run the eval harness, then refresh. Charts stay empty rather
-              than inventing scores.
+              No eval run yet. Scores appear here once an evaluation has completed; nothing
+              is estimated.
             </p>
           ) : (
             <>
@@ -201,10 +184,11 @@ function EvalsPage() {
               <p className="text-sm text-muted-foreground">
                 Run <code>{latest?.run_id}</code>
                 {latest?.mode ? ` · ${latest.mode}` : ""}
-                {latest?.framework ? ` · ${latest.framework}` : ""}
                 {latest?.finished_at ? ` · ${latest.finished_at}` : ""}
                 {latest?.gate_passed ? " · gate passed" : " · gate failed"}
-                {latest?.gate_reason ? ` · ${latest.gate_reason}` : ""}
+                {latest?.gate_reason && latest.gate_reason !== "ok"
+                  ? ` · ${latest.gate_reason}`
+                  : ""}
               </p>
               <StatCards
                 items={METRICS.map((metric) => ({
@@ -218,10 +202,10 @@ function EvalsPage() {
                 }))}
               />
               <p className="text-sm text-muted-foreground">
-                Known-bad phase:{" "}
+                Out-of-corpus refusal checks:{" "}
                 <code>{latest?.known_bad?.clean ? "clean" : "unclean"}</code>
                 {latest?.failing_run_ids && latest.failing_run_ids.length > 0
-                  ? ` · failing traces: ${latest.failing_run_ids.join(", ")}`
+                  ? ` · failing cases: ${latest.failing_run_ids.join(", ")}`
                   : ""}
                 .
               </p>
@@ -234,20 +218,11 @@ function EvalsPage() {
         <CardHeader>
           <CardTitle>Redteam</CardTitle>
           <CardDescription>
-            Ten Contract A cases in <code>evals/redteam.jsonl</code> (<code>tags</code> include{" "}
-            <code>redteam</code>, plus <code>attack_type</code> and <code>expect_block</code>).
-            Mix is injection / pii_leak / jailbreak. The runner reuses generate → abstain.
+            Ten attack cases across prompt injection, PII leaks, and jailbreaks. A pass is a
+            refusal — no answer, no citation, no leak.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <details className="text-sm text-muted-foreground">
-            <summary className="cursor-pointer font-medium text-foreground">
-              How this was run
-            </summary>
-            <p className="mt-2">
-              Command: <code>{REDTEAM_CLI}</code>
-            </p>
-          </details>
           {redteamRun ? (
             <p className="text-sm text-muted-foreground">
               Run <code>{redteamRun.run_id}</code>
@@ -262,7 +237,7 @@ function EvalsPage() {
           ) : (
             <p className="text-sm text-muted-foreground">
               {redteamCases.length} cases loaded
-              {redteam?.detail ? ` · ${redteam.detail}` : " · no runner artifact yet"}.
+              {redteam?.detail ? "" : " · not run yet"}.
             </p>
           )}
           <RedteamChart cases={redteamCases} />

@@ -143,9 +143,6 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                 <span className="font-heading text-sm font-semibold tracking-tight text-sidebar-foreground">
                   Citebench
                 </span>
-                <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                  bench
-                </span>
               </Link>
               <nav className="flex flex-1 flex-col gap-0.5 px-2 py-2" aria-label="Primary">
                 {PRIMARY_NAV.map((item) => (

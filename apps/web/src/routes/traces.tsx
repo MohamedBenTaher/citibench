@@ -71,11 +71,8 @@ export const Route = createFileRoute("/traces")({
   component: TracesPage,
 });
 
-function backendLabel(configured: boolean, langfuseId: string | null): string {
-  if (langfuseId) {
-    return "langfuse";
-  }
-  return configured ? "local (Langfuse down)" : "local";
+function backendLabel(externalId: string | null): string {
+  return externalId ? "external tracing" : "local store";
 }
 
 function kindLabel(kind: SpanKind): string {
@@ -172,7 +169,7 @@ function TracesPage() {
       <PageHeader
         eyebrow="Log"
         title="Traces"
-        description="One RunTrace per generate/ask run. Langfuse is the named backend (citebench.run + nested retrieve → rerank → generate|abstain). This tab is the local fallback view and stays available if Langfuse is down or unconfigured."
+        description="One trace per ask: retrieve → rerank → generate or abstain, with per-span detail, scores, and citations."
       />
       <BackendNote list={list} />
       {loadError ? <ErrorAlert title="Traces" message={loadError} /> : null}
@@ -313,8 +310,8 @@ function TracesPage() {
               <p className="text-sm text-muted-foreground">
                 Method <code>{detail.cost_method || "—"}</code>
                 {detail.langfuse_trace_id
-                  ? ` · Langfuse ${detail.langfuse_trace_id}`
-                  : " · local fallback (no langfuse_trace_id)"}
+                  ? ` · external ${detail.langfuse_trace_id}`
+                  : " · local store"}
                 {detail.rerank_skipped ? " · rerank_skipped=true" : ""}
               </p>
 
@@ -375,19 +372,13 @@ function TracesPage() {
 function BackendNote({ list }: { list: TraceList | null }) {
   return (
     <p className="text-sm text-muted-foreground">
-      Backend:{" "}
+      Storage:{" "}
       <code>
         {list
-          ? backendLabel(
-              list.langfuse_configured,
-              list.traces.some((row) => row.langfuse_trace_id) ? "set" : null,
-            )
+          ? backendLabel(list.traces.some((row) => row.langfuse_trace_id) ? "set" : null)
           : "—"}
       </code>
-      {list?.langfuse_configured
-        ? " · LANGFUSE_PUBLIC_KEY/SECRET_KEY are set"
-        : " · no Langfuse keys; local store only"}
-      . Chunks are <code>text_ref</code> pointers, not corpus dumps.
+      . Every span is kept; chunks are referenced by pointer, not copied into the trace.
     </p>
   );
 }

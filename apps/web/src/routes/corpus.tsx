@@ -171,7 +171,7 @@ function CorpusPage() {
       <PageHeader
         eyebrow="Floor"
         title="Corpus"
-        description="The eval freeze is the pinned MANIFEST list. Add your own HTTPS page or a file (capped; gigabyte ingest is not this slice). Playground can retrieve both origins."
+        description="The frozen corpus is the pinned document list. Add your own HTTPS page or file below; Ask searches both."
       />
 
       <StatCards
@@ -253,42 +253,13 @@ function CorpusPage() {
 
       <details className="text-sm text-muted-foreground">
         <summary className="cursor-pointer font-medium text-foreground">
-          Operator notes
+          About re-indexing
         </summary>
         <p className="mt-2">
-          Re-index is idempotent (replace per MANIFEST id). Browser calls
-          FastAPI at <code>VITE_API_URL</code> (default{" "}
-          <code>http://localhost:8000</code>). <code>POST /ingest</code> with{" "}
-          <code>{`{"wipe": true}`}</code> only wipes when{" "}
-          <code>CITEBENCH_ALLOW_WIPE=1</code> is set on the API.
-          Embeddings are local <code>nomic-embed-text-v1.5</code> (Groq no
-          longer hosts that model). First ingest downloads the ONNX weights
-          (~0.5&nbsp;GB) into <code>NOMIC_CACHE_DIR</code>.
+          Re-indexing is idempotent: documents are replaced, not duplicated. A full
+          wipe is available only when the operator has enabled it. Embeddings run
+          locally; the first ingest downloads the model once.
         </p>
-      </details>
-
-      <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer font-medium text-foreground">
-          Verification
-        </summary>
-        <div className="mt-2 space-y-2">
-          <p>
-            Simulate a single snapshot failure to verify the failures table.
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={() =>
-              void runIngest(
-                { simulate_failure_id: "k8s-pods" },
-                { skipConfirm: true },
-              )
-            }
-          >
-            Re-index with one failure
-          </Button>
-        </div>
       </details>
 
       {loadError ? (

@@ -68,7 +68,7 @@ export function EvalMetricChart({ latest }: { latest: EvalLatest | null }) {
   if (!latest?.present || !metrics) {
     return (
       <p className="text-sm text-muted-foreground">
-        No CI run artifact yet — charts stay empty rather than inventing scores.
+        No eval run yet — charts stay empty rather than inventing scores.
       </p>
     );
   }
@@ -83,8 +83,8 @@ export function EvalMetricChart({ latest }: { latest: EvalLatest | null }) {
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">
-        Faithfulness gate is {gate.toFixed(3)} (CI threshold only, not a published Citebench
-        score). Companion metrics are logged, not gated.
+        The faithfulness gate is {gate.toFixed(3)}. Context precision and answer relevancy
+        are logged alongside and do not gate.
       </p>
       <ChartContainer config={METRIC_CONFIG} className="aspect-video w-full">
         <BarChart data={data} margin={{ left: 8, right: 8, top: 8 }}>
@@ -135,8 +135,8 @@ export function RedteamChart({ cases }: { cases: RedteamCase[] }) {
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">
         {ran
-          ? "blocked / allowed / leaked from the last runner artifact."
-          : "Cases loaded; not run yet — bars stay on “not run” until the harness writes an artifact."}
+          ? "Blocked, allowed, and leaked from the last run."
+          : "Not run yet — cases stay on “not run” until a run completes."}
       </p>
       <ChartContainer config={REDTEAM_CONFIG} className="aspect-video w-full">
         <BarChart data={data} margin={{ left: 8, right: 8, top: 8 }}>
