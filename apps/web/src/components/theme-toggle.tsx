@@ -1,4 +1,5 @@
-import { MoonIcon, SunIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Moon01Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/theme";
 
@@ -16,7 +17,7 @@ export function ThemeToggle() {
       aria-label={label}
       title={label}
     >
-      {isDark ? <SunIcon className="size-4" /> : <MoonIcon className="size-4" />}
+      <HugeiconsIcon icon={isDark ? Sun01Icon : Moon01Icon} size={16} />
     </Button>
   );
 }

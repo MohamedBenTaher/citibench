@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowRightIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { CornerBrackets } from "@/components/corner-brackets";
 import { ErrorAlert } from "@/components/error-alert";
@@ -147,8 +148,10 @@ function IndexPage() {
               className="group inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               View latest Evals
-              <ArrowRightIcon
-                className="size-3.5 transition-transform duration-150 ease-standard group-hover:translate-x-0.5 motion-reduce:transition-none"
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                size={14}
+                className="transition-transform duration-150 ease-standard group-hover:translate-x-0.5 motion-reduce:transition-none"
                 aria-hidden="true"
               />
             </Link>

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import type { Citation } from "@/lib/types";
 
@@ -123,7 +124,7 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
           onClick={() => void copy()}
           className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors duration-150 ease-standard hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
-          {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
+          <HugeiconsIcon icon={copied ? Tick02Icon : Copy01Icon} size={13} />
           {copied ? "Copied" : "Copy"}
         </button>
       </div>

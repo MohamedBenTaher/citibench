@@ -7,16 +7,16 @@ import {
   createRootRoute,
   useRouterState,
 } from "@tanstack/react-router";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ActivityIcon,
-  DatabaseIcon,
+  Activity01Icon,
+  Database01Icon,
   GaugeIcon,
-  InfoIcon,
-  LayoutDashboardIcon,
+  InformationCircleIcon,
+  Layout01Icon,
   ListTreeIcon,
   SparklesIcon,
-  type LucideIcon,
-} from "lucide-react";
+} from "@hugeicons/core-free-icons";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { RouteError } from "@/components/status";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -27,19 +27,20 @@ import "../styles.css";
 
 const THEME_BOOTSTRAP = `(function(){try{var t=localStorage.getItem('citebench-theme');var r=document.documentElement;if(t==='light'){r.classList.remove('dark')}else{r.classList.add('dark')}r.style.colorScheme=t==='light'?'light':'dark';}catch(e){}})();`;
 
-type NavItem = { to: string; label: string; icon: LucideIcon; exact?: boolean };
+type NavIcon = typeof Layout01Icon;
+type NavItem = { to: string; label: string; icon: NavIcon; exact?: boolean };
 
 const PRIMARY_NAV: NavItem[] = [
-  { to: "/", label: "Index", icon: LayoutDashboardIcon, exact: true },
+  { to: "/", label: "Index", icon: Layout01Icon, exact: true },
   { to: "/playground", label: "Ask", icon: SparklesIcon },
   { to: "/evals", label: "Evals", icon: GaugeIcon },
   { to: "/traces", label: "Traces", icon: ListTreeIcon },
-  { to: "/corpus", label: "Corpus", icon: DatabaseIcon },
+  { to: "/corpus", label: "Corpus", icon: Database01Icon },
 ];
 
 const SECONDARY_NAV: NavItem[] = [
-  { to: "/metrics", label: "Metrics", icon: ActivityIcon },
-  { to: "/about", label: "About", icon: InfoIcon },
+  { to: "/metrics", label: "Metrics", icon: Activity01Icon },
+  { to: "/about", label: "About", icon: InformationCircleIcon },
 ];
 
 function isActive(pathname: string, item: NavItem): boolean {
@@ -59,7 +60,6 @@ function NavLinkItem({
   compact?: boolean;
 }) {
   const active = isActive(pathname, item);
-  const Icon = item.icon;
   return (
     <Link
       to={item.to}
@@ -73,8 +73,10 @@ function NavLinkItem({
           : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
       )}
     >
-      <Icon
-        className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")}
+      <HugeiconsIcon
+        icon={item.icon}
+        size={16}
+        className={cn("shrink-0", active ? "text-primary" : "text-muted-foreground")}
         aria-hidden="true"
       />
       <span>{item.label}</span>

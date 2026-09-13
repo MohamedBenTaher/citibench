@@ -1,5 +1,6 @@
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Alert02Icon } from "@hugeicons/core-free-icons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { TriangleAlertIcon } from "lucide-react";
 
 export function ErrorAlert({
   title = "Request failed",
@@ -10,7 +11,7 @@ export function ErrorAlert({
 }) {
   return (
     <Alert variant="destructive">
-      <TriangleAlertIcon />
+      <HugeiconsIcon icon={Alert02Icon} size={16} />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription className="break-words">{message}</AlertDescription>
     </Alert>

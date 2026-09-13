@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
-import { CheckCircle2Icon, CircleAlertIcon, CircleHelpIcon, OctagonXIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertCircleIcon,
+  CancelCircleIcon,
+  CheckmarkCircle02Icon,
+  CircleQuestionMarkIcon,
+} from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";
@@ -12,11 +18,11 @@ const TONE_CLASS: Record<StatusTone, string> = {
   neutral: "border-border bg-muted text-muted-foreground",
 };
 
-const TONE_ICON: Record<StatusTone, typeof CheckCircle2Icon | null> = {
-  success: CheckCircle2Icon,
-  warning: CircleHelpIcon,
-  danger: OctagonXIcon,
-  info: CircleAlertIcon,
+const TONE_ICON: Record<StatusTone, typeof CheckmarkCircle02Icon | null> = {
+  success: CheckmarkCircle02Icon,
+  warning: CircleQuestionMarkIcon,
+  danger: CancelCircleIcon,
+  info: AlertCircleIcon,
   neutral: null,
 };
 
@@ -40,7 +46,7 @@ export function StatusPill({
         className,
       )}
     >
-      {withIcon && Icon ? <Icon className="size-3" aria-hidden="true" /> : null}
+      {withIcon && Icon ? <HugeiconsIcon icon={Icon} size={12} aria-hidden="true" /> : null}
       {children}
     </span>
   );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLinkIcon, FileTextIcon, XIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Cancel01Icon, ExternalLinkIcon, File01Icon } from "@hugeicons/core-free-icons";
 import { ErrorAlert } from "@/components/error-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -177,7 +178,12 @@ export function CorpusBrowser() {
                     onClick={() => void openDocument(doc)}
                     className="flex max-w-prose items-start gap-2 text-left text-sm font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                   >
-                    <FileTextIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <HugeiconsIcon
+                      icon={File01Icon}
+                      size={14}
+                      className="mt-0.5 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
                     <span className="line-clamp-2">{doc.title}</span>
                   </button>
                   <span className="mt-0.5 block truncate font-mono text-[11px] text-muted-foreground">
@@ -251,7 +257,7 @@ export function CorpusBrowser() {
                 rel="noreferrer noopener"
                 className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
-                <ExternalLinkIcon className="size-3" aria-hidden />
+                <HugeiconsIcon icon={ExternalLinkIcon} size={13} aria-hidden />
                 {selected.document.source_url}
               </a>
             </div>
@@ -262,7 +268,7 @@ export function CorpusBrowser() {
               aria-label="Close document"
               onClick={() => setSelected(null)}
             >
-              <XIcon className="size-4" />
+              <HugeiconsIcon icon={Cancel01Icon} size={16} />
             </Button>
           </div>
           <ol className="divide-y divide-border">
