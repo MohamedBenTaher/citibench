@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
 import { RetrievalPanel } from "@/components/retrieval-panel";
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { EvalMetricChart, RedteamChart } from "@/components/eval-charts";
 import { cn } from "@/lib/utils";
+import { clientApiJson } from "@/lib/client-api";
 import { getEvalLatest, getRedteamLatest, getRetrievalLatest } from "@/lib/server";
 import type { MetricName, RedteamCase, RetrievalReport } from "@/lib/types";
 
@@ -121,6 +124,20 @@ function EvalsPage() {
   const redteamCases = redteam?.cases ?? [];
   const redteamRun = redteam?.run;
   const threshold = latest?.threshold_faithfulness ?? 0.7;
+  const [runningRetrieval, setRunningRetrieval] = useState(false);
+
+  async function runRetrieval() {
+    setRunningRetrieval(true);
+    try {
+      await clientApiJson("/evals/retrieval/run", { method: "POST" });
+      toast.success("Retrieval comparison updated");
+      await router.invalidate();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "retrieval run failed");
+    } finally {
+      setRunningRetrieval(false);
+    }
+  }
 
   return (
     <>
@@ -141,7 +158,22 @@ function EvalsPage() {
             from abstaining.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Runs locally against the indexed corpus — no LLM judge.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={runningRetrieval}
+              aria-busy={runningRetrieval}
+              onClick={() => void runRetrieval()}
+            >
+              {runningRetrieval ? "Running…" : "Run comparison"}
+            </Button>
+          </div>
           <RetrievalPanel report={retrieval} />
         </CardContent>
       </Card>

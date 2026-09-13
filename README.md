@@ -1,8 +1,8 @@
 # Citebench
 
-Citebench is a **citation-grounded retrieval bench**, not a chat product.
+Citebench is a **citation-grounded retrieval bench** that measures two things objectively: whether retrieval actually finds the evidence, and whether the system refuses when it cannot.
 
-It answers questions about a **frozen public corpus** (~1,500 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
+It answers questions about a **frozen public corpus** (~1,500 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. Retrieval is measured directly — Recall@k, MRR, and nDCG against hand-labeled questions — alongside an answer/abstain calibration matrix. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
 
 The homepage is an index. The interesting surfaces are **Corpus**, **Playground**, **Traces**, and **Evals**. First screenshot for a reviewer: `/evals` or a failing `/traces` row, not a chat bubble.
 
@@ -175,6 +175,11 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 | Corpus docs | 1487 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
 | Corpus pages | 1600 | HTML snapshot = 1 page; xv6 PDF = 114. `measured-under-local-snapshots`. |
 | Corpus chunks | 31288 | `measured-under-live-ingest-2026-09-12`. tiktoken cl100k_base 512/64; `GET /corpus/stats`. |
+| Retrieval Recall@8 | 0.904 | Hand-labeled qrels, 26 answerable questions (`evals/results/retrieval.json`). Local, no LLM. |
+| Retrieval MRR | 0.616 | Same run. |
+| Retrieval nDCG@8 | 0.692 | Same run. `python -m citebench.eval.retrieval --compare` for config deltas. |
+| False-answer rate | 0.250 | Retrieval confidence gate on 8 unanswerable questions (2 answered). |
+| False-abstain rate | 0.000 | Retrieval confidence gate on 26 answerable questions. |
 | Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 20 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
 | Context precision | 1.000 | Same mock artifact (`evals/results/latest.json`). |
 | p95 latency | — | Unmeasured until traces with `latency_ms > 0` exist. |

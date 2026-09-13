@@ -4,6 +4,9 @@ import json
 import logging
 import os
 import re
+import subprocess
+import sys
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -534,6 +537,49 @@ def get_evals_retrieval() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="retrieval artifact must be an object")
     payload["present"] = True
     return payload
+
+
+_retrieval_run_lock = threading.Lock()
+
+
+@app.post("/evals/retrieval/run")
+def post_retrieval_run(
+    compare: bool = Query(default=True, description="score config variants too"),
+) -> dict[str, Any]:
+    """Run the retrieval evaluation and refresh the artifact (local, no LLM)."""
+    if not _retrieval_run_lock.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="retrieval run already in progress")
+    try:
+        out = _eval_store_dir() / "retrieval.json"
+        command = [
+            sys.executable,
+            "-m",
+            "citebench.eval.retrieval",
+            "--out",
+            str(out),
+        ]
+        if compare:
+            command.append("--compare")
+        try:
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=1800,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise HTTPException(status_code=504, detail="retrieval run timed out") from exc
+        if completed.returncode != 0:
+            raise HTTPException(
+                status_code=500,
+                detail=f"retrieval run failed: {completed.stderr[-600:]}",
+            )
+        payload = _read_json_object(out) or {}
+        payload["present"] = True
+        return payload
+    finally:
+        _retrieval_run_lock.release()
 
 
 @app.get("/evals/redteam")
