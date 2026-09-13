@@ -74,6 +74,70 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
         {report.measured_at ? ` · ${report.measured_at.slice(0, 16).replace("T", " ")}` : ""}
       </p>
 
+      {report.variants && report.variants.length > 0 ? (
+        <div className="space-y-2">
+          <h3 className="font-heading text-sm font-medium tracking-tight">
+            Configuration comparison
+          </h3>
+          <div className="overflow-hidden border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Variant</TableHead>
+                  <TableHead className="text-right">Recall@{k}</TableHead>
+                  <TableHead className="text-right">MRR</TableHead>
+                  <TableHead className="text-right">nDCG@{k}</TableHead>
+                  <TableHead className="text-right">Δ nDCG</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {report.variants.map((variant, index) => {
+                  const baseline = report.variants?.[0]?.retrieval;
+                  const delta =
+                    baseline != null ? variant.retrieval.ndcg_at_k - baseline.ndcg_at_k : 0;
+                  return (
+                    <TableRow
+                      key={variant.name}
+                      data-state={index === 0 ? "selected" : undefined}
+                    >
+                      <TableCell className="text-sm font-medium">
+                        {variant.name}
+                        {index === 0 ? (
+                          <span className="ml-2 text-[11px] text-muted-foreground">baseline</span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs tabular-nums">
+                        {variant.retrieval.recall_at_k.toFixed(3)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs tabular-nums">
+                        {variant.retrieval.mrr.toFixed(3)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs tabular-nums">
+                        {variant.retrieval.ndcg_at_k.toFixed(3)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-xs tabular-nums">
+                        {index === 0 ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <span className={delta >= 0 ? "text-success" : "text-destructive"}>
+                            {delta >= 0 ? "+" : ""}
+                            {delta.toFixed(3)}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Same {metrics.n_scored} labeled questions for every variant. Chunk size is fixed
+            at index time, so it is not a query-time toggle.
+          </p>
+        </div>
+      ) : null}
+
       {calibration ? (
         <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-2">

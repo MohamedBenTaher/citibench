@@ -1,8 +1,8 @@
 {
-  "run_id": "retr-20260913T173840Z-42d978",
-  "started_at": "2026-09-13T17:37:17.221787+00:00",
-  "finished_at": "2026-09-13T17:38:40.534084+00:00",
-  "measured_at": "2026-09-13T17:38:40.534084+00:00",
+  "run_id": "retr-20260913T180616Z-8704b7",
+  "started_at": "2026-09-13T18:02:52.442449+00:00",
+  "finished_at": "2026-09-13T18:06:16.443143+00:00",
+  "measured_at": "2026-09-13T18:06:16.443143+00:00",
   "mode": "retrieve+gate",
   "k": 8,
   "n": 34,
@@ -265,6 +265,52 @@
     ],
     "kind": "retrieval_gate"
   },
+  "variants": [
+    {
+      "name": "hybrid + rerank",
+      "retrieval": {
+        "recall_at_k": 0.9038,
+        "mrr": 0.6158,
+        "ndcg_at_k": 0.6918,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    },
+    {
+      "name": "hybrid, no rerank",
+      "retrieval": {
+        "recall_at_k": 0.8462,
+        "mrr": 0.5279,
+        "ndcg_at_k": 0.5885,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    },
+    {
+      "name": "dense only",
+      "retrieval": {
+        "recall_at_k": 0.8846,
+        "mrr": 0.6032,
+        "ndcg_at_k": 0.674,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    },
+    {
+      "name": "lexical only",
+      "retrieval": {
+        "recall_at_k": 0.6154,
+        "mrr": 0.4119,
+        "ndcg_at_k": 0.4628,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    }
+  ],
   "errors": {},
   "rows": [
     {

@@ -386,3 +386,22 @@ def test_scored_from_row_carries_display_metadata() -> None:
     assert scored.section == "A > B"
     assert scored.page == 2
     assert scored.license == "CC BY 4.0"
+
+
+def test_rerank_disabled_skips_without_calling_rerank() -> None:
+    fixture = load_5doc()
+    calls: list[int] = []
+
+    def recorder(_query: str, hits: list[FusedChunk]) -> list[float]:
+        calls.append(len(hits))
+        return [0.0] * len(hits)
+
+    hits = run_retrieve(
+        fixture,
+        config=RetrieveConfig(rerank_enabled=False, top_k=3),
+        rerank_fn=recorder,
+    )
+    assert calls == []
+    assert hits
+    assert all(hit.rerank_skipped for hit in hits)
+    assert all(hit.rerank_score is None for hit in hits)

@@ -24,11 +24,20 @@ import citebench.eval.paths  # noqa: F401  # sys.path for the API modules
 
 from citebench.eval.paths import REPO_ROOT
 from generate import generate
-from retrieve import retrieve
+from retrieve import retrieve, retrieve_config_from_settings
 from settings import load_settings
 
 DEFAULT_SPLIT = REPO_ROOT / "evals" / "splits" / "retrieval.jsonl"
 DEFAULT_OUT = REPO_ROOT / "evals" / "results" / "retrieval.json"
+
+# Query-time variants compared on the same qrels. Chunk size is fixed at index
+# time, so it is intentionally not a query-time toggle.
+VARIANTS: list[tuple[str, dict[str, Any]]] = [
+    ("hybrid + rerank", {}),
+    ("hybrid, no rerank", {"rerank_enabled": False}),
+    ("dense only", {"retrieval_mode": "dense"}),
+    ("lexical only", {"retrieval_mode": "lexical"}),
+]
 
 
 @dataclass(frozen=True)
@@ -151,6 +160,31 @@ def evaluate(
     )
 
 
+def run_variant(
+    rows: list[RetrievalRow],
+    settings: Any,
+    overrides: dict[str, Any],
+    k: int,
+) -> dict[str, Any]:
+    """Retrieve every row under one config override and return its metrics."""
+    config = retrieve_config_from_settings(settings)
+    for key, value in overrides.items():
+        setattr(config, key, value)
+    retrieved: dict[str, list[str]] = {}
+    for row in rows:
+        try:
+            hits = retrieve(row.question, config, settings=settings)
+        except Exception:  # noqa: BLE001 - a failed variant still reports
+            hits = []
+        docs: list[str] = []
+        for hit in hits:
+            if hit.doc_id not in docs:
+                docs.append(hit.doc_id)
+        retrieved[row.id] = docs
+    metrics, _ = evaluate(rows, retrieved, k)
+    return metrics
+
+
 def calibration(rows: list[RetrievalRow], decisions: dict[str, dict[str, Any]]) -> dict[str, Any]:
     answerable = [row for row in rows if row.answerable]
     unanswerable = [row for row in rows if not row.answerable]
@@ -183,6 +217,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", default=str(DEFAULT_OUT))
     parser.add_argument("--k", type=int, default=0, help="0 uses settings.top_k")
     parser.add_argument("--live", action="store_true", help="also run generate for the calibration matrix")
+    parser.add_argument("--compare", action="store_true", help="also score config variants on the same qrels")
     args = parser.parse_args(argv)
 
     rows = load_retrieval_jsonl(args.split)
@@ -219,6 +254,14 @@ def main(argv: list[str] | None = None) -> int:
     for row in per_row:
         row["gate_answered"] = gate_decisions.get(row["id"], {}).get("answered")
 
+    variants: list[dict[str, Any]] = []
+    if args.compare:
+        variants.append({"name": VARIANTS[0][0], "retrieval": retrieval})
+        for name, overrides in VARIANTS[1:]:
+            variants.append(
+                {"name": name, "retrieval": run_variant(rows, settings, overrides, k)}
+            )
+
     mode = "retrieve+gate"
     calib: dict[str, Any] | None = calibration(rows, gate_decisions)
     if calib is not None:
@@ -254,6 +297,7 @@ def main(argv: list[str] | None = None) -> int:
         "n": len(rows),
         "retrieval": retrieval,
         "calibration": calib,
+        "variants": variants or None,
         "errors": errors,
         "rows": per_row,
     }
@@ -269,6 +313,12 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"calibration false_answer={calib['false_answer_rate']} "
             f"false_abstain={calib['false_abstain_rate']}"
+        )
+    for variant in variants:
+        metrics = variant["retrieval"]
+        print(
+            f"variant {variant['name']}: recall@{k}={metrics['recall_at_k']} "
+            f"mrr={metrics['mrr']} ndcg@{k}={metrics['ndcg_at_k']}"
         )
     print(f"wrote {out}")
     return 0

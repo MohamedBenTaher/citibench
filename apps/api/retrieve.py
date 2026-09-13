@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
 
@@ -30,6 +30,9 @@ class RetrieveConfig(BaseModel):
     top_k: int = 8
     lexical_k: int = 50
     dense_k: int = 50
+    # Comparison knobs (defaults preserve the hybrid+rerank baseline).
+    retrieval_mode: Literal["hybrid", "dense", "lexical"] = "hybrid"
+    rerank_enabled: bool = True
 
 
 class ChunkHit(BaseModel):
@@ -198,13 +201,18 @@ def retrieve(
             # Schema is ensured at lifespan/ingest; bare scripts must ensure_schema first.
             resolved = _require_settings(settings)
             with connect(resolved.database_url) as conn:
-                dense, lexical = hybrid_search(
-                    conn,
-                    query_vec,
-                    query_text,
-                    dense_k=cfg.dense_k,
-                    lexical_k=cfg.lexical_k,
-                )
+                if cfg.retrieval_mode == "dense":
+                    dense, lexical = search_vector(conn, query_vec, cfg.dense_k), []
+                elif cfg.retrieval_mode == "lexical":
+                    dense, lexical = [], search_fts(conn, query_text, cfg.lexical_k)
+                else:
+                    dense, lexical = hybrid_search(
+                        conn,
+                        query_vec,
+                        query_text,
+                        dense_k=cfg.dense_k,
+                        lexical_k=cfg.lexical_k,
+                    )
         else:
             dense = list(vector_search_fn(query_vec, cfg.dense_k))
             lexical = list(fts_search_fn(query_text, cfg.lexical_k))
@@ -240,15 +248,19 @@ def retrieve(
     rerank_status = "ok"
     rerank_error: str | None = None
     rerank_scores: list[float] | None = None
-    try:
-        rerank_scores = [float(score) for score in rank_fn(query_text, pool)]
-        if len(rerank_scores) != len(pool):
-            raise RuntimeError("rerank score count does not match the fused pool")
-    except Exception as exc:
+    if not cfg.rerank_enabled:
+        # Explicit "RRF only" variant: same fallback order, no cross-encoder.
         rerank_skipped = True
-        rerank_status = "error"
-        rerank_error = str(exc)
-        log.warning("FlashRank failed; falling back to RRF order: %s", exc)
+    else:
+        try:
+            rerank_scores = [float(score) for score in rank_fn(query_text, pool)]
+            if len(rerank_scores) != len(pool):
+                raise RuntimeError("rerank score count does not match the fused pool")
+        except Exception as exc:
+            rerank_skipped = True
+            rerank_status = "error"
+            rerank_error = str(exc)
+            log.warning("FlashRank failed; falling back to RRF order: %s", exc)
 
     if rerank_skipped:
         hits = [

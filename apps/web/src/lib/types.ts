@@ -342,6 +342,17 @@ export type RetrievalReport = {
     answerable: number;
     unanswerable: number;
   };
+  variants?: {
+    name: string;
+    retrieval: {
+      recall_at_k: number;
+      mrr: number;
+      ndcg_at_k: number;
+      n_scored: number;
+      answerable: number;
+      unanswerable: number;
+    };
+  }[] | null;
   calibration?: {
     kind?: string;
     answerable: number;
