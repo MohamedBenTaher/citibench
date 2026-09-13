@@ -9,6 +9,7 @@ import type {
   EvalLatest,
   MetricsSnapshot,
   RedteamLatest,
+  RetrievalReport,
   RunTrace,
   TraceList,
 } from "./types";
@@ -82,4 +83,8 @@ export function getEvalLatest() {
 
 export function getRedteamLatest() {
   return fetchApiJson<RedteamLatest>("/evals/redteam");
+}
+
+export function getRetrievalLatest() {
+  return fetchApiJson<RetrievalReport>("/evals/retrieval");
 }

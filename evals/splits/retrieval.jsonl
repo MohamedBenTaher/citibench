@@ -1,0 +1,34 @@
+{"id":"r-001","question":"What is a Kubernetes Pod?","gold_doc_ids":["k8s-docs-concepts-workloads-pods"],"answerable":true,"tags":["k8s"]}
+{"id":"r-002","question":"How does a Kubernetes Service expose a set of Pods?","gold_doc_ids":["k8s-docs-concepts-services-networking-service"],"answerable":true,"tags":["k8s"]}
+{"id":"r-003","question":"What is a Kubernetes Ingress?","gold_doc_ids":["k8s-docs-concepts-services-networking-ingress"],"answerable":true,"tags":["k8s"]}
+{"id":"r-004","question":"What is a Kubernetes ConfigMap used for?","gold_doc_ids":["k8s-docs-concepts-configuration-configmap"],"answerable":true,"tags":["k8s"]}
+{"id":"r-005","question":"How are Kubernetes Secrets stored and used?","gold_doc_ids":["k8s-docs-concepts-configuration-secret"],"answerable":true,"tags":["k8s"]}
+{"id":"r-006","question":"What are Kubernetes Persistent Volumes?","gold_doc_ids":["k8s-docs-concepts-storage-persistent-volumes"],"answerable":true,"tags":["k8s"]}
+{"id":"r-007","question":"How does the kube-scheduler assign Pods to nodes?","gold_doc_ids":["k8s-docs-concepts-scheduling-eviction-kube-scheduler"],"answerable":true,"tags":["k8s"]}
+{"id":"r-008","question":"What are Kubernetes labels and selectors?","gold_doc_ids":["k8s-docs-concepts-overview-working-with-objects-labels"],"answerable":true,"tags":["k8s"]}
+{"id":"r-009","question":"How does a Kubernetes Deployment manage Pods?","gold_doc_ids":["k8s-docs-concepts-workloads-controllers-deployment"],"answerable":true,"tags":["k8s"]}
+{"id":"r-010","question":"What is Azure Kubernetes Service (AKS)?","gold_doc_ids":["azure-en-us-azure-aks-what-is-aks"],"answerable":true,"tags":["azure"]}
+{"id":"r-011","question":"What is a managed identity in Azure?","gold_doc_ids":["azure-en-us-entra-identity-managed-identities-azure-resources-overview"],"answerable":true,"tags":["azure"]}
+{"id":"r-012","question":"How does Azure Blob Storage organize data?","gold_doc_ids":["azure-en-us-azure-storage-blobs-storage-blobs-overview"],"answerable":true,"tags":["azure"]}
+{"id":"r-013","question":"What does AKS networking cover?","gold_doc_ids":["azure-en-us-azure-aks-concepts-network"],"answerable":true,"tags":["azure"]}
+{"id":"r-014","question":"What are the core concepts for AKS clusters and workloads?","gold_doc_ids":["azure-en-us-azure-aks-concepts-clusters-workloads"],"answerable":true,"tags":["azure"]}
+{"id":"r-015","question":"What is write-ahead logging (WAL) in PostgreSQL?","gold_doc_ids":["postgres-docs-current-wal.html"],"answerable":true,"tags":["postgres"]}
+{"id":"r-016","question":"What is routine database maintenance in PostgreSQL?","gold_doc_ids":["postgres-docs-current-maintenance.html"],"answerable":true,"tags":["postgres"]}
+{"id":"r-017","question":"How do indexes work in PostgreSQL?","gold_doc_ids":["postgres-docs-current-indexes-intro.html"],"answerable":true,"tags":["postgres"]}
+{"id":"r-018","question":"What are application-level data consistency checks in PostgreSQL?","gold_doc_ids":["postgres-docs-current-applevel-consistency.html"],"answerable":true,"tags":["postgres"]}
+{"id":"r-019","question":"How do you declare a path parameter in FastAPI?","gold_doc_ids":["fastapi-tutorial-path-params"],"answerable":true,"tags":["fastapi"]}
+{"id":"r-020","question":"How are query parameters declared in FastAPI?","gold_doc_ids":["fastapi-tutorial-query-params"],"answerable":true,"tags":["fastapi"]}
+{"id":"r-021","question":"How does dependency injection work in FastAPI?","gold_doc_ids":["fastapi-tutorial-dependencies"],"answerable":true,"tags":["fastapi"]}
+{"id":"r-022","question":"What does the xv6 book cover?","gold_doc_ids":["xv6-6.828-2024-xv6-book-riscv-rev4.pdf"],"answerable":true,"tags":["xv6"]}
+{"id":"r-023","question":"How do Kubernetes ConfigMaps and Secrets differ?","gold_doc_ids":["k8s-docs-concepts-configuration-configmap","k8s-docs-concepts-configuration-secret"],"answerable":true,"tags":["compare","k8s"]}
+{"id":"r-024","question":"Compare Kubernetes Service and Ingress.","gold_doc_ids":["k8s-docs-concepts-services-networking-service","k8s-docs-concepts-services-networking-ingress"],"answerable":true,"tags":["compare","k8s"]}
+{"id":"r-025","question":"Compare FastAPI path parameters and query parameters.","gold_doc_ids":["fastapi-tutorial-path-params","fastapi-tutorial-query-params"],"answerable":true,"tags":["compare","fastapi"]}
+{"id":"r-026","question":"Compare Kubernetes Pods and Deployments.","gold_doc_ids":["k8s-docs-concepts-workloads-pods","k8s-docs-concepts-workloads-controllers-deployment"],"answerable":true,"tags":["compare","k8s"]}
+{"id":"u-001","question":"What is the recommended adult dosage of ibuprofen?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-002","question":"What was the closing price of AAPL stock yesterday?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-003","question":"How do I configure a Cisco IOS BGP neighbor?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-004","question":"What is the origin of the word algorithm?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-005","question":"How do I reset a Windows 11 BitLocker recovery key?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-006","question":"What is the default MTU for an Azure ExpressRoute circuit?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-007","question":"Who won the 2022 FIFA World Cup?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}
+{"id":"u-008","question":"What is the melting point of tungsten?","gold_doc_ids":[],"answerable":false,"tags":["abstain"]}

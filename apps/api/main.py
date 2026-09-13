@@ -520,6 +520,22 @@ def get_evals_latest() -> dict[str, Any]:
     return payload
 
 
+@app.get("/evals/retrieval")
+def get_evals_retrieval() -> dict[str, Any]:
+    """Objective retrieval metrics + answerability calibration (qrels artifact)."""
+    path = _eval_store_dir() / "retrieval.json"
+    if not path.is_file():
+        return {"present": False, "detail": "no retrieval run yet"}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=500, detail=f"retrieval artifact unreadable: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=500, detail="retrieval artifact must be an object")
+    payload["present"] = True
+    return payload
+
+
 @app.get("/evals/redteam")
 def get_evals_redteam() -> dict[str, Any]:
     """Last redteam run plus the 10 committed cases. Public; no login wall."""

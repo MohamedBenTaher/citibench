@@ -1,6 +1,7 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
+import { RetrievalPanel } from "@/components/retrieval-panel";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +17,8 @@ import {
 } from "@/components/ui/table";
 import { EvalMetricChart, RedteamChart } from "@/components/eval-charts";
 import { cn } from "@/lib/utils";
-import { getEvalLatest, getRedteamLatest } from "@/lib/server";
-import type { MetricName, RedteamCase } from "@/lib/types";
+import { getEvalLatest, getRedteamLatest, getRetrievalLatest } from "@/lib/server";
+import type { MetricName, RedteamCase, RetrievalReport } from "@/lib/types";
 
 const METRICS: { key: MetricName; label: string }[] = [
   { key: "faithfulness", label: "Faithfulness" },
@@ -92,12 +93,17 @@ export const Route = createFileRoute("/evals")({
   }),
   loader: async () => {
     try {
-      const [latest, redteam] = await Promise.all([getEvalLatest(), getRedteamLatest()]);
-      return { latest, redteam, loadError: null as string | null };
+      const [latest, redteam, retrieval] = await Promise.all([
+        getEvalLatest(),
+        getRedteamLatest(),
+        getRetrievalLatest(),
+      ]);
+      return { latest, redteam, retrieval, loadError: null as string | null };
     } catch (error: unknown) {
       return {
         latest: null,
         redteam: null,
+        retrieval: null as RetrievalReport | null,
         loadError: error instanceof Error ? error.message : "failed to load evals",
       };
     }
@@ -109,7 +115,7 @@ export const Route = createFileRoute("/evals")({
 
 function EvalsPage() {
   const router = useRouter();
-  const { latest, redteam, loadError } = Route.useLoaderData();
+  const { latest, redteam, retrieval, loadError } = Route.useLoaderData();
   const metrics = latest?.metrics;
   const hasRun = Boolean(latest?.present && metrics);
   const redteamCases = redteam?.cases ?? [];
@@ -125,6 +131,20 @@ function EvalsPage() {
       />
 
       {loadError ? <ErrorAlert title="Evals" message={loadError} /> : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Retrieval quality</CardTitle>
+          <CardDescription>
+            Hand-labeled questions with a known source document. Recall@k, MRR, and nDCG
+            measure whether retrieval finds the evidence; the matrix separates answering
+            from abstaining.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RetrievalPanel report={retrieval} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

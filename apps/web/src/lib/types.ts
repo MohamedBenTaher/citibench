@@ -312,6 +312,52 @@ export type MetricsSnapshot = {
   detail?: string;
 };
 
+export type RetrievalRow = {
+  id: string;
+  question: string;
+  answerable: boolean;
+  gold_doc_ids: string[];
+  retrieved_doc_ids: string[];
+  recall: number | null;
+  first_relevant_rank: number | null;
+  mrr: number | null;
+  ndcg: number | null;
+  gate_answered?: boolean | null;
+  answered?: boolean | null;
+  abstained?: boolean | null;
+};
+
+export type RetrievalReport = {
+  present?: boolean;
+  run_id?: string;
+  measured_at?: string;
+  mode?: string;
+  k?: number;
+  n?: number;
+  retrieval?: {
+    recall_at_k: number;
+    mrr: number;
+    ndcg_at_k: number;
+    n_scored: number;
+    answerable: number;
+    unanswerable: number;
+  };
+  calibration?: {
+    kind?: string;
+    answerable: number;
+    unanswerable: number;
+    answered_answerable: number;
+    abstained_answerable: number;
+    answered_unanswerable: number;
+    abstained_unanswerable: number;
+    false_answer_rate: number | null;
+    false_abstain_rate: number | null;
+    rows?: { id: string; answerable: boolean; answered?: boolean | null; abstained?: boolean | null; abstain_reason?: string | null }[];
+  } | null;
+  rows: RetrievalRow[];
+  detail?: string;
+};
+
 export type RedteamLatest = {
   present?: boolean;
   split?: string;
