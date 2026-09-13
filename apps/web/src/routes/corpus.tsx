@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { CorpusBrowser } from "@/components/corpus-browser";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
@@ -202,6 +203,8 @@ function CorpusPage() {
           </p>
         ) : null}
       </div>
+
+      <CorpusBrowser />
 
       <Card>
         <CardHeader>

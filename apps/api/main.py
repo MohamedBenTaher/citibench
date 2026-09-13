@@ -14,10 +14,14 @@ from pydantic import BaseModel, Field
 
 from db import (
     connect,
+    corpus_facets,
     corpus_stats,
     database_unavailable_detail,
     ensure_schema,
+    get_chunks_by_ids,
+    get_document,
     is_database_error,
+    list_documents,
 )
 from embed import warmup_local_embed
 from generate import GenerateResult, generate
@@ -195,6 +199,90 @@ def get_corpus_stats() -> dict[str, Any]:
             status_code=503,
             detail=database_unavailable_detail(exc, settings.database_url),
         ) from exc
+
+
+@app.get("/corpus/facets")
+def get_corpus_facets() -> dict[str, Any]:
+    """Distinct product / source / doc_type / origin values for browser filters."""
+    settings = load_settings()
+    try:
+        with connect(settings.database_url) as conn:
+            return corpus_facets(conn)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=database_unavailable_detail(exc, settings.database_url),
+        ) from exc
+
+
+@app.get("/corpus/documents")
+def get_corpus_documents(
+    q: str | None = Query(default=None, description="search id, title, or source URL"),
+    product: str | None = Query(default=None),
+    source: str | None = Query(default=None),
+    origin: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
+    """Browse the frozen corpus so a reviewer can see what is askable."""
+    settings = load_settings()
+    try:
+        with connect(settings.database_url) as conn:
+            return list_documents(
+                conn,
+                query=(q or "").strip() or None,
+                product=product,
+                source=source,
+                origin=origin,
+                status=status,
+                limit=limit,
+                offset=offset,
+            )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=database_unavailable_detail(exc, settings.database_url),
+        ) from exc
+
+
+@app.get("/corpus/documents/{doc_id}")
+def get_corpus_document(
+    doc_id: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
+    """One document plus a page of section/page chunk previews."""
+    settings = load_settings()
+    try:
+        with connect(settings.database_url) as conn:
+            payload = get_document(conn, doc_id, limit=limit, offset=offset)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=database_unavailable_detail(exc, settings.database_url),
+        ) from exc
+    if payload is None:
+        raise HTTPException(status_code=404, detail=f"document not found: {doc_id}")
+    return payload
+
+
+@app.get("/corpus/chunks")
+def get_corpus_chunk_text(
+    ids: str = Query(..., description="comma-separated chunk ids (max 24)"),
+) -> dict[str, Any]:
+    """Full text for cited chunk previews (Playground sources)."""
+    requested = [item.strip() for item in ids.split(",") if item.strip()][:24]
+    settings = load_settings()
+    try:
+        with connect(settings.database_url) as conn:
+            chunks = get_chunks_by_ids(conn, requested)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=database_unavailable_detail(exc, settings.database_url),
+        ) from exc
+    return {"chunks": chunks}
 
 
 @app.post("/ingest")

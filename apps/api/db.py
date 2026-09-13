@@ -410,6 +410,143 @@ def finish_ingest_run(
     )
 
 
+_DOC_SELECT = """
+SELECT d.id, d.title, d.source_url, d.product, d.doc_type, d.source, d.origin,
+       d.license, d.status, d.error, d.page_count, d.indexed_at,
+       COALESCE(d.version, d.version_or_snapshot) AS version,
+       (SELECT COUNT(*) FROM chunks c WHERE c.doc_id = d.id) AS chunk_count
+FROM documents d
+"""
+
+
+def list_documents(
+    conn: psycopg.Connection,
+    *,
+    query: str | None = None,
+    product: str | None = None,
+    source: str | None = None,
+    origin: str | None = None,
+    status: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Browse the indexed corpus: filter/search documents, newest product order."""
+    where: list[str] = []
+    params: list[Any] = []
+    if query:
+        where.append("(d.id ILIKE %s OR d.title ILIKE %s OR d.source_url ILIKE %s)")
+        like = f"%{query}%"
+        params.extend([like, like, like])
+    for column, value in (
+        ("d.product", product),
+        ("d.source", source),
+        ("d.origin", origin),
+        ("d.status", status),
+    ):
+        if value:
+            where.append(f"{column} = %s")
+            params.append(value)
+    clause = f" WHERE {' AND '.join(where)}" if where else ""
+
+    total_row = conn.execute(
+        f"SELECT COUNT(*) AS n FROM documents d{clause}", params
+    ).fetchone()
+    rows = conn.execute(
+        f"{_DOC_SELECT}{clause} ORDER BY d.product NULLS LAST, d.title, d.id LIMIT %s OFFSET %s",
+        [*params, limit, offset],
+    ).fetchall()
+    return {
+        "total": int(total_row["n"]) if total_row else 0,
+        "limit": limit,
+        "offset": offset,
+        "documents": [dict(row) for row in rows],
+    }
+
+
+def get_document(
+    conn: psycopg.Connection,
+    doc_id: str,
+    *,
+    limit: int = 50,
+    offset: int = 0,
+) -> dict[str, Any] | None:
+    """One document plus a page of its chunks (metadata + short preview, no full body)."""
+    doc = conn.execute(f"{_DOC_SELECT} WHERE d.id = %s", (doc_id,)).fetchone()
+    if doc is None:
+        return None
+    total_row = conn.execute(
+        "SELECT COUNT(*) AS n FROM chunks WHERE doc_id = %s", (doc_id,)
+    ).fetchone()
+    chunks = conn.execute(
+        """
+        SELECT id, doc_id, chunk_index, section, page, url, token_count,
+               left(text, 600) AS preview
+        FROM chunks
+        WHERE doc_id = %s
+        ORDER BY chunk_index
+        LIMIT %s OFFSET %s
+        """,
+        (doc_id, limit, offset),
+    ).fetchall()
+    for row in chunks:
+        row["text_ref"] = f"{row['doc_id']}#{row['id']}"
+    return {
+        "document": dict(doc),
+        "chunk_total": int(total_row["n"]) if total_row else 0,
+        "limit": limit,
+        "offset": offset,
+        "chunks": [dict(row) for row in chunks],
+    }
+
+
+def get_chunks_by_ids(
+    conn: psycopg.Connection,
+    chunk_ids: Sequence[str],
+) -> list[dict[str, Any]]:
+    """Full chunk text for citation previews (bounded by the caller)."""
+    if not chunk_ids:
+        return []
+    rows = conn.execute(
+        """
+        SELECT c.id, c.doc_id, c.chunk_index, c.section, c.page, c.url,
+               c.token_count, c.text,
+               d.title, d.product, d.source, d.license
+        FROM chunks c
+        JOIN documents d ON d.id = c.doc_id
+        WHERE c.id = ANY(%s)
+        """,
+        (list(chunk_ids),),
+    ).fetchall()
+    by_id = {row["id"]: row for row in rows}
+    ordered = []
+    for chunk_id in chunk_ids:
+        row = by_id.get(chunk_id)
+        if row is None:
+            continue
+        item = dict(row)
+        item["text_ref"] = f"{item['doc_id']}#{item['id']}"
+        ordered.append(item)
+    return ordered
+
+
+def corpus_facets(conn: psycopg.Connection) -> dict[str, list[str]]:
+    """Distinct filter values for the corpus browser."""
+
+    def distinct(column: str) -> list[str]:
+        rows = conn.execute(
+            f"SELECT DISTINCT {column} AS v FROM documents "
+            f"WHERE {column} IS NOT NULL AND {column} <> '' ORDER BY 1"
+        ).fetchall()
+        return [str(row["v"]) for row in rows]
+
+    return {
+        "products": distinct("product"),
+        "sources": distinct("source"),
+        "doc_types": distinct("doc_type"),
+        "origins": distinct("origin"),
+    }
+
+
 def corpus_stats(conn: psycopg.Connection) -> dict[str, Any]:
     docs_ok = conn.execute(
         "SELECT COUNT(*) AS n FROM documents WHERE status = 'ok'"

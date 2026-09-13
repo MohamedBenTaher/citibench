@@ -34,6 +34,84 @@ export type Citation = {
   text_ref: string;
   score: number | null;
   rank: number | null;
+  title?: string | null;
+  source?: string | null;
+  product?: string | null;
+  doc_type?: string | null;
+  version?: string | null;
+  license?: string | null;
+  page?: number | null;
+  section?: string | null;
+  url?: string | null;
+};
+
+export type DocumentRow = {
+  id: string;
+  title: string;
+  source_url: string;
+  product: string | null;
+  doc_type: string | null;
+  source: string | null;
+  origin: string;
+  license: string;
+  status: string;
+  error: string | null;
+  page_count: number;
+  chunk_count: number;
+  indexed_at: string | null;
+  version: string | null;
+};
+
+export type DocumentList = {
+  total: number;
+  limit: number;
+  offset: number;
+  documents: DocumentRow[];
+  detail?: string;
+};
+
+export type DocumentChunk = {
+  id: string;
+  doc_id: string;
+  chunk_index: number;
+  section: string | null;
+  page: number | null;
+  url: string | null;
+  token_count: number;
+  preview: string;
+  text_ref: string;
+};
+
+export type DocumentDetail = {
+  document: DocumentRow;
+  chunk_total: number;
+  limit: number;
+  offset: number;
+  chunks: DocumentChunk[];
+  detail?: string;
+};
+
+export type CorpusFacets = {
+  products: string[];
+  sources: string[];
+  doc_types: string[];
+  origins: string[];
+};
+
+export type CitedChunk = {
+  id: string;
+  doc_id: string;
+  chunk_index: number;
+  section: string | null;
+  page: number | null;
+  url: string | null;
+  token_count: number;
+  text: string;
+  text_ref: string;
+  title: string;
+  product: string | null;
+  source: string | null;
+  license: string;
 };
 
 export type CostEstimate = {

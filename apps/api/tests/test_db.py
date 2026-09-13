@@ -104,3 +104,55 @@ def test_insert_chunks_writes_metadata_columns() -> None:
     sql = captured[0]
     for column in ("section", "section_path", "url"):
         assert column in sql
+
+
+def test_list_documents_parameterizes_filters() -> None:
+    import db
+
+    captured: list[tuple[str, object]] = []
+
+    class _Res:
+        def __init__(self, rows: list[dict]) -> None:
+            self._rows = rows
+
+        def fetchone(self):
+            return self._rows[0] if self._rows else None
+
+        def fetchall(self):
+            return self._rows
+
+    class _Conn:
+        def execute(self, sql: str, params: object = None) -> _Res:
+            captured.append((sql, params))
+            if sql.strip().startswith("SELECT COUNT(*)"):
+                return _Res([{"n": 1}])
+            return _Res(
+                [
+                    {
+                        "id": "d",
+                        "title": "t",
+                        "source_url": "u",
+                        "product": "Kubernetes",
+                        "doc_type": "guide",
+                        "source": "s",
+                        "origin": "freeze",
+                        "license": "MIT",
+                        "status": "ok",
+                        "error": None,
+                        "page_count": 1,
+                        "indexed_at": None,
+                        "version": "v",
+                        "chunk_count": 3,
+                    }
+                ]
+            )
+
+    result = db.list_documents(
+        _Conn(), query="pods", product="Kubernetes", limit=5, offset=10
+    )
+    assert result["total"] == 1
+    assert result["documents"][0]["chunk_count"] == 3
+    sql, params = captured[-1]
+    assert "%s" in sql
+    assert "pods" not in sql  # values are bound, never interpolated
+    assert params[-2:] == [5, 10]
