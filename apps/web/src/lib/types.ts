@@ -24,8 +24,31 @@ export type CorpusStats = {
   chunk_count: number;
   user_doc_count?: number;
   last_index_time: string | null;
+  freeze_date?: string | null;
   failures: FailureRow[];
   detail?: string;
+};
+
+export type RetrievalHit = {
+  chunk_id: string;
+  doc_id: string;
+  score: number;
+  rank: number;
+  rerank_skipped: boolean;
+  text?: string | null;
+  vector_score?: number | null;
+  fts_score?: number | null;
+  fused_score?: number | null;
+  rerank_score?: number | null;
+  title?: string | null;
+  source?: string | null;
+  product?: string | null;
+  doc_type?: string | null;
+  version?: string | null;
+  license?: string | null;
+  page?: number | null;
+  section?: string | null;
+  url?: string | null;
 };
 
 export type Citation = {
@@ -136,6 +159,7 @@ export type CostEstimate = {
 export type GenerateTerminal = "generate" | "abstain";
 
 export type GenerateResult = {
+  query?: string;
   answer: string;
   abstained: boolean;
   abstain_reason: string | null;
@@ -143,6 +167,7 @@ export type GenerateResult = {
   terminal: GenerateTerminal;
   citations: Citation[];
   retrieved_chunk_ids: string[];
+  retrieved_hits?: RetrievalHit[];
   latency_ms: number;
   cost: CostEstimate;
   cost_method: string;

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
@@ -189,17 +190,31 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+_FREEZE_RE = re.compile(r"Freeze date:\s*\*\*(.+?)\*\*")
+
+
+def _manifest_freeze_date(settings: Settings) -> str | None:
+    try:
+        text = settings.manifest_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = _FREEZE_RE.search(text)
+    return match.group(1).strip() if match else None
+
+
 @app.get("/corpus/stats")
 def get_corpus_stats() -> dict[str, Any]:
     settings = load_settings()
     try:
         with connect(settings.database_url) as conn:
-            return corpus_stats(conn)
+            payload = corpus_stats(conn)
     except Exception as exc:
         raise HTTPException(
             status_code=503,
             detail=database_unavailable_detail(exc, settings.database_url),
         ) from exc
+    payload["freeze_date"] = _manifest_freeze_date(settings)
+    return payload
 
 
 @app.get("/corpus/facets")

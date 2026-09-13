@@ -95,6 +95,7 @@ class GenerateResult(BaseModel):
     terminal: Literal["generate", "abstain"]
     citations: list[ChunkRef] = Field(default_factory=list)
     retrieved_chunk_ids: list[str] = Field(default_factory=list)
+    retrieved_hits: list[ChunkHit] = Field(default_factory=list)
     latency_ms: float
     cost: CostEstimate = Field(default_factory=CostEstimate)
     cost_method: str
@@ -352,6 +353,7 @@ def generate(
         terminal=terminal,
         citations=citations,
         retrieved_chunk_ids=[hit.chunk_id for hit in hits],
+        retrieved_hits=hits,
         latency_ms=round(latency_ms, 3),
         cost=cost,
         cost_method=cost_method_string(resolved),

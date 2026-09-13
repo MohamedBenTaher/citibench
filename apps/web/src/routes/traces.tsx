@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { ErrorAlert } from "@/components/error-alert";
+import { StatusPill } from "@/components/status-pill";
 import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
@@ -237,7 +238,14 @@ function TracesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {list.traces.map((row) => (
+                {[...list.traces]
+                  .sort(
+                    (a, b) =>
+                      (a.failed ? 0 : a.abstained ? 1 : 2) -
+                        (b.failed ? 0 : b.abstained ? 1 : 2) ||
+                      b.started_at.localeCompare(a.started_at),
+                  )
+                  .map((row) => (
                   <TableRow
                     key={row.run_id}
                     data-state={selectedId === row.run_id ? "selected" : undefined}
@@ -259,9 +267,11 @@ function TracesPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={row.failed ? "destructive" : "secondary"}>
+                      <StatusPill
+                        tone={row.failed ? "danger" : row.abstained ? "warning" : "success"}
+                      >
                         {row.failed ? "failed" : row.abstained ? "abstain" : "generate"}
-                      </Badge>
+                      </StatusPill>
                       {row.rerank_skipped ? (
                         <span className="ml-1 text-xs text-muted-foreground">
                           · rerank skipped

@@ -1,21 +1,24 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ErrorAlert } from "@/components/error-alert";
 import { Markdown } from "@/components/markdown";
 import { PageHeader } from "@/components/page-header";
+import { StatusPill } from "@/components/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { clientApiJson } from "@/lib/client-api";
 import { getCitedChunks, getCorpusSuggestions } from "@/lib/server";
+import { cn } from "@/lib/utils";
 import type {
   CitedChunk,
   Citation,
   CorpusSuggestion,
   GenerateResult,
+  RetrievalHit,
 } from "@/lib/types";
 
 const OUT_OF_CORPUS = "What is the InnovX proprietary runbook password?";
@@ -27,17 +30,11 @@ export const Route = createFileRoute("/playground")({
   component: PlaygroundPage,
 });
 
-function terminalLabel(terminal: GenerateResult["terminal"]): string {
-  switch (terminal) {
-    case "generate":
-      return "answer";
-    case "abstain":
-      return "abstain";
-    default: {
-      const _exhaustive: never = terminal;
-      return _exhaustive;
-    }
+function score(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "—";
   }
+  return value.toFixed(3);
 }
 
 function PlaygroundPage() {
@@ -73,7 +70,7 @@ function PlaygroundPage() {
       });
       setResult(data);
       if (data.terminal === "abstain") {
-        toast.message("abstain — not in the freeze");
+        toast.message("abstain — corpus did not support the question");
       } else {
         toast.success("answer grounded in the freeze");
       }
@@ -81,9 +78,7 @@ function PlaygroundPage() {
       if (ids.length > 0) {
         void getCitedChunks(ids)
           .then((payload) => {
-            setSnippets(
-              Object.fromEntries(payload.chunks.map((chunk) => [chunk.id, chunk])),
-            );
+            setSnippets(Object.fromEntries(payload.chunks.map((chunk) => [chunk.id, chunk])));
           })
           .catch(() => setSnippets({}));
       }
@@ -97,30 +92,25 @@ function PlaygroundPage() {
     }
   }
 
-  const citationIndex = useMemo(() => {
-    if (!result) {
-      return new Map<string, number>();
-    }
-    return new Map(result.citations.map((citation, index) => [citation.chunk_id, index + 1]));
-  }, [result]);
+  const citedIds = useMemo(
+    () => new Set((result?.citations ?? []).map((citation) => citation.chunk_id)),
+    [result],
+  );
+  const retrieved = result?.retrieved_hits ?? [];
 
   return (
     <>
       <PageHeader
-        eyebrow="Set"
-        title="Playground"
+        eyebrow="Ask"
+        title="Single ask"
         description="One question over the frozen corpus. You get a grounded answer with sources, or an abstain. No thread, no follow-ups, no login."
       />
 
-      <section className="border border-border p-4 sm:p-5" aria-labelledby="ask-heading">
+      <section className="border border-border bg-card p-4 sm:p-5" aria-labelledby="ask-heading">
         <h2 id="ask-heading" className="sr-only">
           Ask a question
         </h2>
-        <form
-          className="flex flex-col gap-3"
-          aria-busy={busy}
-          onSubmit={(event) => void onAsk(event)}
-        >
+        <form className="flex flex-col gap-3" aria-busy={busy} onSubmit={(event) => void onAsk(event)}>
           <Textarea
             id="playground-query"
             name="query"
@@ -193,105 +183,192 @@ function PlaygroundPage() {
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-          </div>
+          <Skeleton className="h-28" />
         </section>
       ) : null}
 
       {result && !busy ? (
-        <article className="space-y-6" aria-live="polite">
-          <section className="space-y-3" aria-labelledby="answer-heading">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 id="answer-heading" className="font-heading text-sm font-medium tracking-tight">
-                {result.terminal === "abstain" ? "Abstained" : "Answer"}
-              </h2>
-              <Badge variant={result.terminal === "generate" ? "default" : "secondary"}>
-                {terminalLabel(result.terminal)}
-              </Badge>
+        <article className="space-y-8" aria-live="polite">
+          <Section step="01" title="Query">
+            <p className="text-pretty text-[15px] leading-relaxed text-foreground">
+              {result.query}
+            </p>
+          </Section>
+
+          <Section
+            step="02"
+            title="Retrieved chunks"
+            aside={`${retrieved.length || result.retrieved_chunk_ids.length} hits · citations are a strict subset`}
+          >
+            {retrieved.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No chunks retrieved.</p>
+            ) : (
+              <div className="overflow-hidden border border-border">
+                <table className="w-full border-collapse text-left text-xs">
+                  <thead className="bg-muted/40 text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">#</th>
+                      <th className="px-3 py-2 font-medium">Chunk</th>
+                      <th className="hidden px-3 py-2 text-right font-medium sm:table-cell">dense</th>
+                      <th className="hidden px-3 py-2 text-right font-medium sm:table-cell">fts</th>
+                      <th className="hidden px-3 py-2 text-right font-medium md:table-cell">rrf</th>
+                      <th className="px-3 py-2 text-right font-medium">flash</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {retrieved.map((hit: RetrievalHit) => {
+                      const cited = citedIds.has(hit.chunk_id);
+                      return (
+                        <tr
+                          key={hit.chunk_id}
+                          className={cn(
+                            "border-t border-border",
+                            cited && "bg-success/[0.06]",
+                          )}
+                        >
+                          <td className="px-3 py-2 font-mono tabular-nums text-muted-foreground">
+                            {hit.rank}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className="flex items-center gap-1.5">
+                              {cited ? (
+                                <span className="size-1.5 rounded-full bg-success" aria-label="cited" />
+                              ) : null}
+                              <span className="font-mono text-[11px] text-foreground">
+                                {hit.doc_id}
+                              </span>
+                            </span>
+                            {hit.section ? (
+                              <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+                                {hit.section}
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="hidden px-3 py-2 text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
+                            {score(hit.vector_score)}
+                          </td>
+                          <td className="hidden px-3 py-2 text-right font-mono tabular-nums text-muted-foreground sm:table-cell">
+                            {score(hit.fts_score)}
+                          </td>
+                          <td className="hidden px-3 py-2 text-right font-mono tabular-nums text-muted-foreground md:table-cell">
+                            {score(hit.fused_score)}
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono tabular-nums text-foreground">
+                            {score(hit.rerank_score ?? hit.score)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Section>
+
+          <Section
+            step="03"
+            title="Decision"
+            aside={
+              result.terminal === "abstain"
+                ? "no answer generated"
+                : `grounded on ${result.citations.length} of ${retrieved.length || result.retrieved_chunk_ids.length} retrieved chunks`
+            }
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <StatusPill tone={result.terminal === "abstain" ? "warning" : "success"}>
+                {result.terminal === "abstain" ? "abstain" : "generate"}
+              </StatusPill>
               {result.abstain_reason ? (
                 <span className="font-mono text-[11px] text-muted-foreground">
                   {result.abstain_reason}
                 </span>
               ) : null}
               {result.rerank_skipped ? <Badge variant="outline">rerank skipped</Badge> : null}
+              <span className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span className="font-mono tabular-nums">{result.latency_ms.toFixed(1)} ms</span>
+                <span className="font-mono tabular-nums">${result.cost.usd_estimate.toFixed(6)}</span>
+                <span>
+                  model <code className="font-mono">{result.model}</code>
+                </span>
+                {result.run_id ? (
+                  <Link
+                    to="/traces"
+                    search={{ run_id: result.run_id }}
+                    preload="intent"
+                    className="underline-offset-4 hover:text-foreground hover:underline"
+                  >
+                    trace {result.run_id.slice(0, 8)}
+                  </Link>
+                ) : null}
+              </span>
             </div>
+          </Section>
 
+          <Section step="04" title={result.terminal === "abstain" ? "Abstained" : "Answer"}>
             {result.terminal === "abstain" ? (
-              <div className="border border-border bg-card px-4 py-5">
+              <div className="border-l-2 border-warning bg-warning/10 px-4 py-4">
                 <p className="font-heading text-lg font-medium tracking-tight">
                   {result.answer}
                 </p>
                 <p className="mt-2 max-w-2xl text-pretty text-sm leading-relaxed text-muted-foreground">
-                  The frozen corpus does not support this question, so the bench refuses
-                  rather than inventing an answer or a citation.
+                  The frozen corpus does not contain sufficient evidence, so the bench
+                  refuses rather than inventing an answer or a citation.
                 </p>
               </div>
             ) : (
-              <div className="border border-border bg-card px-4 py-5 sm:px-5">
-                <Markdown text={result.answer} citations={result.citations} />
-              </div>
+              <Markdown text={result.answer} citations={result.citations} />
             )}
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
-              <span className="font-mono tabular-nums">{result.latency_ms.toFixed(1)} ms</span>
-              <span className="font-mono tabular-nums">
-                ${result.cost.usd_estimate.toFixed(6)}
-              </span>
-              <span>
-                model <code className="font-mono">{result.model}</code>
-              </span>
-              {result.run_id ? (
-                <Link
-                  to="/traces"
-                  search={{ run_id: result.run_id }}
-                  preload="intent"
-                  className="underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  Open trace {result.run_id.slice(0, 8)}
-                </Link>
-              ) : null}
-            </div>
-
-            <details className="text-xs text-muted-foreground">
-              <summary className="cursor-pointer font-medium text-foreground">
-                Cost method
-              </summary>
-              <p className="mt-2 font-mono">{result.cost_method}</p>
-              <p className="mt-1">
-                prompt {result.cost.prompt_tokens} · completion {result.cost.completion_tokens} ·
-                embed {result.cost.embed_tokens} · rerank {result.cost.rerank_tokens}
-              </p>
-            </details>
-          </section>
+          </Section>
 
           {result.citations.length > 0 ? (
-            <section id="sources" className="scroll-mt-20 space-y-3" aria-labelledby="sources-heading">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 id="sources-heading" className="font-heading text-sm font-medium tracking-tight">
-                  Sources
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  {result.citations.length} cited chunk
-                  {result.citations.length === 1 ? "" : "s"}
-                </span>
-              </div>
+            <Section
+              step="05"
+              title="Sources"
+              aside={`${result.citations.length} cited chunk${result.citations.length === 1 ? "" : "s"}`}
+              id="sources"
+            >
               <ol className="grid gap-3 sm:grid-cols-2">
-                {result.citations.map((citation) => (
+                {result.citations.map((citation, index) => (
                   <SourceCard
                     key={citation.chunk_id}
                     citation={citation}
-                    index={citationIndex.get(citation.chunk_id) ?? 0}
+                    index={index + 1}
                     snippet={snippets[citation.chunk_id]}
                   />
                 ))}
               </ol>
-            </section>
+            </Section>
           ) : null}
         </article>
       ) : null}
     </>
+  );
+}
+
+function Section({
+  step,
+  title,
+  aside,
+  id,
+  children,
+}: {
+  step: string;
+  title: string;
+  aside?: string;
+  id?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-20 space-y-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="flex items-center gap-2 font-heading text-sm font-medium tracking-tight">
+          <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{step}</span>
+          {title}
+        </h2>
+        {aside ? <span className="text-xs text-muted-foreground">{aside}</span> : null}
+      </div>
+      {children}
+    </section>
   );
 }
 
