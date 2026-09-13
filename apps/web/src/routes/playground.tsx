@@ -17,11 +17,12 @@ import { StatusPill } from "@/components/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientApiJson } from "@/lib/client-api";
-import { getCitedChunks, getCorpusSuggestions } from "@/lib/server";
+import { getCitedChunks, getCorpusFacets, getCorpusSuggestions } from "@/lib/server";
 import { cn } from "@/lib/utils";
 import type {
   CitedChunk,
   Citation,
+  CorpusFacets,
   CorpusSuggestion,
   GenerateResult,
   RetrievalHit,
@@ -156,6 +157,72 @@ export function SuggestionChips({
   );
 }
 
+function FilterRow({
+  facets,
+  product,
+  docType,
+  onProduct,
+  onDocType,
+  busy,
+  center = false,
+}: {
+  facets: CorpusFacets | null;
+  product: string;
+  docType: string;
+  onProduct: (value: string) => void;
+  onDocType: (value: string) => void;
+  busy: boolean;
+  center?: boolean;
+}) {
+  const selectClass =
+    "h-8 rounded-lg border border-border bg-card px-2 text-sm text-foreground outline-none transition-colors duration-150 ease-standard focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", center && "justify-center")}>
+      <select
+        className={selectClass}
+        value={product}
+        disabled={busy}
+        aria-label="Filter by product"
+        onChange={(event) => onProduct(event.target.value)}
+      >
+        <option value="">All products</option>
+        {facets?.products.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+      <select
+        className={selectClass}
+        value={docType}
+        disabled={busy}
+        aria-label="Filter by document type"
+        onChange={(event) => onDocType(event.target.value)}
+      >
+        <option value="">All types</option>
+        {facets?.doc_types.map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </select>
+      {product || docType ? (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            onProduct("");
+            onDocType("");
+          }}
+          className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          Clear filters
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function PlaygroundPage() {
   const { q } = Route.useSearch();
   const [query, setQuery] = useState(q ?? "");
@@ -164,11 +231,17 @@ function PlaygroundPage() {
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [snippets, setSnippets] = useState<Record<string, CitedChunk>>({});
   const [suggestions, setSuggestions] = useState<CorpusSuggestion[]>([]);
+  const [facets, setFacets] = useState<CorpusFacets | null>(null);
+  const [product, setProduct] = useState("");
+  const [docType, setDocType] = useState("");
 
   useEffect(() => {
     getCorpusSuggestions(6)
       .then((payload) => setSuggestions(payload.suggestions))
       .catch(() => setSuggestions([]));
+    getCorpusFacets()
+      .then(setFacets)
+      .catch(() => setFacets(null));
   }, []);
 
   async function ask() {
@@ -180,10 +253,20 @@ function PlaygroundPage() {
     setError(null);
     setSnippets({});
     try {
+      const filters: Record<string, string> = {};
+      if (product) {
+        filters.product = product;
+      }
+      if (docType) {
+        filters.doc_type = docType;
+      }
       const data = await clientApiJson<GenerateResult>("/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: question }),
+        body: JSON.stringify({
+          query: question,
+          filters: Object.keys(filters).length > 0 ? filters : undefined,
+        }),
       });
       setResult(data);
       if (data.terminal === "abstain") {
@@ -229,6 +312,15 @@ function PlaygroundPage() {
           </p>
         </div>
         <SearchBar value={query} onChange={setQuery} onSubmit={() => void ask()} busy={busy} autoFocus />
+        <FilterRow
+          facets={facets}
+          product={product}
+          docType={docType}
+          onProduct={setProduct}
+          onDocType={setDocType}
+          busy={busy}
+          center
+        />
         <SuggestionChips items={suggestions} onPick={setQuery} busy={busy} />
       </section>
     );
@@ -236,8 +328,16 @@ function PlaygroundPage() {
 
   return (
     <>
-      <div className="lg:sticky lg:top-0 lg:z-10 lg:-mx-6 lg:border-b lg:border-border lg:bg-background/85 lg:px-6 lg:py-3 lg:backdrop-blur">
+      <div className="space-y-2 lg:sticky lg:top-0 lg:z-10 lg:-mx-6 lg:border-b lg:border-border lg:bg-background/85 lg:px-6 lg:py-3 lg:backdrop-blur">
         <SearchBar value={query} onChange={setQuery} onSubmit={() => void ask()} busy={busy} compact />
+        <FilterRow
+          facets={facets}
+          product={product}
+          docType={docType}
+          onProduct={setProduct}
+          onDocType={setDocType}
+          busy={busy}
+        />
       </div>
 
       {error ? <ErrorAlert title="Generate" message={error} /> : null}

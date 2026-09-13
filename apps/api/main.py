@@ -35,7 +35,7 @@ from pipeline import IngestBusy, WipeDisabled, run_ingest
 from user_ingest import SourceRejected, ingest_user_upload, ingest_user_url
 from ratelimit import generate_window
 from rerank import warmup_ranker
-from retrieve import ChunkHit, retrieve, retrieve_config_from_settings
+from retrieve import ChunkHit, Filters, retrieve, retrieve_config_from_settings
 from settings import GROQ_KEY_HELP, Settings, load_settings
 from trace import get_trace, langfuse_configured, list_traces
 
@@ -177,6 +177,7 @@ class SourceRequest(BaseModel):
 
 class RetrieveRequest(BaseModel):
     query: str
+    filters: Filters | None = None
 
 
 class RetrieveResponse(BaseModel):
@@ -186,6 +187,7 @@ class RetrieveResponse(BaseModel):
 
 class GenerateRequest(BaseModel):
     query: str
+    filters: Filters | None = None
 
 
 @app.get("/health")
@@ -426,7 +428,10 @@ def post_retrieve(body: RetrieveRequest) -> RetrieveResponse:
     if not query:
         return RetrieveResponse(hits=[], rerank_skipped=False)
     try:
-        hits = retrieve(query, retrieve_config_from_settings(settings), settings=settings)
+        config = retrieve_config_from_settings(settings).model_copy(
+            update={"filters": body.filters}
+        )
+        hits = retrieve(query, config, settings=settings)
     except RuntimeError as exc:
         raise _runtime_http_error(exc) from exc
     except Exception as exc:
@@ -444,11 +449,10 @@ def post_generate(body: GenerateRequest) -> GenerateResult:
             detail="generate rate limit exceeded; retry shortly",
         )
     try:
-        return generate(
-            body.query or "",
-            settings=settings,
-            config=retrieve_config_from_settings(settings),
+        config = retrieve_config_from_settings(settings).model_copy(
+            update={"filters": body.filters}
         )
+        return generate(body.query or "", settings=settings, config=config)
     except RuntimeError as exc:
         raise _runtime_http_error(exc) from exc
     except Exception as exc:

@@ -20,6 +20,19 @@ from settings import Settings, load_settings
 log = logging.getLogger("citebench.retrieve")
 
 
+class Filters(BaseModel):
+    """Optional metadata constraints applied to both retrieval pools."""
+
+    product: str | None = None
+    doc_type: str | None = None
+    source: str | None = None
+    version: str | None = None
+    license: str | None = None
+    origin: str | None = None
+    section: str | None = None
+    doc_ids: list[str] | None = None
+
+
 class RetrieveConfig(BaseModel):
     chunk_size: int = 512
     chunk_overlap: int = 64
@@ -33,6 +46,7 @@ class RetrieveConfig(BaseModel):
     # Comparison knobs (defaults preserve the hybrid+rerank baseline).
     retrieval_mode: Literal["hybrid", "dense", "lexical"] = "hybrid"
     rerank_enabled: bool = True
+    filters: Filters | None = None
 
 
 class ChunkHit(BaseModel):
@@ -202,9 +216,9 @@ def retrieve(
             resolved = _require_settings(settings)
             with connect(resolved.database_url) as conn:
                 if cfg.retrieval_mode == "dense":
-                    dense, lexical = search_vector(conn, query_vec, cfg.dense_k), []
+                    dense, lexical = search_vector(conn, query_vec, cfg.dense_k, cfg.filters), []
                 elif cfg.retrieval_mode == "lexical":
-                    dense, lexical = [], search_fts(conn, query_text, cfg.lexical_k)
+                    dense, lexical = [], search_fts(conn, query_text, cfg.lexical_k, cfg.filters)
                 else:
                     dense, lexical = hybrid_search(
                         conn,
@@ -212,6 +226,7 @@ def retrieve(
                         query_text,
                         dense_k=cfg.dense_k,
                         lexical_k=cfg.lexical_k,
+                        filters=cfg.filters,
                     )
         else:
             dense = list(vector_search_fn(query_vec, cfg.dense_k))
@@ -432,38 +447,77 @@ def hybrid_search(
     *,
     dense_k: int,
     lexical_k: int,
+    filters: Filters | None = None,
 ) -> tuple[list[ScoredChunk], list[ScoredChunk]]:
-    dense = search_vector(conn, query_vec, dense_k)
-    lexical = search_fts(conn, query_text, lexical_k)
+    dense = search_vector(conn, query_vec, dense_k, filters)
+    lexical = search_fts(conn, query_text, lexical_k, filters)
     return dense, lexical
 
 
-def search_vector(conn, query_vec: Sequence[float], k: int) -> list[ScoredChunk]:
+def _filter_sql(filters: Filters | None) -> tuple[str, list[Any]]:
+    """Parameterized AND clauses over the documents/chunks join."""
+    if filters is None:
+        return "", []
+    clauses: list[str] = []
+    params: list[Any] = []
+    for column, value in (
+        ("d.product", filters.product),
+        ("d.doc_type", filters.doc_type),
+        ("d.source", filters.source),
+        ("COALESCE(d.version, d.version_or_snapshot)", filters.version),
+        ("d.license", filters.license),
+        ("d.origin", filters.origin),
+        ("c.section", filters.section),
+    ):
+        if value:
+            clauses.append(f"{column} = %s")
+            params.append(value)
+    if filters.doc_ids:
+        clauses.append("d.id = ANY(%s)")
+        params.append(list(filters.doc_ids))
+    if not clauses:
+        return "", []
+    return " AND " + " AND ".join(clauses), params
+
+
+def search_vector(
+    conn,
+    query_vec: Sequence[float],
+    k: int,
+    filters: Filters | None = None,
+) -> list[ScoredChunk]:
     if k <= 0:
         return []
     literal = _vector_literal(query_vec)
+    clause, filter_params = _filter_sql(filters)
     rows = conn.execute(
-        """
+        f"""
         SELECT c.id, c.doc_id, c.text, c.page, c.section, c.url,
                d.title, d.source, d.product, d.doc_type, d.license,
                COALESCE(d.version, d.version_or_snapshot) AS version,
                1 - (c.embedding <=> %s::vector) AS vector_score
         FROM chunks c
         JOIN documents d ON d.id = c.doc_id
-        WHERE c.embedding IS NOT NULL
+        WHERE c.embedding IS NOT NULL{clause}
         ORDER BY c.embedding <=> %s::vector, c.id
         LIMIT %s
         """,
-        (literal, literal, k),
+        (literal, *filter_params, literal, k),
     ).fetchall()
     return [_scored_from_row(row, "vector_score") for row in rows]
 
 
-def search_fts(conn, query: str, k: int) -> list[ScoredChunk]:
+def search_fts(
+    conn,
+    query: str,
+    k: int,
+    filters: Filters | None = None,
+) -> list[ScoredChunk]:
     if k <= 0 or not query.strip():
         return []
+    clause, filter_params = _filter_sql(filters)
     rows = conn.execute(
-        """
+        f"""
         SELECT c.id, c.doc_id, c.text, c.page, c.section, c.url,
                d.title, d.source, d.product, d.doc_type, d.license,
                COALESCE(d.version, d.version_or_snapshot) AS version,
@@ -471,11 +525,11 @@ def search_fts(conn, query: str, k: int) -> list[ScoredChunk]:
         FROM chunks c
         JOIN documents d ON d.id = c.doc_id
         WHERE c.tsv IS NOT NULL
-          AND c.tsv @@ plainto_tsquery('english', %s)
+          AND c.tsv @@ plainto_tsquery('english', %s){clause}
         ORDER BY fts_score DESC, c.id
         LIMIT %s
         """,
-        (query, query, k),
+        (query, query, *filter_params, k),
     ).fetchall()
     return [_scored_from_row(row, "fts_score") for row in rows]
 

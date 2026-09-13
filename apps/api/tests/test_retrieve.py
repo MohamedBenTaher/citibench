@@ -405,3 +405,24 @@ def test_rerank_disabled_skips_without_calling_rerank() -> None:
     assert hits
     assert all(hit.rerank_skipped for hit in hits)
     assert all(hit.rerank_score is None for hit in hits)
+
+
+def test_filter_sql_is_parameterized() -> None:
+    from retrieve import Filters, _filter_sql
+
+    assert _filter_sql(None) == ("", [])
+    assert _filter_sql(Filters()) == ("", [])
+
+    clause, params = _filter_sql(Filters(product="Kubernetes", doc_type="concept"))
+    assert "d.product = %s" in clause
+    assert "d.doc_type = %s" in clause
+    assert params == ["Kubernetes", "concept"]
+
+    clause2, params2 = _filter_sql(Filters(doc_ids=["a", "b"], section="Pods"))
+    assert "d.id = ANY(%s)" in clause2
+    assert "c.section = %s" in clause2
+    assert params2 == ["Pods", ["a", "b"]]
+
+    clause3, params3 = _filter_sql(Filters(product="O'Brien"))
+    assert "O'Brien" not in clause3
+    assert params3 == ["O'Brien"]
