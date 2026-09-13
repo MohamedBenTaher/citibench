@@ -16,6 +16,7 @@ from db import (
     connect,
     corpus_facets,
     corpus_stats,
+    corpus_suggestions,
     database_unavailable_detail,
     ensure_schema,
     get_chunks_by_ids,
@@ -208,6 +209,22 @@ def get_corpus_facets() -> dict[str, Any]:
     try:
         with connect(settings.database_url) as conn:
             return corpus_facets(conn)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=database_unavailable_detail(exc, settings.database_url),
+        ) from exc
+
+
+@app.get("/corpus/suggestions")
+def get_corpus_suggestions(
+    limit: int = Query(default=6, ge=1, le=12),
+) -> dict[str, Any]:
+    """Question suggestions generated from the corpus's own document titles."""
+    settings = load_settings()
+    try:
+        with connect(settings.database_url) as conn:
+            return corpus_suggestions(conn, limit=limit)
     except Exception as exc:
         raise HTTPException(
             status_code=503,

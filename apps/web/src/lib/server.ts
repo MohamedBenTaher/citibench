@@ -3,6 +3,7 @@ import type {
   CitedChunk,
   CorpusFacets,
   CorpusStats,
+  CorpusSuggestions,
   DocumentDetail,
   DocumentList,
   EvalLatest,
@@ -35,6 +36,12 @@ export function getCorpusStats() {
 
 export function getCorpusFacets() {
   return fetchApiJson<CorpusFacets>("/corpus/facets");
+}
+
+export function getCorpusSuggestions(limit = 6) {
+  return fetchApiJson<CorpusSuggestions>(
+    withQuery("/corpus/suggestions", { limit }),
+  );
 }
 
 export function getCorpusDocuments(

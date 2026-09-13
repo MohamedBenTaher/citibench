@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import socket
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
@@ -545,6 +546,196 @@ def corpus_facets(conn: psycopg.Connection) -> dict[str, list[str]]:
         "doc_types": distinct("doc_type"),
         "origins": distinct("origin"),
     }
+
+
+_GENERIC_TOPICS = frozenset(
+    {
+        "kubernetes documentation",
+        "concepts",
+        "kubernetes",
+        "fastapi",
+        "about",
+        "advanced user guide",
+        "reference",
+        "release notes",
+        "blog",
+        "community",
+        "search",
+        "documentation",
+        "overview",
+        "tutorials",
+    }
+)
+
+_IMPERATIVE_VERBS = frozenset(
+    {
+        "configure",
+        "create",
+        "manage",
+        "deploy",
+        "use",
+        "set",
+        "update",
+        "migrate",
+        "install",
+        "run",
+        "expose",
+        "debug",
+        "test",
+        "access",
+        "extend",
+        "generate",
+        "include",
+        "handle",
+        "rotate",
+        "scale",
+        "monitor",
+        "troubleshoot",
+        "enable",
+        "add",
+        "build",
+        "define",
+        "restrict",
+        "connect",
+        "assign",
+    }
+)
+
+
+def clean_topic(product: str | None, title: str | None) -> str:
+    """Turn a crawled page title into a short askable topic."""
+    text = (title or "").strip()
+    for separator in (" / ", " | "):
+        if separator in text:
+            text = text.split(separator, 1)[0].strip()
+    if product == "FastAPI" and text.endswith(" - FastAPI"):
+        text = text[: -len(" - FastAPI")].strip()
+    if product == "Azure" and " - " in text:
+        text = text.split(" - ", 1)[0].strip()
+    if product == "PostgreSQL":
+        text = re.sub(r"^PostgreSQL:\s*Documentation:\s*\d+:\s*", "", text)
+        text = re.sub(r"^\d+(?:\.\d+)*\.\s*", "", text)
+    if text.lower().startswith("about "):
+        text = text[6:].strip()
+    if text.endswith((" Overview", " overview")):
+        text = text[: -len(" Overview")].strip()
+    if text.lower().endswith(" documentation"):
+        text = text[: -len(" documentation")].strip()
+    return text.strip(" -–—:")
+
+
+def phrase_question(product: str | None, topic: str) -> str:
+    """Product-aware question stem for a corpus topic."""
+    stripped = topic.rstrip("?").strip()
+    if not stripped:
+        return ""
+    if topic.rstrip().endswith("?"):
+        return topic.strip()
+    lowered = stripped.lower()
+    if lowered.startswith(("what is ", "what are ", "how do ", "how does ", "how to ")):
+        return f"{stripped}?"
+    if product == "Kubernetes":
+        first = stripped.split(" ", 1)[0].lower()
+        if first in _IMPERATIVE_VERBS:
+            return f"How do I {stripped[0].lower()}{stripped[1:]} in Kubernetes?"
+        return f"What is {stripped} in Kubernetes?"
+    if product == "Azure":
+        return f"What is {stripped}?"
+    if product == "PostgreSQL":
+        return f"What does the PostgreSQL manual say about {stripped}?"
+    if product == "FastAPI":
+        return f"What does the FastAPI guide say about {stripped}?"
+    if product == "xv6":
+        return "What does the xv6 book cover?"
+    return f"What is {stripped}?"
+
+
+def corpus_suggestions(conn: psycopg.Connection, limit: int = 6) -> dict[str, Any]:
+    """Question suggestions derived from the corpus's own document titles.
+
+    Deterministic: samples a spread of topics per product (concepts first, then
+    references) and adds one compare question. No hand-written prompts.
+    """
+    limit = max(1, min(limit, 12))
+    rows = conn.execute(
+        """
+        SELECT id, title, product, doc_type
+        FROM documents
+        WHERE status = 'ok' AND origin = 'freeze' AND product IS NOT NULL
+        ORDER BY product, id
+        """
+    ).fetchall()
+
+    grouped: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        topic = clean_topic(row["product"], row["title"])
+        if not (5 <= len(topic) <= 90):
+            continue
+        lowered = topic.lower()
+        if lowered in _GENERIC_TOPICS or lowered.endswith("documentation"):
+            continue
+        if re.match(r"^(postgresql|xv6|kubernetes|fastapi)\s+\d", lowered):
+            continue
+        if re.match(r"^(part|chapter|appendix)\b", lowered):
+            continue
+        grouped.setdefault(str(row["product"]), []).append(
+            {"doc_id": row["id"], "topic": topic, "doc_type": row["doc_type"] or ""}
+        )
+    for items in grouped.values():
+        items.sort(key=lambda item: (item["doc_type"] == "reference", item["doc_id"]))
+
+    products = sorted(grouped)
+    suggestions: list[dict[str, str]] = []
+    seen: set[str] = set()
+    target = max(1, limit - 1)
+    cursors = {product: 0 for product in products}
+    strides = {product: max(1, len(grouped[product]) // 4) for product in products}
+
+    while len(suggestions) < target:
+        progressed = False
+        for product in products:
+            if len(suggestions) >= target:
+                break
+            items = grouped[product]
+            index = cursors[product]
+            if index >= len(items):
+                continue
+            cursors[product] = index + strides[product]
+            item = items[index]
+            question = phrase_question(product, item["topic"])
+            if not question or question in seen:
+                continue
+            seen.add(question)
+            progressed = True
+            suggestions.append(
+                {"question": question, "product": product, "doc_id": item["doc_id"]}
+            )
+        if not progressed:
+            break
+
+    if limit >= 2:
+        short = {
+            product: [
+                item["topic"] for item in grouped[product] if 8 <= len(item["topic"]) <= 45
+            ]
+            for product in products
+        }
+        candidates = [
+            (product, topics) for product, topics in short.items() if len(topics) >= 2
+        ]
+        if candidates:
+            # Prefer the core products, then the product with the most short topics.
+            candidates.sort(
+                key=lambda pair: (pair[0] not in ("Kubernetes", "FastAPI"), -len(pair[1]))
+            )
+            product, topics = candidates[0]
+            question = f"Compare {topics[0]} and {topics[1]} in {product}."
+            if question not in seen:
+                suggestions.append(
+                    {"question": question, "product": product, "doc_id": ""}
+                )
+
+    return {"suggestions": suggestions[:limit], "source": "corpus"}
 
 
 def corpus_stats(conn: psycopg.Connection) -> dict[str, Any]:

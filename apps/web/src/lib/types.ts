@@ -98,6 +98,17 @@ export type CorpusFacets = {
   origins: string[];
 };
 
+export type CorpusSuggestion = {
+  question: string;
+  product: string;
+  doc_id: string;
+};
+
+export type CorpusSuggestions = {
+  suggestions: CorpusSuggestion[];
+  source?: string;
+};
+
 export type CitedChunk = {
   id: string;
   doc_id: string;

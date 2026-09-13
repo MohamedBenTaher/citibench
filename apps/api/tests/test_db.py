@@ -156,3 +156,52 @@ def test_list_documents_parameterizes_filters() -> None:
     assert "%s" in sql
     assert "pods" not in sql  # values are bound, never interpolated
     assert params[-2:] == [5, 10]
+
+
+def test_clean_topic_and_phrase_question() -> None:
+    import db
+
+    assert db.clean_topic("Kubernetes", "Pods / Kubernetes") == "Pods"
+    assert (
+        db.clean_topic(
+            "PostgreSQL", "PostgreSQL: Documentation: 18: 13.4. Data Consistency Checks"
+        )
+        == "Data Consistency Checks"
+    )
+    assert (
+        db.clean_topic("FastAPI", "Additional Responses in OpenAPI - FastAPI")
+        == "Additional Responses in OpenAPI"
+    )
+    assert (
+        db.clean_topic(
+            "Azure", "What is AKS? - Azure Kubernetes Service / Microsoft Learn"
+        )
+        == "What is AKS?"
+    )
+    assert db.phrase_question("Kubernetes", "Pods") == "What is Pods in Kubernetes?"
+    assert db.phrase_question("Kubernetes", "Configure a Pod").startswith("How do I configure")
+    assert db.phrase_question("xv6", "anything") == "What does the xv6 book cover?"
+
+
+def test_corpus_suggestions_are_derived_from_documents() -> None:
+    import db
+
+    rows = [
+        {"id": "k8s-deploy", "title": "Deployments / Kubernetes", "product": "Kubernetes", "doc_type": "concept"},
+        {"id": "k8s-ctrl", "title": "Controllers / Kubernetes", "product": "Kubernetes", "doc_type": "concept"},
+        {"id": "pg-wal", "title": "PostgreSQL: Documentation: 18: 28. WAL", "product": "PostgreSQL", "doc_type": "manual"},
+    ]
+
+    class _Result:
+        def fetchall(self):
+            return rows
+
+    class _Conn:
+        def execute(self, _sql: str, _params: object = None) -> _Result:
+            return _Result()
+
+    suggestions = db.corpus_suggestions(_Conn(), 3)["suggestions"]
+    questions = [item["question"] for item in suggestions]
+    assert any("Deployments" in question for question in questions)
+    assert any(question.startswith("Compare") for question in questions)
+    assert all(item["question"] for item in suggestions)

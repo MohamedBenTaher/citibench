@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -10,17 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { clientApiJson } from "@/lib/client-api";
-import { getCitedChunks } from "@/lib/server";
-import type { CitedChunk, Citation, GenerateResult } from "@/lib/types";
-
-const SUGGESTIONS = [
-  "How does the kube-scheduler place pods onto nodes?",
-  "What is a managed identity in Azure?",
-  "How are Kubernetes Secrets stored and used?",
-  "What is write-ahead logging in PostgreSQL?",
-  "How do you declare a path parameter in FastAPI?",
-  "Compare Kubernetes ConfigMaps and Secrets.",
-];
+import { getCitedChunks, getCorpusSuggestions } from "@/lib/server";
+import type {
+  CitedChunk,
+  Citation,
+  CorpusSuggestion,
+  GenerateResult,
+} from "@/lib/types";
 
 const OUT_OF_CORPUS = "What is the InnovX proprietary runbook password?";
 
@@ -51,7 +47,14 @@ function PlaygroundPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [snippets, setSnippets] = useState<Record<string, CitedChunk>>({});
+  const [suggestions, setSuggestions] = useState<CorpusSuggestion[]>([]);
   const canSubmit = !busy && query.trim().length > 0;
+
+  useEffect(() => {
+    getCorpusSuggestions(7)
+      .then((payload) => setSuggestions(payload.suggestions))
+      .catch(() => setSuggestions([]));
+  }, []);
 
   async function onAsk(event: FormEvent) {
     event.preventDefault();
@@ -154,29 +157,32 @@ function PlaygroundPage() {
               disabled={busy}
               onClick={() => setQuery(OUT_OF_CORPUS)}
             >
-              Try an out-of-corpus question
+              Test abstain (out of corpus)
             </Button>
           </div>
         </form>
 
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Try
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                disabled={busy}
-                onClick={() => setQuery(suggestion)}
-                className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors duration-150 ease-standard hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
-              >
-                {suggestion}
-              </button>
-            ))}
+        {suggestions.length > 0 ? (
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              From the corpus
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion.question}
+                  type="button"
+                  disabled={busy}
+                  title={suggestion.product}
+                  onClick={() => setQuery(suggestion.question)}
+                  className="rounded-full border border-border px-3 py-1 text-left text-xs text-muted-foreground transition-colors duration-150 ease-standard hover:border-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+                >
+                  {suggestion.question}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
       </section>
 
       {error ? <ErrorAlert title="Generate" message={error} /> : null}
