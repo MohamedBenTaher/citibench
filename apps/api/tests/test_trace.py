@@ -353,7 +353,7 @@ def test_traces_endpoint_lists_generate_runs(monkeypatch: pytest.MonkeyPatch) ->
 
     import main as main_mod
 
-    monkeypatch.setattr(main_mod, "generate", fake_generate)
+    monkeypatch.setattr("routes.ask.generate", fake_generate)
     client = TestClient(main_mod.app)
     asked = client.post("/generate", json={"query": fixture["query"]})
     assert asked.status_code == 200

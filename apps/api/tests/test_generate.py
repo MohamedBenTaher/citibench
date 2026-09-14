@@ -410,7 +410,7 @@ def test_generate_endpoint_401_when_groq_rejects_key(monkeypatch: pytest.MonkeyP
             "https://console.groq.com/keys"
         )
 
-    monkeypatch.setattr(main_mod, "generate", boom)
+    monkeypatch.setattr("routes.ask.generate", boom)
     response = TestClient(main_mod.app).post("/generate", json={"query": "pods"})
     assert response.status_code == 401
     assert "rejected by Groq" in response.json()["detail"]
@@ -426,7 +426,7 @@ def test_ingest_endpoint_401_when_groq_rejects_key(monkeypatch: pytest.MonkeyPat
             "https://console.groq.com/keys"
         )
 
-    monkeypatch.setattr(main_mod, "run_ingest", boom)
+    monkeypatch.setattr("routes.ingest.run_ingest", boom)
     response = TestClient(main_mod.app).post("/ingest", json={})
     assert response.status_code == 401
     assert "rejected by Groq" in response.json()["detail"]
@@ -454,7 +454,7 @@ def test_generate_endpoint_cite_path_wired(monkeypatch: pytest.MonkeyPatch) -> N
 
     import main as main_mod
 
-    monkeypatch.setattr(main_mod, "generate", fake_generate)
+    monkeypatch.setattr("routes.ask.generate", fake_generate)
     response = TestClient(main_mod.app).post("/generate", json={"query": fixture["query"]})
     assert response.status_code == 200
     body = response.json()

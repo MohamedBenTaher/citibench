@@ -284,7 +284,7 @@ def test_retrieve_endpoint_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setenv("GROQ_API_KEY", "")
     import main as main_mod
 
-    monkeypatch.setattr(main_mod, "retrieve", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("routes.ask.retrieve", lambda *_args, **_kwargs: [])
     response = TestClient(main_mod.app).post("/retrieve", json={"query": "pods onto nodes"})
     assert response.status_code == 200
     assert response.json()["hits"] == []

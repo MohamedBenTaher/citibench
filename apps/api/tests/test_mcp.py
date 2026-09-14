@@ -45,7 +45,7 @@ def _api(monkeypatch, retrieve_hits: list[ChunkHit] | None = None) -> CitebenchA
         def fake_retrieve(query: str, *args, **kwargs):
             return list(retrieve_hits)
 
-        monkeypatch.setattr(main_mod, "retrieve", fake_retrieve)
+        monkeypatch.setattr("routes.ask.retrieve", fake_retrieve)
     return CitebenchApi(StarletteTransport(TestClient(main_mod.app)))
 
 
@@ -140,7 +140,7 @@ def test_search_corpus_blank_query(monkeypatch) -> None:
 
 def test_search_corpus_without_groq_key(monkeypatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "")
-    monkeypatch.setattr(main_mod, "retrieve", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("routes.ask.retrieve", lambda *_args, **_kwargs: [])
     api = CitebenchApi(StarletteTransport(TestClient(main_mod.app)))
     reply = _call(api, "search_corpus", {"query": "pods"})
     assert reply["result"].get("isError") is not True

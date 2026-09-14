@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from main import maybe_warmup, should_skip_model_warmup
+from routes import maybe_warmup, should_skip_model_warmup
 from settings import load_settings
 
 
@@ -15,8 +15,8 @@ def test_warmup_skipped_when_env_set(monkeypatch: pytest.MonkeyPatch) -> None:
 
     embed = MagicMock()
     rerank = MagicMock()
-    monkeypatch.setattr("main.warmup_local_embed", embed)
-    monkeypatch.setattr("main.warmup_ranker", rerank)
+    monkeypatch.setattr("routes.warmup_local_embed", embed)
+    monkeypatch.setattr("routes.warmup_ranker", rerank)
     maybe_warmup(load_settings())
     embed.assert_not_called()
     rerank.assert_not_called()
@@ -29,8 +29,8 @@ def test_maybe_warmup_calls_both(monkeypatch: pytest.MonkeyPatch) -> None:
 
     embed = MagicMock()
     rerank = MagicMock()
-    monkeypatch.setattr("main.warmup_local_embed", embed)
-    monkeypatch.setattr("main.warmup_ranker", rerank)
+    monkeypatch.setattr("routes.warmup_local_embed", embed)
+    monkeypatch.setattr("routes.warmup_ranker", rerank)
     settings = load_settings()
     maybe_warmup(settings)
     maybe_warmup(settings)
