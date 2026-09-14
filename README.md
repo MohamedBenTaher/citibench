@@ -132,7 +132,7 @@ The big freeze lives in `corpus/MANIFEST.md`; corpus-v0 is immutable.
 
 **Ingest** fetches the pinned URLs, chunks at 512/64, embeds with `search_document:` using local `nomic-embed-text-v1.5` ONNX by default (`embed_backend: local`); set `EMBED_BACKEND=groq_then_local` to restore the historical Groq `/embeddings` probe (Groq now 404s that model), writes pgvector + FTS. Snapshots land in `corpus/raw/<id>/` with sha256. First ingest downloads the ONNX weights (~0.5 GB) into `NOMIC_CACHE_DIR`.
 
-**Retrieve** embeds the query with `search_query:`, fuses dense + lexical lists with RRF, then FlashRank (`ms-marco-MiniLM-L-12-v2`) keeps 8 hits. If rerank fails, order stays RRF and `rerank_skipped` is set — never a silent skip.
+**Retrieve** embeds the query with `search_query:`, fuses dense + lexical lists with RRF, then FlashRank (`ms-marco-TinyBERT-L-2-v2`) keeps 8 hits. If rerank fails, order stays RRF and `rerank_skipped` is set — never a silent skip.
 
 **Generate** is one LangGraph path: retrieve, then answer with citations **or** abstain (`I don't know`). Citations are always a subset of retrieved chunk ids. Empty retrieve, low FlashRank score, or ungrounded output → abstain.
 
@@ -175,15 +175,15 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 | Corpus docs | 1487 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
 | Corpus pages | 1600 | HTML snapshot = 1 page; xv6 PDF = 114. `measured-under-local-snapshots`. |
 | Corpus chunks | 31288 | `measured-under-live-ingest-2026-09-12`. tiktoken cl100k_base 512/64; `GET /corpus/stats`. |
-| Retrieval Recall@8 | 0.904 | Hand-labeled qrels, 26 answerable questions (`evals/results/retrieval.json`). Local, no LLM. |
-| Retrieval MRR | 0.616 | Same run. |
-| Retrieval nDCG@8 | 0.692 | Same run. `python -m citebench.eval.retrieval --compare` for config deltas. |
-| False-answer rate | 0.250 | Retrieval confidence gate on 8 unanswerable questions (2 answered). |
+| Retrieval Recall@8 | 0.923 | Hand-labeled qrels, 26 answerable questions (`evals/results/retrieval.json`). Local, no LLM. |
+| Retrieval MRR | 0.721 | Same run. |
+| Retrieval nDCG@8 | 0.769 | Same run. `python -m citebench.eval.retrieval --compare` for config deltas. |
+| False-answer rate | 0.000 | Retrieval confidence gate on 8 unanswerable questions. |
 | False-abstain rate | 0.000 | Retrieval confidence gate on 26 answerable questions. |
 | Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 20 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
 | Context precision | 1.000 | Same mock artifact (`evals/results/latest.json`). |
-| Retrieve latency p50 | 2401 ms | Retrieve-only, 31,288 chunks, n=50 (`scripts/bench-retrieve.py` → `evals/results/retrieve-bench.json`). `measured-under-retrieve-bench-2026-09-13`. Rerank ≈2180 ms of it. |
-| Retrieve latency p95 | 2548 ms | Same run. Over the 400 ms budget, but rerank-bound, so ANN is deferred (see `DECISIONS.md`). |
+| Retrieve latency p50 | 297 ms | Retrieve-only, 31,288 chunks, n=50 (`scripts/bench-retrieve.py` → `evals/results/retrieve-bench.json`). `measured-under-retrieve-bench-2026-09-14`. Under the 400 ms budget after the TinyBERT rerank swap (plan 023). |
+| Retrieve latency p95 | 316 ms | Same run. Rerank ≈100 ms, dense scan ≈130 ms of it. |
 | Ask latency p95 | — | Unmeasured; full `/generate` trace latency once enough runs exist. |
 | Cost / 1k queries | — | Unmeasured. When traces exist: mean `citebench.cost.v1` USD × 1000. |
 

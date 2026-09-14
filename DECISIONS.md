@@ -47,6 +47,33 @@ the cross-encoder cost (pool size, ONNX threads/quantization, or a lighter
 model). Re-run the bench after that plan, or after filters (plan 017) change
 pool sizes.
 
+**Update (2026-09-14, plan 023 — rerank now fits the budget):** two fixes and
+one swap landed, all measured.
+
+1. Bug fixed: `cfg.rerank_model` never reached FlashRank — `retrieve()` built
+   its default rerank call from `DEFAULT_RERANK_MODEL` instead of the config,
+   so a configured model was silently ignored (it also invalidated any
+   "compare models" ablation that didn't hard-code the name). The call now
+   passes `model_name` and `max_length` from `RetrieveConfig`.
+2. Quality-gated ablation on the committed qrels: `rerank_pool` 30/20/10 and
+   `rerank_max_length` 256/128 all lose recall → left unchanged (pool 50,
+   n_ctx 512).
+3. Winner: **ms-marco-TinyBERT-L-2-v2** becomes the default reranker. At
+   identical knobs it beats MiniLM-L-12-Q on every metric (recall@8 **0.923**
+   vs 0.904, MRR **0.721** vs 0.616, nDCG@8 **0.769** vs 0.692) while
+   reranking 50 passages in **~0.10 s** instead of ~2.18 s. The previous
+   answerability gate numbers were measured with MiniLM scores (false-answer
+   0.250); fresh calibration with TinyBERT: **false-answer 0.000,
+   false-abstain 0.000**.
+   Scoping the claim honestly: a 26-row qrels split can't prove TinyBERT is
+   the stronger model in general — it is measured stronger on this labeled
+   split, and the artifact is the evidence.
+4. New retrieve-only bench: **p50 297 ms / p95 316 ms** at 31,288 chunks —
+   inside the 400 ms budget (`measured-under-retrieve-bench-2026-09-14`);
+   remaining cost is ~130 ms dense scan + ~100 ms rerank. ANN stays deferred
+   under the same reasoning as above: shrinking the scan cannot materially
+   move p95 now.
+
 ## Why not fine-tune
 
 The frozen corpus is ~1,500 public pages. Fine-tuning an embedder or reranker on

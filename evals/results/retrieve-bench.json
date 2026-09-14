@@ -1,20 +1,20 @@
 {
-  "measured_at": "2026-09-13T19:32:05.215236+00:00",
-  "measured_under": "retrieve-bench-2026-09-13",
+  "measured_at": "2026-09-14T19:53:06.560115+00:00",
+  "measured_under": "retrieve-bench-2026-09-14",
   "n": 50,
   "doc_count": 1487,
   "page_count": 1600,
   "chunk_count": 31288,
-  "mean_ms": 2401.624,
-  "p50_ms": 2400.791,
-  "p95_ms": 2548.079,
-  "min_ms": 1743.016,
-  "max_ms": 3004.117,
+  "mean_ms": 295.613,
+  "p50_ms": 296.675,
+  "p95_ms": 316.441,
+  "min_ms": 262.626,
+  "max_ms": 323.419,
   "stage_mean_ms": {
-    "embed_ms": 18.514,
-    "vector_ms": 140.404,
-    "fts_ms": 5.216,
-    "rerank_ms": 2180.336
+    "embed_ms": 17.255,
+    "vector_ms": 124.98,
+    "fts_ms": 3.639,
+    "rerank_ms": 97.681
   },
   "config": {
     "top_k": 8,
@@ -22,6 +22,8 @@
     "lexical_k": 50,
     "rerank_pool": 50,
     "retrieval_mode": "hybrid",
-    "rerank_enabled": true
-  }
+    "rerank_enabled": true,
+    "rerank_max_length": 512
+  },
+  "variant_overrides": null
 }

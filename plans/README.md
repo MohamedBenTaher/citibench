@@ -112,7 +112,7 @@ Planned at commit `028fa3e`, 2026-09-10.
 | 020 | R4: User uploads stay in a separate namespace | P3 | S | 008 | TODO |
 | 021 | S1: Public repo/demo hygiene, topics, no secrets | P2 | S | 016 | TODO |
 | 022 | S2/S3/S4: Screenshot, resume bullets, pin + site blurb | P2 | S | 015, 021 | TODO |
-| 023 | R2b: Make rerank fit the retrieve latency budget | P2 | M | 013, 018 | TODO |
+| 023 | R2b: Make rerank fit the retrieve latency budget | P2 | M | 013, 018 | DONE (TinyBERT swap: qrels recall 0.904→0.923, nDCG 0.692→0.769, p95 2548→316 ms; fixed rerank-model pass-through bug; pool/ctx ablations rejected by quality gate) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

@@ -1,15 +1,15 @@
 {
-  "run_id": "retr-20260913T181529Z-1ac238",
-  "started_at": "2026-09-13T18:11:23.988838+00:00",
-  "finished_at": "2026-09-13T18:15:29.930618+00:00",
-  "measured_at": "2026-09-13T18:15:29.930618+00:00",
+  "run_id": "retr-20260914T195400Z-776964",
+  "started_at": "2026-09-14T19:53:07.636518+00:00",
+  "finished_at": "2026-09-14T19:54:00.431920+00:00",
+  "measured_at": "2026-09-14T19:54:00.431920+00:00",
   "mode": "retrieve+gate",
   "k": 8,
   "n": 34,
   "retrieval": {
-    "recall_at_k": 0.8462,
-    "mrr": 0.6455,
-    "ndcg_at_k": 0.6944,
+    "recall_at_k": 0.9231,
+    "mrr": 0.7205,
+    "ndcg_at_k": 0.7687,
     "n_scored": 26,
     "answerable": 26,
     "unanswerable": 8
@@ -19,9 +19,9 @@
     "unanswerable": 8,
     "answered_answerable": 26,
     "abstained_answerable": 0,
-    "answered_unanswerable": 2,
-    "abstained_unanswerable": 6,
-    "false_answer_rate": 0.25,
+    "answered_unanswerable": 0,
+    "abstained_unanswerable": 8,
+    "false_answer_rate": 0.0,
     "false_abstain_rate": 0.0,
     "rows": [
       {
@@ -237,16 +237,16 @@
       {
         "id": "u-005",
         "answerable": false,
-        "answered": true,
-        "abstained": false,
-        "abstain_reason": null
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence"
       },
       {
         "id": "u-006",
         "answerable": false,
-        "answered": true,
-        "abstained": false,
-        "abstain_reason": null
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence"
       },
       {
         "id": "u-007",
@@ -269,9 +269,9 @@
     {
       "name": "hybrid + rerank",
       "retrieval": {
-        "recall_at_k": 0.8462,
-        "mrr": 0.6455,
-        "ndcg_at_k": 0.6944,
+        "recall_at_k": 0.9231,
+        "mrr": 0.7205,
+        "ndcg_at_k": 0.7687,
         "n_scored": 26,
         "answerable": 26,
         "unanswerable": 8
@@ -291,9 +291,9 @@
     {
       "name": "dense only",
       "retrieval": {
-        "recall_at_k": 0.8846,
-        "mrr": 0.6529,
-        "ndcg_at_k": 0.7097,
+        "recall_at_k": 0.9231,
+        "mrr": 0.6955,
+        "ndcg_at_k": 0.756,
         "n_scored": 26,
         "answerable": 26,
         "unanswerable": 8
@@ -303,8 +303,41 @@
       "name": "lexical only",
       "retrieval": {
         "recall_at_k": 0.6154,
-        "mrr": 0.4279,
-        "ndcg_at_k": 0.4741,
+        "mrr": 0.4647,
+        "ndcg_at_k": 0.5033,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    },
+    {
+      "name": "rerank pool 30",
+      "retrieval": {
+        "recall_at_k": 0.8654,
+        "mrr": 0.6904,
+        "ndcg_at_k": 0.7328,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    },
+    {
+      "name": "rerank pool 20",
+      "retrieval": {
+        "recall_at_k": 0.8269,
+        "mrr": 0.6593,
+        "ndcg_at_k": 0.6962,
+        "n_scored": 26,
+        "answerable": 26,
+        "unanswerable": 8
+      }
+    },
+    {
+      "name": "rerank pool 10",
+      "retrieval": {
+        "recall_at_k": 0.8846,
+        "mrr": 0.6568,
+        "ndcg_at_k": 0.7002,
         "n_scored": 26,
         "answerable": 26,
         "unanswerable": 8
@@ -322,18 +355,17 @@
       ],
       "retrieved_doc_ids": [
         "k8s-docs-tutorials-kubernetes-basics-explore-explore-intro",
-        "k8s-docs-tutorials-hello-minikube",
-        "k8s-docs-concepts-workloads-pods",
         "azure-en-us-azure-aks-concepts-clusters-workloads",
         "azure-en-us-azure-aks-core-aks-concepts",
+        "k8s-docs-tutorials-hello-minikube",
+        "k8s-docs-concepts-workloads-pods-pod-condition",
         "k8s-docs-home",
-        "k8s-docs",
-        "k8s-docs-concepts-windows-intro"
+        "k8s-docs"
       ],
-      "recall": 1.0,
-      "first_relevant_rank": 3,
-      "mrr": 0.3333,
-      "ndcg": 0.5,
+      "recall": 0.0,
+      "first_relevant_rank": null,
+      "mrr": 0.0,
+      "ndcg": 0.0,
       "gate_answered": true
     },
     {
@@ -344,17 +376,17 @@
         "k8s-docs-concepts-services-networking-service"
       ],
       "retrieved_doc_ids": [
-        "k8s-docs-concepts-services-networking-cluster-ip-allocation",
         "k8s-docs-concepts-services-networking-service",
-        "k8s-docs-tasks-inject-data-application-environment-variable-expose-pod-informati",
+        "k8s-docs-concepts-services-networking-cluster-ip-allocation",
         "k8s-docs-tutorials-kubernetes-basics-expose-expose-intro",
         "k8s-docs-reference-kubectl-generated-kubectl_expose",
-        "k8s-docs-concepts-containers-container-environment"
+        "azure-en-us-azure-aks-concepts-network-services",
+        "azure-en-us-azure-aks-automatic-quick-automatic-custom-network"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 2,
-      "mrr": 0.5,
-      "ndcg": 0.6309,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
       "gate_answered": true
     },
     {
@@ -365,16 +397,17 @@
         "k8s-docs-concepts-services-networking-ingress"
       ],
       "retrieved_doc_ids": [
-        "k8s-docs-concepts-services-networking-ingress",
+        "k8s-docs-reference-labels-annotations-taints",
         "k8s-docs-concepts-services-networking-ingress-controllers",
-        "k8s-docs-home",
-        "k8s-docs",
-        "k8s-docs-concepts-services-networking-service"
+        "k8s-docs-concepts-services-networking-ingress",
+        "azure-en-us-azure-aks-app-routing-gateway-api",
+        "azure-en-us-azure-aks-concepts-clusters-workloads",
+        "azure-en-us-azure-aks-core-aks-concepts"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 1,
-      "mrr": 1.0,
-      "ndcg": 1.0,
+      "first_relevant_rank": 3,
+      "mrr": 0.3333,
+      "ndcg": 0.5,
       "gate_answered": true
     },
     {
@@ -385,18 +418,18 @@
         "k8s-docs-concepts-configuration-configmap"
       ],
       "retrieved_doc_ids": [
+        "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
+        "k8s-docs-tasks-manage-kubernetes-objects-kustomization",
         "k8s-docs-tasks-configure-pod-container-configure-pod-configmap",
         "azure-en-us-azure-aks-concepts-storage",
-        "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
         "k8s-docs-concepts-configuration-configmap",
-        "k8s-docs-tasks-manage-kubernetes-objects-kustomization",
-        "k8s-docs-concepts-configuration",
-        "k8s-docs-concepts-extend-kubernetes-api-extension-custom-resources"
+        "k8s-docs-reference-scheduling-policies",
+        "k8s-docs-reference-labels-annotations-taints"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 4,
-      "mrr": 0.25,
-      "ndcg": 0.4307,
+      "first_relevant_rank": 5,
+      "mrr": 0.2,
+      "ndcg": 0.3869,
       "gate_answered": true
     },
     {
@@ -410,9 +443,9 @@
         "k8s-docs-concepts-configuration-secret",
         "azure-en-us-azure-aks-concepts-security",
         "k8s-docs-concepts-storage-volumes",
-        "azure-en-us-azure-aks-concepts-storage",
         "k8s-docs-concepts-security-secrets-good-practices",
-        "azure-en-us-azure-aks-azure-files-dynamic-pv"
+        "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
+        "k8s-docs-concepts-security-security-checklist"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -428,18 +461,19 @@
         "k8s-docs-concepts-storage-persistent-volumes"
       ],
       "retrieved_doc_ids": [
-        "azure-en-us-azure-aks-concepts-storage",
         "k8s-docs-concepts-storage-persistent-volumes",
         "k8s-docs-concepts-storage-volume-populators-and-data-sources",
-        "k8s-docs-concepts-storage-volumes",
-        "azure-en-us-azure-aks-azure-netapp-files",
         "k8s-docs-concepts-storage-volume-snapshots",
-        "k8s-docs-concepts-security-multi-tenancy"
+        "k8s-docs-setup-best-practices-multiple-zones",
+        "k8s-docs-setup-multiple-zones",
+        "k8s-docs-concepts-storage-ephemeral-volumes",
+        "azure-en-us-azure-aks-azure-files-dynamic-pv",
+        "azure-en-us-azure-aks-azure-disks-dynamic-pv"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 2,
-      "mrr": 0.5,
-      "ndcg": 0.6309,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
       "gate_answered": true
     },
     {
@@ -450,13 +484,13 @@
         "k8s-docs-concepts-scheduling-eviction-kube-scheduler"
       ],
       "retrieved_doc_ids": [
-        "k8s-docs-reference-command-line-tools-reference-kube-scheduler",
+        "k8s-docs-concepts-scheduling-eviction-scheduler-perf-tuning",
         "k8s-docs-concepts-scheduling-eviction-kube-scheduler",
         "k8s-docs-concepts-extend-kubernetes",
-        "k8s-docs-concepts-storage-ephemeral-storage",
-        "k8s-docs-concepts-architecture",
-        "k8s-docs-concepts-scheduling-eviction-scheduler-perf-tuning",
-        "k8s-docs-concepts-scheduling-eviction-assign-pod-node"
+        "k8s-docs-concepts-scheduling-eviction-assign-pod-node",
+        "k8s-docs-reference-command-line-tools-reference-kube-scheduler",
+        "k8s-docs-setup-production-environment-tools-kubeadm-create-cluster-kubeadm",
+        "k8s-docs-tasks-administer-cluster-safely-drain-node"
       ],
       "recall": 1.0,
       "first_relevant_rank": 2,
@@ -474,10 +508,10 @@
       "retrieved_doc_ids": [
         "k8s-docs-concepts-overview-working-with-objects-labels-1",
         "k8s-docs-concepts-overview-working-with-objects-labels",
+        "k8s-docs-concepts-workloads-controllers-deployment",
         "k8s-docs-tutorials-kubernetes-basics-expose-expose-intro",
-        "k8s-docs-concepts-overview-working-with-objects-owners-dependents",
-        "k8s-docs-concepts-architecture-garbage-collection",
-        "k8s-docs-reference-labels-annotations-taints"
+        "k8s-docs-reference-labels-annotations-taints",
+        "k8s-docs-concepts-architecture-garbage-collection"
       ],
       "recall": 1.0,
       "first_relevant_rank": 2,
@@ -494,13 +528,12 @@
       ],
       "retrieved_doc_ids": [
         "k8s-docs-tutorials-hello-minikube",
-        "k8s-docs-concepts-workloads-controllers",
-        "k8s-docs-tasks-extend-kubernetes-configure-multiple-schedulers",
-        "k8s-docs-concepts-workloads",
-        "k8s-docs-concepts-security-linux-kernel-security-constraints",
-        "azure-en-us-azure-aks-concepts-network",
-        "k8s-docs-setup-best-practices-multiple-zones",
-        "k8s-docs-setup-multiple-zones"
+        "k8s-docs-concepts-architecture",
+        "k8s-docs-concepts-overview-working-with-objects",
+        "k8s-docs-concepts-workloads-pods",
+        "k8s-docs-concepts-workloads-autoscaling-vertical-pod-autoscale",
+        "k8s-docs-tutorials-kubernetes-basics-explore-explore-intro",
+        "k8s-docs-concepts-workloads-autoscaling"
       ],
       "recall": 0.0,
       "first_relevant_rank": null,
@@ -518,10 +551,12 @@
       "retrieved_doc_ids": [
         "azure-en-us-azure-aks-what-is-aks",
         "azure-en-us-azure-aks",
-        "azure-en-us-azure-aks-concepts-clusters-workloads",
-        "azure-en-us-azure-aks-core-aks-concepts",
+        "azure-en-us-azure-aks-free-standard-pricing-tiers",
+        "azure-en-us-azure-aks-advanced-container-networking-services-overview",
         "azure-en-us-azure-aks-automatic-quick-automatic-managed-network",
-        "azure-en-us-azure-aks-learn-quick-kubernetes-automatic-deploy"
+        "azure-en-us-azure-aks-learn-quick-kubernetes-automatic-deploy",
+        "azure-en-us-azure-aks-app-routing-gateway-api",
+        "azure-en-us-azure-aks-node-auto-repair"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -538,12 +573,13 @@
       ],
       "retrieved_doc_ids": [
         "azure-en-us-entra-identity-managed-identities-azure-resources-overview",
-        "azure-en-us-entra-identity-managed-identities-azure-resources-how-to-use-vm-sign",
-        "azure-en-us-entra-identity-managed-identities-azure-resources-how-to-assign-acce",
         "azure-en-us-entra-identity-managed-identities-azure-resources-how-to-configure-m",
         "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-cli-w",
         "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-porta",
-        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-power"
+        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-power",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-rest-",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-templ",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-how-to-use-vm-sign"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -559,19 +595,18 @@
         "azure-en-us-azure-storage-blobs-storage-blobs-overview"
       ],
       "retrieved_doc_ids": [
-        "azure-en-us-azure-storage-blobs-storage-blobs-list-java",
-        "azure-en-us-azure-storage-blobs-storage-blobs-list",
-        "azure-en-us-azure-storage-blobs-storage-blobs-list-javascript",
-        "azure-en-us-azure-storage-blobs-storage-blobs-list-python",
+        "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-cli",
         "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-nodejs",
-        "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-dotnet",
-        "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-java",
+        "azure-en-us-azure-storage-blobs-storage-blobs-introduction",
+        "azure-en-us-azure-storage-blobs-data-lake-storage-multi-protocol-access",
+        "azure-en-us-azure-storage-blobs-storage-blobs-overview",
+        "azure-en-us-azure-storage-blobs-access-tiers-overview",
         "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-python"
       ],
-      "recall": 0.0,
-      "first_relevant_rank": null,
-      "mrr": 0.0,
-      "ndcg": 0.0,
+      "recall": 1.0,
+      "first_relevant_rank": 5,
+      "mrr": 0.2,
+      "ndcg": 0.3869,
       "gate_answered": true
     },
     {
@@ -583,18 +618,17 @@
       ],
       "retrieved_doc_ids": [
         "azure-en-us-azure-aks-advanced-container-networking-services-overview",
-        "azure-en-us-azure-aks-use-network-policies",
-        "azure-en-us-azure-aks-concepts-clusters-workloads",
-        "azure-en-us-azure-aks-core-aks-concepts",
-        "azure-en-us-azure-aks-upgrade-cluster",
-        "azure-en-us-azure-aks-faq",
+        "azure-en-us-azure-aks-azure-cni-powered-by-cilium",
         "azure-en-us-azure-aks-container-network-security-wireguard-encryption-concepts",
-        "azure-en-us-azure-azure-monitor-best-practices-containers"
+        "azure-en-us-azure-aks-concepts-network",
+        "azure-en-us-azure-aks-faq",
+        "azure-en-us-azure-aks-best-practices-performance-scale-large",
+        "azure-en-us-azure-aks-concepts-network-cni-overview"
       ],
-      "recall": 0.0,
-      "first_relevant_rank": null,
-      "mrr": 0.0,
-      "ndcg": 0.0,
+      "recall": 1.0,
+      "first_relevant_rank": 4,
+      "mrr": 0.25,
+      "ndcg": 0.4307,
       "gate_answered": true
     },
     {
@@ -608,10 +642,10 @@
         "azure-en-us-azure-aks-concepts-clusters-workloads",
         "azure-en-us-azure-aks-core-aks-concepts",
         "azure-en-us-azure-aks-concepts-identity",
-        "azure-en-us-azure-aks-concepts-network",
-        "azure-en-us-azure-aks-concepts-security",
         "azure-en-us-azure-aks-concepts-scale",
-        "azure-en-us-azure-aks-what-is-aks"
+        "azure-en-us-azure-aks-concepts-security",
+        "azure-en-us-azure-aks-workload-identity-overview",
+        "azure-en-us-azure-aks-best-practices-performance-scale-large"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -627,17 +661,18 @@
         "postgres-docs-current-wal.html"
       ],
       "retrieved_doc_ids": [
-        "postgres-docs-current-wal-for-extensions.html",
         "postgres-docs-current-wal.html",
-        "postgres-docs-current-functions-admin.html",
-        "postgres-docs-current-datatype-pg-lsn.html",
+        "postgres-docs-current-wal-for-extensions.html",
         "postgres-docs-current-reference.html",
-        "postgres-docs-current-glossary.html"
+        "postgres-docs-current-datatype-pg-lsn.html",
+        "postgres-docs-current-runtime-config-logging.html",
+        "postgres-docs-current-functions-admin.html",
+        "postgres-docs-current-reference-server.html"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 2,
-      "mrr": 0.5,
-      "ndcg": 0.6309,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
       "gate_answered": true
     },
     {
@@ -649,11 +684,12 @@
       ],
       "retrieved_doc_ids": [
         "postgres-docs-current-maintenance.html",
-        "postgres-docs-current-index.html",
-        "postgres-docs-current",
-        "postgres-docs-current-glossary.html",
+        "postgres-docs-current-client-authentication.html",
         "postgres-docs-current-tutorial-arch.html",
-        "postgres-docs-current-admin.html"
+        "postgres-docs-current-tutorial-concepts.html",
+        "postgres-docs-current-reference-server.html",
+        "postgres-docs-current-bgworker.html",
+        "postgres-docs-current-glossary.html"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -669,18 +705,18 @@
         "postgres-docs-current-indexes-intro.html"
       ],
       "retrieved_doc_ids": [
+        "postgres-docs-current-locking-indexes.html",
         "postgres-docs-current-indexes-intro.html",
         "postgres-docs-current-indexes-index-only-scans.html",
-        "postgres-docs-current-locking-indexes.html",
-        "postgres-docs-current-indexes-partial.html",
-        "postgres-docs-current-indexes-examine.html",
-        "postgres-docs-current-indexam.html",
-        "postgres-docs-current-indexes-bitmap-scans.html"
+        "postgres-docs-current-datatype-numeric.html",
+        "postgres-docs-current-datatype-json.html",
+        "postgres-docs-current-indexes-types.html",
+        "postgres-docs-current-indexes-partial.html"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 1,
-      "mrr": 1.0,
-      "ndcg": 1.0,
+      "first_relevant_rank": 2,
+      "mrr": 0.5,
+      "ndcg": 0.6309,
       "gate_answered": true
     },
     {
@@ -692,10 +728,11 @@
       ],
       "retrieved_doc_ids": [
         "postgres-docs-current-applevel-consistency.html",
-        "postgres-docs-current-mvcc.html",
         "postgres-docs-current-mvcc-intro.html",
-        "postgres-docs-current-wal.html",
-        "postgres-docs-current-ddl-constraints.html"
+        "postgres-docs-current-ddl-constraints.html",
+        "postgres-docs-current-mvcc.html",
+        "postgres-docs-current-transaction-iso.html",
+        "postgres-docs-current-client-authentication.html"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -712,9 +749,11 @@
       ],
       "retrieved_doc_ids": [
         "fastapi-tutorial-path-params",
+        "fastapi-advanced-response-headers",
+        "fastapi-advanced-response-cookies",
+        "fastapi-tutorial-body-multiple-params",
         "fastapi-tutorial-body",
-        "fastapi-tutorial-query-params",
-        "fastapi-tutorial-path-params-numeric-validations"
+        "fastapi-tutorial-query-params"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -731,8 +770,11 @@
       ],
       "retrieved_doc_ids": [
         "fastapi-tutorial-query-params",
+        "fastapi-tutorial-body",
         "fastapi-tutorial-query-param-models",
-        "fastapi-tutorial-query-params-str-validations"
+        "fastapi-tutorial-query-params-str-validations",
+        "fastapi-tutorial-header-params",
+        "fastapi-tutorial-cookie-params"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -749,9 +791,9 @@
       ],
       "retrieved_doc_ids": [
         "fastapi-tutorial-dependencies",
-        "fastapi-tutorial-background-tasks",
         "fastapi-features",
-        "fastapi-tutorial-security-get-current-user"
+        "fastapi-tutorial-background-tasks",
+        "fastapi-tutorial-dependencies-dependencies-with-yield"
       ],
       "recall": 1.0,
       "first_relevant_rank": 1,
@@ -784,17 +826,18 @@
         "k8s-docs-concepts-configuration-secret"
       ],
       "retrieved_doc_ids": [
+        "k8s-docs-concepts-configuration-configmap",
         "k8s-docs-tasks-manage-kubernetes-objects-kustomization",
         "k8s-docs-concepts-configuration-secret",
-        "k8s-docs-concepts-security-secrets-good-practices",
-        "k8s-docs-concepts-configuration-configmap",
         "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
-        "k8s-docs-concepts-security-security-checklist"
+        "k8s-docs-concepts-security-security-checklist",
+        "k8s-docs-concepts-security-secrets-good-practices",
+        "k8s-docs-reference-labels-annotations-taints"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 2,
-      "mrr": 0.5,
-      "ndcg": 0.6509,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 0.9197,
       "gate_answered": true
     },
     {
@@ -806,16 +849,17 @@
         "k8s-docs-concepts-services-networking-ingress"
       ],
       "retrieved_doc_ids": [
-        "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
-        "k8s-docs-concepts-services-networking-service",
         "k8s-docs-concepts-services-networking-ingress",
+        "k8s-docs-concepts-services-networking-service",
+        "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
+        "k8s-docs-reference-labels-annotations-taints",
         "k8s-docs-concepts-services-networking-ingress-controllers",
-        "k8s-docs-reference-glossary"
+        "azure-en-us-azure-aks-app-routing"
       ],
       "recall": 1.0,
-      "first_relevant_rank": 2,
-      "mrr": 0.5,
-      "ndcg": 0.6934,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
       "gate_answered": true
     },
     {
@@ -827,16 +871,16 @@
         "fastapi-tutorial-query-params"
       ],
       "retrieved_doc_ids": [
-        "fastapi-tutorial-body-multiple-params",
         "fastapi-tutorial-query-params",
+        "fastapi-tutorial-path-params",
         "fastapi-tutorial-query-params-str-validations",
-        "fastapi-tutorial-body",
-        "fastapi-tutorial-path-params-numeric-validations"
+        "fastapi-reference-parameters",
+        "fastapi-tutorial-body"
       ],
-      "recall": 0.5,
-      "first_relevant_rank": 2,
-      "mrr": 0.5,
-      "ndcg": 0.3869,
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
       "gate_answered": true
     },
     {
@@ -849,18 +893,17 @@
       ],
       "retrieved_doc_ids": [
         "k8s-docs-tutorials-hello-minikube",
-        "k8s-docs-concepts-windows-intro",
-        "k8s-docs-tutorials-kubernetes-basics-explore-explore-intro",
-        "k8s-docs-concepts-workloads",
-        "k8s-docs-concepts-workloads-controllers-deployment",
         "k8s-docs-tasks-run-application-scale-deployment",
-        "k8s-docs-tasks-administer-cluster-namespaces",
-        "k8s-docs-concepts-workloads-controllers"
+        "k8s-docs-tutorials-kubernetes-basics-explore-explore-intro",
+        "k8s-docs-concepts-workloads-controllers-deployment",
+        "azure-en-us-azure-aks-tutorial-kubernetes-prepare-app",
+        "azure-en-us-azure-aks-concepts-network",
+        "k8s-docs-concepts-workloads-pods"
       ],
-      "recall": 0.5,
-      "first_relevant_rank": 5,
-      "mrr": 0.2,
-      "ndcg": 0.2372,
+      "recall": 1.0,
+      "first_relevant_rank": 4,
+      "mrr": 0.25,
+      "ndcg": 0.4685,
       "gate_answered": true
     },
     {
@@ -869,10 +912,12 @@
       "answerable": false,
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
-        "fastapi-release-notes",
-        "k8s-docs-concepts-workloads-pods-user-namespaces",
+        "azure-en-us-azure-aks-quotas-skus-regions",
         "k8s-docs-reference-issues-security-official-cve-feed",
-        "azure-en-us-azure-aks-quotas-skus-regions"
+        "k8s-docs-concepts-workloads-autoscaling-horizontal-pod-autoscale",
+        "k8s-docs-tasks-run-application-horizontal-pod-autoscale",
+        "azure-en-us-azure-aks-azure-files-dynamic-pv",
+        "fastapi-release-notes"
       ],
       "recall": null,
       "first_relevant_rank": null,
@@ -887,10 +932,13 @@
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
         "fastapi-uk",
-        "fastapi-release-notes",
         "azure-en-us-azure-aks-spot-node-pool",
-        "postgres-docs-current-bookindex.html",
-        "k8s-docs-contribute-participate-pr-wranglers"
+        "k8s-docs-tasks-job-coarse-parallel-processing-work-queue",
+        "fastapi-release-notes",
+        "azure-en-us-azure-azure-monitor-fundamentals-best-practices-cost",
+        "k8s-docs-concepts-cluster-administration-flow-control",
+        "k8s-docs-reference-config-api-kubelet-config.v1beta1",
+        "k8s-docs-concepts-workloads-pods-pod-lifecycle"
       ],
       "recall": null,
       "first_relevant_rank": null,
@@ -905,11 +953,11 @@
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
         "k8s-docs-concepts-cluster-administration-addons",
-        "k8s-docs-setup-production-environment-tools-kubeadm-high-availability",
-        "k8s-docs-tasks-administer-cluster-dns-custom-nameservers",
+        "k8s-docs-concepts-services-networking-dual-stack",
         "k8s-docs-setup-production-environment-tools-kubeadm-create-cluster-kubeadm",
-        "k8s-docs-tutorials-cluster-management-kubelet-standalone",
-        "k8s-docs-concepts-services-networking-dual-stack"
+        "azure-en-us-azure-aks-app-routing",
+        "azure-en-us-azure-storage-blobs-storage-custom-domain-name",
+        "k8s-docs-reference-setup-tools-kubeadm-kubeadm-init-phase"
       ],
       "recall": null,
       "first_relevant_rank": null,
@@ -924,11 +972,11 @@
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
         "postgres-docs-current-textsearch-dictionaries.html",
-        "k8s-docs-concepts-workloads-controllers-job",
-        "xv6-6.828-2024-xv6-book-riscv-rev4.pdf",
         "fastapi-deployment-concepts",
-        "fastapi-async",
-        "k8s-docs-concepts-scheduling-eviction-topology-aware-scheduling"
+        "k8s-docs-concepts-overview",
+        "k8s-docs-concepts-scheduling-eviction-topology-aware-scheduling",
+        "k8s-docs-concepts-configuration-manage-resources-containers",
+        "fastapi-async"
       ],
       "recall": null,
       "first_relevant_rank": null,
@@ -942,18 +990,19 @@
       "answerable": false,
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
-        "azure-en-us-azure-storage-blobs-data-lake-storage-acl-python",
-        "azure-en-us-azure-storage-blobs-data-lake-storage-acl-java",
-        "azure-en-us-azure-storage-blobs-data-lake-storage-acl-cli",
-        "xv6-6.828-2024-xv6-book-riscv-rev4.pdf",
         "postgres-docs-current-functions-admin.html",
-        "k8s-docs-tasks-administer-cluster-encrypt-data"
+        "k8s-docs-tasks-administer-cluster-encrypt-data",
+        "postgres-docs-current-explicit-locking.html",
+        "azure-en-us-azure-azure-monitor-alerts-best-practices-alerts",
+        "azure-en-us-azure-storage-blobs-data-lake-storage-acl-java",
+        "k8s-docs-tasks-administer-cluster-kms-provider-1",
+        "k8s-docs-tasks-administer-cluster-kms-provider"
       ],
       "recall": null,
       "first_relevant_rank": null,
       "mrr": null,
       "ndcg": null,
-      "gate_answered": true
+      "gate_answered": false
     },
     {
       "id": "u-006",
@@ -961,19 +1010,20 @@
       "answerable": false,
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
-        "azure-en-us-azure-aks-concepts-storage",
         "azure-en-us-azure-aks-configure-kubenet",
+        "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-java-quarkus",
         "azure-en-us-azure-aks-concepts-clusters-workloads",
         "azure-en-us-azure-aks-core-aks-concepts",
-        "azure-en-us-azure-aks-azure-files-dynamic-pv",
-        "azure-en-us-azure-aks-gpu-cluster",
-        "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-java-quarkus"
+        "azure-en-us-azure-storage-blobs-data-lake-storage-best-practices",
+        "azure-en-us-azure-aks-workload-identity-overview",
+        "azure-en-us-azure-aks-intro-aks-automatic",
+        "azure-en-us-azure-aks-azure-files-dynamic-pv"
       ],
       "recall": null,
       "first_relevant_rank": null,
       "mrr": null,
       "ndcg": null,
-      "gate_answered": true
+      "gate_answered": false
     },
     {
       "id": "u-007",
@@ -995,11 +1045,11 @@
       "answerable": false,
       "gold_doc_ids": [],
       "retrieved_doc_ids": [
-        "k8s-docs-reference-command-line-tools-reference-kube-controller-manager",
-        "azure-en-us-azure-storage-blobs-access-tiers-overview",
+        "k8s-docs-reference-using-api-cel",
         "fastapi-release-notes",
-        "postgres-docs-current-queries-with.html",
-        "k8s-docs-reference-using-api-cel"
+        "azure-en-us-azure-storage-blobs-access-tiers-overview",
+        "postgres-docs-current-functions-math.html",
+        "azure-en-us-azure-azure-monitor-metrics-analyze-metrics"
       ],
       "recall": null,
       "first_relevant_rank": null,
