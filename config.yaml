@@ -10,7 +10,10 @@ embed_api_base: https://api.groq.com/openai/v1
 # nomic-embed-text-v1.5 prefixes (model card). Applied before the embed call.
 embed_document_prefix: "search_document: "
 embed_query_prefix: "search_query: "
-rerank_model: ms-marco-MiniLM-L-12-v2
+# Reranker (FlashRank): TinyBERT-L-2 measures better AND ~7x faster than
+# MiniLM-L-12-Q on the committed qrels (plan 023: recall@8 0.923 vs 0.904,
+# nDCG@8 0.769 vs 0.692, rerank ~0.1 s vs ~2.2 s at pool 50).
+rerank_model: ms-marco-TinyBERT-L-2-v2
 chunk_size: 512
 chunk_overlap: 64
 # Chunk-boundary tokenizer: tiktoken cl100k_base. Deterministic across re-index.

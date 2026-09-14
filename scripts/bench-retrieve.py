@@ -98,11 +98,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--split", default=str(DEFAULT_SPLIT))
     parser.add_argument("--n", type=int, default=50)
     parser.add_argument("--out", default=str(DEFAULT_OUT))
+    parser.add_argument(
+        "--variant",
+        default=None,
+        metavar="JSON",
+        help="RetrieveConfig overrides to bench (e.g. '{\"rerank_pool\": 20}'); written into the artifact.",
+    )
     args = parser.parse_args(argv)
 
     settings = load_settings()
     queries = _load_queries(Path(args.split))
     config = retrieve_config_from_settings(settings)
+    variant_overrides: dict[str, Any] | None = None
+    if args.variant:
+        variant_overrides = json.loads(args.variant)
+        if not isinstance(variant_overrides, dict):
+            raise SystemExit("--variant must be a JSON object")
+        for key, value in variant_overrides.items():
+            setattr(config, key, value)
 
     with connect(settings.database_url) as conn:
         ensure_schema(conn)
@@ -144,7 +157,9 @@ def main(argv: list[str] | None = None) -> int:
             "rerank_pool": config.rerank_pool,
             "retrieval_mode": config.retrieval_mode,
             "rerank_enabled": config.rerank_enabled,
+            "rerank_max_length": config.rerank_max_length,
         },
+        "variant_overrides": variant_overrides,
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)

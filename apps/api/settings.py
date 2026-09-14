@@ -49,7 +49,7 @@ class Settings:
     groq_api_key: str
     embed_backend: str = "local"
     embed_query_prefix: str = "search_query: "
-    rerank_model: str = "ms-marco-MiniLM-L-12-v2"
+    rerank_model: str = "ms-marco-TinyBERT-L-2-v2"
     rrf_k: int = 60
     rerank_pool: int = 50
     top_k: int = 8
@@ -134,7 +134,7 @@ def load_settings() -> Settings:
         chunk_size=int(raw.get("chunk_size", 512)),
         chunk_overlap=int(raw.get("chunk_overlap", 64)),
         tokenizer=str(raw.get("tokenizer", "cl100k_base")),
-        rerank_model=str(raw.get("rerank_model", "ms-marco-MiniLM-L-12-v2")),
+        rerank_model=str(raw.get("rerank_model", "ms-marco-TinyBERT-L-2-v2")),
         rrf_k=int(raw.get("rrf_k", 60)),
         rerank_pool=int(raw.get("rerank_pool", raw.get("rerank_input_k", 50))),
         top_k=int(raw.get("top_k", 8)),

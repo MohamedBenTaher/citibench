@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from datetime import datetime, timezone
+from functools import partial
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
@@ -37,7 +38,7 @@ class RetrieveConfig(BaseModel):
     chunk_size: int = 512
     chunk_overlap: int = 64
     embed_model: str = "nomic-embed-text-v1.5"
-    rerank_model: str = "ms-marco-MiniLM-L-12-v2"
+    rerank_model: str = "ms-marco-TinyBERT-L-2-v2"
     rrf_k: int = 60
     rerank_pool: int = 50
     top_k: int = 8
@@ -46,6 +47,8 @@ class RetrieveConfig(BaseModel):
     # Comparison knobs (defaults preserve the hybrid+rerank baseline).
     retrieval_mode: Literal["hybrid", "dense", "lexical"] = "hybrid"
     rerank_enabled: bool = True
+    # FlashRank n_ctx; 512 preserves the stock behavior.
+    rerank_max_length: int = 512
     filters: Filters | None = None
 
 
@@ -206,7 +209,11 @@ def retrieve(
         return []
 
     embed_fn = embed_query_fn or _default_embed(settings)
-    rank_fn = rerank_fn or flashrank_rerank
+    rank_fn = rerank_fn or partial(
+        flashrank_rerank,
+        model_name=cfg.rerank_model,
+        max_length=cfg.rerank_max_length,
+    )
     use_default_search = vector_search_fn is None and fts_search_fn is None
 
     try:

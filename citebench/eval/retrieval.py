@@ -37,6 +37,9 @@ VARIANTS: list[tuple[str, dict[str, Any]]] = [
     ("hybrid, no rerank", {"rerank_enabled": False}),
     ("dense only", {"retrieval_mode": "dense"}),
     ("lexical only", {"retrieval_mode": "lexical"}),
+    ("rerank pool 30", {"rerank_pool": 30}),
+    ("rerank pool 20", {"rerank_pool": 20}),
+    ("rerank pool 10", {"rerank_pool": 10}),
 ]
 
 
