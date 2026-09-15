@@ -9,6 +9,7 @@ It answers questions about a **frozen public corpus** (~1,500 Kubernetes, Azure,
 | Doc | What it covers |
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System context, package layering, ask/ingest paths, eval gates, decisions, library links (Mermaid diagrams) |
+| [docs/RETRIEVAL-EVALS.md](docs/RETRIEVAL-EVALS.md) | Retriever internals, knobs, latency budget, qrels scoring, calibration gates, retrieval decision log |
 | [DECISIONS.md](DECISIONS.md) | Binding arena choices, one dated section per decision |
 | [docs/contracts/SYNTHESIS.md](docs/contracts/SYNTHESIS.md) | A–F contract references |
 

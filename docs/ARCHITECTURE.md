@@ -1,7 +1,8 @@
 # Citebench Architecture
 
 > A bench, not a chat product. The homepage is an index; the review surfaces are
-> Corpus, Playground, Traces, and Evals. Living decisions live in
+> Corpus, Playground, Traces, and Evals. For the deep dive on the retriever and
+> scoring: [`RETRIEVAL-EVALS.md`](RETRIEVAL-EVALS.md). Living decisions live in
 > [`DECISIONS.md`](../DECISIONS.md); per-plan history in
 > [`plans/README.md`](../plans/README.md); contracts in
 > [`docs/contracts/`](contracts/SYNTHESIS.md).
