@@ -13,10 +13,10 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
 
-from db import connect
-from embed import embed_query
-from rerank import flashrank_rerank
-from settings import Settings, load_settings
+from citebench_api.persistence.db import connect
+from citebench_api.retrieval.embed import embed_query
+from citebench_api.retrieval.rerank import flashrank_rerank
+from citebench_api.config import Settings, load_settings
 
 log = logging.getLogger("citebench.retrieve")
 

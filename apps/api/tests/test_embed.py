@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-import embed
-from embed import EmbedError, _vectors_from_payload
-from settings import Settings
+from citebench_api.retrieval import embed as embed
+from citebench_api.retrieval.embed import EmbedError, _vectors_from_payload
+from citebench_api.config import Settings
 
 
 def test_vectors_from_payload_enforces_768d() -> None:

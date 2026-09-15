@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from manifest import parse_manifest
+from citebench_api.ingest.manifest import parse_manifest
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REPO_MANIFEST = REPO_ROOT / "corpus" / "MANIFEST.md"

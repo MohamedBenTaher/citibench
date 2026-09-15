@@ -10,8 +10,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from chunking import chunk_text_dynamic
-from db import (
+from citebench_api.retrieval.chunking import chunk_text_dynamic
+from citebench_api.persistence.db import (
     connect,
     corpus_stats,
     delete_unknown_documents,
@@ -23,11 +23,11 @@ from db import (
     start_ingest_run,
     wipe_index,
 )
-from embed import EmbedError, embed_texts
-from manifest import ManifestDoc, parse_manifest
-from parse_doc import parse_snapshot
-from settings import Settings
-from snapshot import SnapshotError, build_http_client, load_snapshot, snapshot_url
+from citebench_api.retrieval.embed import EmbedError, embed_texts
+from citebench_api.ingest.manifest import ManifestDoc, parse_manifest
+from citebench_api.ingest.parse_doc import parse_snapshot
+from citebench_api.config import Settings
+from citebench_api.ingest.snapshot import SnapshotError, build_http_client, load_snapshot, snapshot_url
 
 log = logging.getLogger("citebench.ingest")
 _PAGE_MARK = re.compile(r"\[page (\d+)\]")

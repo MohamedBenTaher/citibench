@@ -1,8 +1,6 @@
-from retrieve import FusedChunk
+from citebench_api.retrieval.retrieve import FusedChunk
 
-import rerank
-
-
+from citebench_api.retrieval import rerank as rerank
 def test_flashrank_loader_uses_default_model_max_length_and_cache_dir(monkeypatch, tmp_path) -> None:
     created: dict[str, object] = {}
 

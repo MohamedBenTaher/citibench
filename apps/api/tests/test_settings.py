@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from settings import GROQ_KEY_HELP, Settings, _repo_root, load_settings, require_groq_key
+from citebench_api.config import GROQ_KEY_HELP, Settings, _repo_root, load_settings, require_groq_key
 
 
 def test_require_groq_key_fails_clearly() -> None:

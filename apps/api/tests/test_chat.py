@@ -1,7 +1,7 @@
 import pytest
 
-import chat
-from chat import ChatError, groq_chat
+from citebench_api.generation import chat as chat
+from citebench_api.generation.chat import ChatError, groq_chat
 from test_generate import make_settings
 
 
@@ -47,7 +47,7 @@ class _FakeClient:
 
 
 def test_chat_candidates_include_gpt_oss_fallback() -> None:
-    from chat import _chat_candidates
+    from citebench_api.generation.chat import _chat_candidates
 
     assert _chat_candidates("llama-3.1-8b-instant") == [
         "llama-3.1-8b-instant",

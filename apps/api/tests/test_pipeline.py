@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from pipeline import IngestBusy, WipeDisabled, format_text_ref, run_ingest
+from citebench_api.ingest.pipeline import IngestBusy, WipeDisabled, format_text_ref, run_ingest
 from test_generate import make_settings
 
 
@@ -15,8 +15,8 @@ def test_format_text_ref_matches_citation_shape() -> None:
 
 
 def test_record_failure_marks_without_replace(monkeypatch: pytest.MonkeyPatch) -> None:
-    from manifest import ManifestDoc
-    import pipeline as pipeline_mod
+    from citebench_api.ingest.manifest import ManifestDoc
+    import citebench_api.ingest.pipeline as pipeline_mod
 
     marked: list[str] = []
     monkeypatch.setattr(
@@ -55,7 +55,7 @@ def test_record_failure_marks_without_replace(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_ingest_busy_without_database() -> None:
-    import pipeline as pipeline_mod
+    import citebench_api.ingest.pipeline as pipeline_mod
 
     assert pipeline_mod._INGEST_LOCK.acquire(blocking=False)
     try:

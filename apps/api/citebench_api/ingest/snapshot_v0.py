@@ -6,8 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from manifest import parse_manifest
-from snapshot import SnapshotError, build_http_client, snapshot_url
+from citebench_api.ingest.manifest import parse_manifest
+from citebench_api.ingest.snapshot import SnapshotError, build_http_client, snapshot_url
 
 DEFAULT_MANIFEST = Path(__file__).resolve().parents[2] / "corpus" / "v0" / "MANIFEST.md"
 

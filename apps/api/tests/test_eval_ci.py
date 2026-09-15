@@ -250,7 +250,7 @@ def test_ci_passes_when_metrics_ok_and_known_bad_fails(eval_store: Path) -> None
 def test_failing_cases_store_traces(eval_store: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from citebench.eval.ci import run_ci
     from citebench.eval.pipeline import EvalAnswer
-    from trace import list_traces
+    from citebench_api.tracing.trace import list_traces
 
     def unfaithful(question: str, row_id: str) -> EvalAnswer:
         if row_id.startswith("bad-"):

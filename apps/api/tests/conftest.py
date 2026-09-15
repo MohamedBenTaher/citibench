@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from trace import clear_memory_store, reset_langfuse_state
+from citebench_api.tracing.trace import clear_memory_store, reset_langfuse_state
 
 
 @pytest.fixture(autouse=True)

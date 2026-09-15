@@ -1,4 +1,4 @@
-from suggestions import parse_questions
+from citebench_api.suggestions import parse_questions
 
 
 def test_parse_questions_plain_json() -> None:

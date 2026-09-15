@@ -1,4 +1,4 @@
-from chunking import (
+from citebench_api.retrieval.chunking import (
     DEFAULT_CHUNK_OVERLAP,
     DEFAULT_CHUNK_SIZE,
     chunk_text,

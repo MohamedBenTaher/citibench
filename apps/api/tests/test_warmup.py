@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from routes import maybe_warmup, should_skip_model_warmup
-from settings import load_settings
+from citebench_api.routes import maybe_warmup, should_skip_model_warmup
+from citebench_api.config import load_settings
 
 
 def test_warmup_skipped_when_env_set(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -15,8 +15,8 @@ def test_warmup_skipped_when_env_set(monkeypatch: pytest.MonkeyPatch) -> None:
 
     embed = MagicMock()
     rerank = MagicMock()
-    monkeypatch.setattr("routes.warmup_local_embed", embed)
-    monkeypatch.setattr("routes.warmup_ranker", rerank)
+    monkeypatch.setattr("citebench_api.routes.warmup_local_embed", embed)
+    monkeypatch.setattr("citebench_api.routes.warmup_ranker", rerank)
     maybe_warmup(load_settings())
     embed.assert_not_called()
     rerank.assert_not_called()
@@ -29,8 +29,8 @@ def test_maybe_warmup_calls_both(monkeypatch: pytest.MonkeyPatch) -> None:
 
     embed = MagicMock()
     rerank = MagicMock()
-    monkeypatch.setattr("routes.warmup_local_embed", embed)
-    monkeypatch.setattr("routes.warmup_ranker", rerank)
+    monkeypatch.setattr("citebench_api.routes.warmup_local_embed", embed)
+    monkeypatch.setattr("citebench_api.routes.warmup_ranker", rerank)
     settings = load_settings()
     maybe_warmup(settings)
     maybe_warmup(settings)

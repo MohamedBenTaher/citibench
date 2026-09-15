@@ -7,9 +7,9 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import PlainTextResponse
 
-import metrics as metrics_service  # service module; this package has its own observability.py
-from settings import load_settings
-from trace import get_trace, langfuse_configured, list_traces
+import citebench_api.tracing.metrics as metrics_service  # service module; this package has its own observability.py
+from citebench_api.config import load_settings
+from citebench_api.tracing.trace import get_trace, langfuse_configured, list_traces
 
 router = APIRouter()
 

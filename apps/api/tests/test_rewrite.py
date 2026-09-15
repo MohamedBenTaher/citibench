@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from retrieve import ChunkHit, RetrieveConfig
+from citebench_api.retrieval.retrieve import ChunkHit, RetrieveConfig
 from test_generate import make_settings, stub_chat
-from trace import SpanKind, emit_trace, get_trace
+from citebench_api.tracing.trace import SpanKind, emit_trace, get_trace
 
-import rewrite
-from rewrite import clamp_max_words, parse_rewrite, rewrite_query
+from citebench_api.generation import rewrite as rewrite
+from citebench_api.generation.rewrite import clamp_max_words, parse_rewrite, rewrite_query
 
 
 def test_parse_rejects_garbage() -> None:
@@ -27,7 +27,7 @@ def test_rewrite_returns_parsed_and_clamped_query() -> None:
 
     def fake_chat(messages, _settings):
         captured.append(messages)
-        from chat import ChatResult
+        from citebench_api.generation.chat import ChatResult
 
         return ChatResult('{"query": "pods   scheduled on nodes  too"}', 5, 3, model="m")
 
@@ -63,7 +63,7 @@ def _hit(chunk_id: str = "k8s-pods:0") -> ChunkHit:
 def _dispatch_chat(rewrite_json: str, answer_payload: dict):
     """Chat fn that answers the rewrite prompt separately from the ask."""
     def chat_fn(messages):
-        from chat import ChatResult
+        from citebench_api.generation.chat import ChatResult
 
         if "rewrite" in messages[0]["content"]:
             return ChatResult(rewrite_json, 5, 3, model="m")
@@ -73,7 +73,7 @@ def _dispatch_chat(rewrite_json: str, answer_payload: dict):
 
 
 def test_generate_uses_rewritten_query_and_records_it(tmp_path) -> None:
-    from generate import generate
+    from citebench_api.generation.generate import generate
 
     settings = make_settings(query_rewrite=True, trace_store_dir=Path(tmp_path / "traces"))
     seen_queries: list[str] = []
@@ -107,7 +107,7 @@ def test_generate_uses_rewritten_query_and_records_it(tmp_path) -> None:
 
 
 def test_generate_skips_rewrite_when_flag_off(tmp_path) -> None:
-    from generate import generate
+    from citebench_api.generation.generate import generate
 
     settings = make_settings(trace_store_dir=Path(tmp_path / "traces"))
     seen_queries: list[str] = []
@@ -132,7 +132,7 @@ def test_generate_skips_rewrite_when_flag_off(tmp_path) -> None:
 
 
 def test_rewrite_failure_flag_on_still_answers(tmp_path) -> None:
-    from generate import generate
+    from citebench_api.generation.generate import generate
 
     settings = make_settings(query_rewrite=True, trace_store_dir=Path(tmp_path / "traces"))
     seen_queries: list[str] = []
@@ -142,7 +142,7 @@ def test_rewrite_failure_flag_on_still_answers(tmp_path) -> None:
         return [_hit()]
 
     def chat_fn(messages):
-        from chat import ChatResult
+        from citebench_api.generation.chat import ChatResult
 
         if "rewrite" in messages[0]["content"]:
             raise rewrite.ChatError("Groq chat HTTP 500")
@@ -168,7 +168,7 @@ def test_rewrite_failure_flag_on_still_answers(tmp_path) -> None:
 
 def test_rewrite_does_not_break_abstention(tmp_path) -> None:
     """An out-of-corpus question still abstains with the rewrite on."""
-    from generate import generate
+    from citebench_api.generation.generate import generate
 
     settings = make_settings(query_rewrite=True, trace_store_dir=Path(tmp_path / "traces"))
 

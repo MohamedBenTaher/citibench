@@ -3,7 +3,7 @@ import hashlib
 import httpx
 import pytest
 
-from snapshot import SnapshotError, load_snapshot, snapshot_url
+from citebench_api.ingest.snapshot import SnapshotError, load_snapshot, snapshot_url
 
 
 def test_snapshot_writes_bytes_and_sha256(tmp_path) -> None:

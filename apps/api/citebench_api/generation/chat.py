@@ -9,7 +9,7 @@ from typing import Any
 
 import httpx
 
-from settings import Settings, require_groq_key
+from citebench_api.config import Settings, require_groq_key
 
 log = logging.getLogger("citebench.chat")
 

@@ -20,7 +20,10 @@ services:
       retries: 20
 
   api:
-    build: ./apps/api
+    build:
+      # Repo-root context so the uv lock + citebench API package stay in sync.
+      context: .
+      dockerfile: apps/api/Dockerfile
     ports:
       - "8000:8000"
     extra_hosts:

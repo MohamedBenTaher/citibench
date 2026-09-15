@@ -13,10 +13,14 @@ DEFAULT_CORPUS_DIR = Path(os.environ.get("CORPUS_DIR", "/app/corpus"))
 
 
 def _repo_root() -> Path | None:
-    """apps/api/settings.py → repo root. None when the image has no extra parents."""
-    parts = Path(__file__).resolve().parents
-    if len(parts) > 2:
-        return parts[2]
+    """Walk up from citebench_api/config.py until the repo root is found.
+
+    Marker: the workspace pyproject.toml. Handles any install depth (venv-less
+    local check, /app layout where the marker may be absent -> None).
+    """
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / "pyproject.toml").is_file() and (candidate / "apps" / "api").is_dir():
+            return candidate
     return None
 
 

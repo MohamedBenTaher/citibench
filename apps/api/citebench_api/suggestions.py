@@ -15,9 +15,9 @@ import threading
 import time
 from typing import Any
 
-from chat import groq_chat
-from db import corpus_macro, corpus_suggestions
-from settings import Settings
+from citebench_api.generation.chat import groq_chat
+from citebench_api.persistence.db import corpus_macro, corpus_suggestions
+from citebench_api.config import Settings
 
 log = logging.getLogger("citebench.suggestions")
 

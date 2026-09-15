@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from generate import COST_METHOD_NAME
-from manifest import parse_manifest
-from metrics import collect_metrics, percentile, render_prometheus
-from settings import load_settings
+from citebench_api.generation.generate import COST_METHOD_NAME
+from citebench_api.ingest.manifest import parse_manifest
+from citebench_api.tracing.metrics import collect_metrics, percentile, render_prometheus
+from citebench_api.config import load_settings
 from test_trace import valid_trace
-from trace import emit_trace
+from citebench_api.tracing.trace import emit_trace
 
 
 def _manifest_doc_count() -> int:
@@ -27,8 +27,7 @@ def eval_store(tmp_path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("EVAL_STORE_DIR", str(store))
     # No live Postgres in tests (AGENTS.md): force the manifest fallback even if
     # a developer has a local citebench DB running.
-    import metrics
-
+    from citebench_api.tracing import metrics as metrics
     monkeypatch.setattr(metrics, "_try_corpus_stats", lambda *_args, **_kwargs: None)
     return store
 
@@ -166,8 +165,8 @@ def test_metrics_rejects_unknown_format(eval_store: Path) -> None:
 
 
 def test_corpus_measure_from_local_html(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from corpus_measure import measure_corpus
-    from manifest import parse_manifest
+    from citebench_api.ingest.corpus_measure import measure_corpus
+    from citebench_api.ingest.manifest import parse_manifest
 
     settings = load_settings()
     docs = parse_manifest(settings.manifest_path)

@@ -16,8 +16,8 @@ ROOT = Path(__file__).resolve().parents[1]
 API_DIR = ROOT / "apps" / "api"
 sys.path.insert(0, str(API_DIR))
 
-from pipeline import run_ingest  # noqa: E402
-from settings import load_settings  # noqa: E402
+from citebench_api.ingest.pipeline import run_ingest  # noqa: E402
+from citebench_api.config import load_settings  # noqa: E402
 
 
 def _eval_store() -> Path:

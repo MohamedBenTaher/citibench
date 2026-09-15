@@ -11,8 +11,8 @@ import json
 import logging
 from typing import Any, Callable, Protocol
 
-from chat import ChatError, ChatResult, groq_chat
-from settings import Settings
+from citebench_api.generation.chat import ChatError, ChatResult, groq_chat
+from citebench_api.config import Settings
 
 log = logging.getLogger("citebench.rewrite")
 

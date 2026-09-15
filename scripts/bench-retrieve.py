@@ -21,9 +21,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "apps" / "api"))
 
-from db import connect, corpus_stats, ensure_schema  # noqa: E402
-from metrics import percentile  # noqa: E402
-from retrieve import (  # noqa: E402
+from citebench_api.persistence.db import connect, corpus_stats, ensure_schema  # noqa: E402
+from citebench_api.tracing.metrics import percentile  # noqa: E402
+from citebench_api.retrieval.retrieve import (  # noqa: E402
     _default_embed,
     flashrank_rerank,
     retrieve,
@@ -32,7 +32,7 @@ from retrieve import (  # noqa: E402
     search_fts,
     search_vector,
 )
-from settings import load_settings  # noqa: E402
+from citebench_api.config import load_settings  # noqa: E402
 
 DEFAULT_SPLIT = ROOT / "evals" / "splits" / "ci.jsonl"
 DEFAULT_OUT = ROOT / "evals" / "results" / "retrieve-bench.json"

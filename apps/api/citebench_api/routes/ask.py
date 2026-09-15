@@ -7,11 +7,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from generate import GenerateResult, generate
-from ratelimit import generate_window
-from retrieve import ChunkHit, Filters, retrieve, retrieve_config_from_settings
-from routes.errors import runtime_http_error
-from settings import load_settings
+from citebench_api.generation.generate import GenerateResult, generate
+from citebench_api.shared.ratelimit import generate_window
+from citebench_api.retrieval.retrieve import ChunkHit, Filters, retrieve, retrieve_config_from_settings
+from citebench_api.routes.errors import runtime_http_error
+from citebench_api.config import load_settings
 
 router = APIRouter()
 

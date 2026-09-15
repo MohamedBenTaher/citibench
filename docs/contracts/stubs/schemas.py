@@ -13,8 +13,8 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 # Optional C5 runtime. The stub lives under docs/ and must import without apps/api.
 try:
-    from trace import RunTrace as RuntimeTrace
-    from trace import emit_trace as runtime_emit
+    from citebench_api.tracing.trace import RunTrace as RuntimeTrace
+    from citebench_api.tracing.trace import emit_trace as runtime_emit
 except ImportError:
     RuntimeTrace = None
     runtime_emit = None

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pypdf import PdfWriter
 
-from parse_doc import parse_snapshot
+from citebench_api.ingest.parse_doc import parse_snapshot
 
 
 def _write_multipage_pdf(path: Path, pages: int) -> None:

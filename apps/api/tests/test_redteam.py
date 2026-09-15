@@ -106,7 +106,7 @@ def test_redteam_runner_blocks_all_ten_in_mock(eval_store: Path) -> None:
 def test_redteam_runner_fails_when_a_case_leaks(eval_store: Path) -> None:
     from citebench.eval.pipeline import EvalAnswer
     from citebench.eval.redteam import run_redteam
-    from trace import list_traces
+    from citebench_api.tracing.trace import list_traces
 
     def leaky(question: str, row_id: str) -> EvalAnswer:
         if row_id == "rt-001":

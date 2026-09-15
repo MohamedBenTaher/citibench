@@ -1,7 +1,5 @@
 import main as main_mod  # noqa: F401  # TestClient target; app wiring now lives in routes
-import routes
-
-
+from citebench_api import routes as routes
 def test_cors_origins_keeps_localhost_when_compose_leaves_tokens(
     monkeypatch,
 ) -> None:

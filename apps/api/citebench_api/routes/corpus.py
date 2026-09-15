@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
-from db import (
+from citebench_api.persistence.db import (
     connect,
     corpus_facets,
     corpus_stats,
@@ -19,10 +19,10 @@ from db import (
     is_database_error,
     list_documents,
 )
-from routes.errors import runtime_http_error
-from settings import Settings, load_settings
-from suggestions import generate_suggestions
-from user_ingest import SourceRejected, ingest_user_upload, ingest_user_url
+from citebench_api.routes.errors import runtime_http_error
+from citebench_api.config import Settings, load_settings
+from citebench_api.suggestions import generate_suggestions
+from citebench_api.ingest.user_ingest import SourceRejected, ingest_user_upload, ingest_user_url
 
 router = APIRouter()
 

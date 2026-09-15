@@ -15,11 +15,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from db import connect, ensure_schema
-from embed import warmup_local_embed
-from rerank import warmup_ranker
-from settings import Settings, load_settings
-from routes import ask, corpus, evals, health, ingest, observability
+from citebench_api.persistence.db import connect, ensure_schema
+from citebench_api.retrieval.embed import warmup_local_embed
+from citebench_api.retrieval.rerank import warmup_ranker
+from citebench_api.config import Settings, load_settings
+from citebench_api.routes import ask, corpus, evals, health, ingest, observability
 
 _WARMUP_SKIP_VALUES = frozenset({"1", "true", "yes"})
 

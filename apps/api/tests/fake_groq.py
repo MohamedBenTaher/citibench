@@ -78,7 +78,7 @@ def create_chat_completion(body: ChatRequest) -> dict:
             content = '{"abstain": true, "answer": "I don\'t know", "citation_ids": []}'
     return {
         "id": "fake-chat",
-        "object": "chat.completion",
+        "object": "citebench_api.generation.chat.completion",
         "model": body.model,
         "choices": [
             {

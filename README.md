@@ -28,7 +28,7 @@ The homepage is an index. The interesting surfaces are **Corpus**, **Playground*
 
 | Piece | Role |
 | --- | --- |
-| `apps/api` | FastAPI: health, ingest, retrieve, generate, traces, evals, metrics |
+| `apps/api` | FastAPI: health, ingest, retrieve, generate, traces, evals, metrics (`citebench_api` package: `routes/` HTTP, `retrieval/`, `generation/`, `ingest/`, `tracing/`, `persistence/`) |
 | `apps/web` | TanStack Start + shadcn/ui: `/` index plus four tabs |
 | `db` | `pgvector/pgvector:pg16` — inspectable SQL, not a hosted vector SaaS |
 | `citebench.eval` | RAGAS CI + redteam runners |
@@ -94,7 +94,7 @@ curl -sS -X POST http://localhost:8000/ingest -H 'Content-Type: application/json
 
 | Make target | What it does |
 | --- | --- |
-| `make setup` | Copy `.env`, create `.venv`, install `apps/api` + pytest |
+| `make setup` | Copy `.env`, create `.venv` via `uv sync --frozen` (deps pinned in `uv.lock`) |
 | `make start` | `docker compose up --build -d`, wait for `/health` (`WEB_PORT=3100` if :3000 is taken) |
 | `make ingest` | `POST /ingest` |
 | `make evals` | Local pytest + mock RAGAS + mock redteam (run before provision) |
@@ -207,7 +207,7 @@ export CITEBENCH_API_URL=http://localhost:8000 PYTHONPATH=.
 ## Repo map
 
 ```
-apps/api/           FastAPI + ingest/retrieve/generate/trace
+apps/api/           citebench_api package: routes/ (HTTP) + retrieval/ + generation/ + ingest/ + tracing/ + persistence/
 apps/web/           TanStack Start tabs
 citebench/eval/     RAGAS + redteam CLIs
 citebench/mcp/      search_corpus + get_trace

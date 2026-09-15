@@ -20,9 +20,9 @@ from typing import Any
 import citebench.eval.paths  # noqa: F401  # sys.path for the API modules
 
 from citebench.eval.loader import load_eval_jsonl
-from generate import generate
-from retrieve import retrieve
-from settings import load_settings
+from citebench_api.generation.generate import generate
+from citebench_api.retrieval.retrieve import retrieve
+from citebench_api.config import load_settings
 
 DEFAULT_SPLIT = "evals/splits/ci.jsonl"
 DEFAULT_KNOWN_BAD = "evals/splits/known_bad.jsonl"

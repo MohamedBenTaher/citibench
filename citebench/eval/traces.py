@@ -7,8 +7,8 @@ from typing import Any
 import citebench.eval.paths  # noqa: F401
 
 from citebench.eval.pipeline import EvalAnswer
-from settings import load_settings
-from trace import (
+from citebench_api.config import load_settings
+from citebench_api.tracing.trace import (
     ChunkRef,
     CostEstimate,
     RunTrace,

@@ -9,9 +9,9 @@ from uuid import uuid4
 import citebench.eval.paths  # noqa: F401
 
 from citebench.eval.paths import REPO_ROOT
-from generate import ABSTAIN_ANSWER, generate
-from retrieve import ChunkHit
-from settings import Settings, load_settings
+from citebench_api.generation.generate import ABSTAIN_ANSWER, generate
+from citebench_api.retrieval.retrieve import ChunkHit
+from citebench_api.config import Settings, load_settings
 
 AnswerFn = Callable[[str, str], "EvalAnswer"]
 

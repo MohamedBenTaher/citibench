@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from chat import ChatResult, _result_from_payload
-from generate import (
+from citebench_api.generation.chat import ChatResult, _result_from_payload
+from citebench_api.generation.generate import (
     ABSTAIN_ANSWER,
     COST_METHOD_NAME,
     ChunkRef,
@@ -22,8 +22,8 @@ from generate import (
     refs_for_ids,
     retrieve_abstain_reason,
 )
-from retrieve import ChunkHit, RetrieveConfig
-from settings import Settings
+from citebench_api.retrieval.retrieve import ChunkHit, RetrieveConfig
+from citebench_api.config import Settings
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "retrieve_5doc" / "corpus.json"
 KNOWN_BAD = Path(__file__).resolve().parents[3] / "evals" / "splits" / "known_bad.jsonl"
@@ -262,7 +262,7 @@ def test_out_of_corpus_known_bad_abstains() -> None:
 
 
 def test_parse_failure_keeps_billed_tokens() -> None:
-    from trace import list_traces
+    from citebench_api.tracing.trace import list_traces
 
     def chat_fn(_messages: list[dict[str, str]]) -> ChatResult:
         return ChatResult(
@@ -282,7 +282,7 @@ def test_parse_failure_keeps_billed_tokens() -> None:
 
 
 def test_estimate_embed_tokens_caches_encoding(monkeypatch: pytest.MonkeyPatch) -> None:
-    import generate as generate_mod
+    import citebench_api.generation.generate as generate_mod
 
     original_cache = dict(generate_mod._encoding_cache)
     generate_mod._encoding_cache.clear()
@@ -410,7 +410,7 @@ def test_generate_endpoint_401_when_groq_rejects_key(monkeypatch: pytest.MonkeyP
             "https://console.groq.com/keys"
         )
 
-    monkeypatch.setattr("routes.ask.generate", boom)
+    monkeypatch.setattr("citebench_api.routes.ask.generate", boom)
     response = TestClient(main_mod.app).post("/generate", json={"query": "pods"})
     assert response.status_code == 401
     assert "rejected by Groq" in response.json()["detail"]
@@ -426,7 +426,7 @@ def test_ingest_endpoint_401_when_groq_rejects_key(monkeypatch: pytest.MonkeyPat
             "https://console.groq.com/keys"
         )
 
-    monkeypatch.setattr("routes.ingest.run_ingest", boom)
+    monkeypatch.setattr("citebench_api.routes.ingest.run_ingest", boom)
     response = TestClient(main_mod.app).post("/ingest", json={})
     assert response.status_code == 401
     assert "rejected by Groq" in response.json()["detail"]
@@ -454,7 +454,7 @@ def test_generate_endpoint_cite_path_wired(monkeypatch: pytest.MonkeyPatch) -> N
 
     import main as main_mod
 
-    monkeypatch.setattr("routes.ask.generate", fake_generate)
+    monkeypatch.setattr("citebench_api.routes.ask.generate", fake_generate)
     response = TestClient(main_mod.app).post("/generate", json={"query": fixture["query"]})
     assert response.status_code == 200
     body = response.json()

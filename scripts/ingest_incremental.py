@@ -17,8 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "apps" / "api"))
 
-from pipeline import run_ingest  # noqa: E402
-from settings import load_settings  # noqa: E402
+from citebench_api.ingest.pipeline import run_ingest  # noqa: E402
+from citebench_api.config import load_settings  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:

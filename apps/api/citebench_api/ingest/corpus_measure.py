@@ -10,11 +10,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from chunking import chunk_text_dynamic
-from manifest import ManifestDoc, parse_manifest
-from parse_doc import parse_snapshot
-from settings import Settings, load_settings
-from snapshot import SnapshotError, build_http_client, snapshot_url
+from citebench_api.retrieval.chunking import chunk_text_dynamic
+from citebench_api.ingest.manifest import ManifestDoc, parse_manifest
+from citebench_api.ingest.parse_doc import parse_snapshot
+from citebench_api.config import Settings, load_settings
+from citebench_api.ingest.snapshot import SnapshotError, build_http_client, snapshot_url
 
 _FREEZE_RE = re.compile(r"Freeze date:\s*\*\*(.+?)\*\*")
 

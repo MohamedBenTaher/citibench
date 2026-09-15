@@ -9,14 +9,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-from chunking import chunk_text_dynamic
-from db import connect, corpus_stats, insert_chunks, replace_document, start_ingest_run, finish_ingest_run
-from embed import embed_texts
-from fetch_guard import UnsafeSource, assert_fetchable_https
-from parse_doc import parse_snapshot
-from pipeline import IngestBusy, _INGEST_LOCK, format_text_ref
-from settings import Settings
-from snapshot import SnapshotError, SnapshotResult, build_http_client, snapshot_url_streamed
+from citebench_api.retrieval.chunking import chunk_text_dynamic
+from citebench_api.persistence.db import connect, corpus_stats, insert_chunks, replace_document, start_ingest_run, finish_ingest_run
+from citebench_api.retrieval.embed import embed_texts
+from citebench_api.shared.fetch_guard import UnsafeSource, assert_fetchable_https
+from citebench_api.ingest.parse_doc import parse_snapshot
+from citebench_api.ingest.pipeline import IngestBusy, _INGEST_LOCK, format_text_ref
+from citebench_api.config import Settings
+from citebench_api.ingest.snapshot import SnapshotError, SnapshotResult, build_http_client, snapshot_url_streamed
 
 log = logging.getLogger("citebench.user_ingest")
 _PAGE_MARK = re.compile(r"\[page (\d+)\]")

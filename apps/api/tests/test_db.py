@@ -1,6 +1,6 @@
 import socket
 
-from db import (
+from citebench_api.persistence.db import (
     database_unavailable_detail,
     is_database_error,
     resolve_database_url,
@@ -64,8 +64,7 @@ def test_is_database_error_matches_dns() -> None:
 
 
 def test_insert_chunks_writes_metadata_columns() -> None:
-    import db
-
+    from citebench_api.persistence import db as db
     captured: list[str] = []
 
     class _Cursor:
@@ -107,8 +106,7 @@ def test_insert_chunks_writes_metadata_columns() -> None:
 
 
 def test_list_documents_parameterizes_filters() -> None:
-    import db
-
+    from citebench_api.persistence import db as db
     captured: list[tuple[str, object]] = []
 
     class _Res:
@@ -159,8 +157,7 @@ def test_list_documents_parameterizes_filters() -> None:
 
 
 def test_clean_topic_and_phrase_question() -> None:
-    import db
-
+    from citebench_api.persistence import db as db
     assert db.clean_topic("Kubernetes", "Pods / Kubernetes") == "Pods"
     assert (
         db.clean_topic(
@@ -184,8 +181,7 @@ def test_clean_topic_and_phrase_question() -> None:
 
 
 def test_corpus_suggestions_are_derived_from_documents() -> None:
-    import db
-
+    from citebench_api.persistence import db as db
     rows = [
         {"id": "k8s-deploy", "title": "Deployments / Kubernetes", "product": "Kubernetes", "doc_type": "concept"},
         {"id": "k8s-ctrl", "title": "Controllers / Kubernetes", "product": "Kubernetes", "doc_type": "concept"},

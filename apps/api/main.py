@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from routes import create_app
+from citebench_api.routes import create_app
 
 app = create_app()

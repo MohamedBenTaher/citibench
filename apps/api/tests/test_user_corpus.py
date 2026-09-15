@@ -3,9 +3,9 @@ from pathlib import Path
 import httpx
 import pytest
 
-from chunking import chunk_text_dynamic
-from fetch_guard import UnsafeSource, assert_fetchable_https
-from snapshot import SnapshotError, snapshot_url_streamed
+from citebench_api.retrieval.chunking import chunk_text_dynamic
+from citebench_api.shared.fetch_guard import UnsafeSource, assert_fetchable_https
+from citebench_api.ingest.snapshot import SnapshotError, snapshot_url_streamed
 
 
 def test_fetch_guard_rejects_loopback() -> None:

@@ -5,15 +5,18 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.11 /uv /uvx /usr/local/bin/
 
 WORKDIR /app
 
-ENV UV_SYSTEM_PYTHON=1 \
-    UV_LINK_MODE=copy \
+ENV UV_LINK_MODE=copy \
     UV_HTTP_TIMEOUT=180 \
     UV_COMPILE_BYTECODE=1
 
-COPY requirements.txt .
-RUN uv pip install --no-cache -r requirements.txt
+# Lock, not requirements: one pinned resolution shared with CI/local.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
-COPY . .
+COPY apps/api ./apps/api
+
+WORKDIR /app/apps/api
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 

@@ -23,9 +23,9 @@ from uuid import uuid4
 import citebench.eval.paths  # noqa: F401  # sys.path for the API modules
 
 from citebench.eval.paths import REPO_ROOT
-from generate import generate
-from retrieve import retrieve, retrieve_config_from_settings
-from settings import load_settings
+from citebench_api.generation.generate import generate
+from citebench_api.retrieval.retrieve import retrieve, retrieve_config_from_settings
+from citebench_api.config import load_settings
 
 DEFAULT_SPLIT = REPO_ROOT / "evals" / "splits" / "retrieval.jsonl"
 DEFAULT_OUT = REPO_ROOT / "evals" / "results" / "retrieval.json"

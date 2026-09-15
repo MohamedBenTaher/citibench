@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from retrieve import (
+from citebench_api.retrieval.retrieve import (
     ChunkHit,
     FusedChunk,
     RetrieveConfig,
@@ -284,7 +284,7 @@ def test_retrieve_endpoint_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setenv("GROQ_API_KEY", "")
     import main as main_mod
 
-    monkeypatch.setattr("routes.ask.retrieve", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr("citebench_api.routes.ask.retrieve", lambda *_args, **_kwargs: [])
     response = TestClient(main_mod.app).post("/retrieve", json={"query": "pods onto nodes"})
     assert response.status_code == 200
     assert response.json()["hits"] == []
@@ -343,7 +343,7 @@ def test_default_retrieve_opens_one_connection(monkeypatch: pytest.MonkeyPatch) 
         enter_count += 1
         yield _DummyConn()
 
-    monkeypatch.setattr("retrieve.connect", counting_connect)
+    monkeypatch.setattr("citebench_api.retrieval.retrieve.connect", counting_connect)
 
     with pytest.raises(RuntimeError, match="search failed on dummy connection"):
         retrieve(
@@ -357,13 +357,13 @@ def test_default_retrieve_opens_one_connection(monkeypatch: pytest.MonkeyPatch) 
 
 
 def test_retrieve_module_does_not_import_ensure_schema() -> None:
-    import retrieve as retrieve_mod
+    import citebench_api.retrieval.retrieve as retrieve_mod
 
     assert not hasattr(retrieve_mod, "ensure_schema")
 
 
 def test_scored_from_row_carries_display_metadata() -> None:
-    from retrieve import _scored_from_row
+    from citebench_api.retrieval.retrieve import _scored_from_row
 
     row = {
         "id": "k8s-pods:0",
@@ -408,7 +408,7 @@ def test_rerank_disabled_skips_without_calling_rerank() -> None:
 
 
 def test_filter_sql_is_parameterized() -> None:
-    from retrieve import Filters, _filter_sql
+    from citebench_api.retrieval.retrieve import Filters, _filter_sql
 
     assert _filter_sql(None) == ("", [])
     assert _filter_sql(Filters()) == ("", [])

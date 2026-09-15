@@ -10,7 +10,7 @@ from pathlib import Path
 
 import httpx
 
-from fetch_guard import UnsafeSource, assert_fetchable_https
+from citebench_api.shared.fetch_guard import UnsafeSource, assert_fetchable_https
 
 DEFAULT_TIMEOUT = httpx.Timeout(45.0, connect=15.0)
 USER_AGENT = (

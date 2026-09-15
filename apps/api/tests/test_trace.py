@@ -9,10 +9,10 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from generate import generate
-from retrieve import RetrieveConfig
+from citebench_api.generation.generate import generate
+from citebench_api.retrieval.retrieve import RetrieveConfig
 from test_generate import fixture_hits, load_5doc, make_settings, stub_chat, stub_retrieve
-from trace import (
+from citebench_api.tracing.trace import (
     ChunkRef,
     CostEstimate,
     RunTrace,
@@ -252,7 +252,7 @@ def test_langfuse_unreachable_host_stays_local(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-citebench-dev")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-citebench-dev")
     monkeypatch.setenv("LANGFUSE_HOST", "http://127.0.0.1:9")
-    monkeypatch.setattr("trace._langfuse_host_reachable", lambda _host, timeout=1.5: False)
+    monkeypatch.setattr("citebench_api.tracing.trace._langfuse_host_reachable", lambda _host, timeout=1.5: False)
     trace = valid_trace(run_id="run-unreach")
     emit_trace(trace)
     assert trace.langfuse_trace_id is None
@@ -273,8 +273,8 @@ def test_langfuse_auth_failure_stays_local(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-bad")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-bad")
     monkeypatch.setenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
-    monkeypatch.setattr("trace._langfuse_host_reachable", lambda _host, timeout=1.5: True)
-    monkeypatch.setattr("trace.SdkLangfusePoster", Reject)
+    monkeypatch.setattr("citebench_api.tracing.trace._langfuse_host_reachable", lambda _host, timeout=1.5: True)
+    monkeypatch.setattr("citebench_api.tracing.trace.SdkLangfusePoster", Reject)
     trace = valid_trace(run_id="run-auth")
     emit_trace(trace)
     assert trace.langfuse_trace_id is None
@@ -298,8 +298,8 @@ def test_langfuse_post_failure_trips_breaker(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-ok")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-ok")
     monkeypatch.setenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
-    monkeypatch.setattr("trace._langfuse_host_reachable", lambda _host, timeout=1.5: True)
-    monkeypatch.setattr("trace.SdkLangfusePoster", Once)
+    monkeypatch.setattr("citebench_api.tracing.trace._langfuse_host_reachable", lambda _host, timeout=1.5: True)
+    monkeypatch.setattr("citebench_api.tracing.trace.SdkLangfusePoster", Once)
     emit_trace(valid_trace(run_id="run-a"))
     emit_trace(valid_trace(run_id="run-b"))
     assert calls["n"] == 1
@@ -353,7 +353,7 @@ def test_traces_endpoint_lists_generate_runs(monkeypatch: pytest.MonkeyPatch) ->
 
     import main as main_mod
 
-    monkeypatch.setattr("routes.ask.generate", fake_generate)
+    monkeypatch.setattr("citebench_api.routes.ask.generate", fake_generate)
     client = TestClient(main_mod.app)
     asked = client.post("/generate", json={"query": fixture["query"]})
     assert asked.status_code == 200
@@ -441,7 +441,7 @@ def body_not_in(text_ref: str, bodies: set[str]) -> bool:
 
 
 def test_refs_from_hits_carry_metadata_but_not_body() -> None:
-    from trace import refs_from_hits
+    from citebench_api.tracing.trace import refs_from_hits
 
     class _Hit:
         chunk_id = "k8s-pods:0"

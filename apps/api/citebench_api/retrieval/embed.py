@@ -19,7 +19,7 @@ from typing import Any
 
 import httpx
 
-from settings import Settings
+from citebench_api.config import Settings
 
 try:
     from fastembed import TextEmbedding
@@ -207,7 +207,7 @@ def _load_local_model() -> Any:
         if TextEmbedding is None:
             raise EmbedError(
                 "fastembed is required for local nomic-embed-text-v1.5. "
-                "Install apps/api/requirements.txt"
+                "Install the workspace deps: uv sync --frozen"
             )
         _local_model = TextEmbedding(
             model_name=_LOCAL_NOMIC,
