@@ -45,6 +45,7 @@ from pydantic import BaseModel, Field
 
 from chat import ChatResult, groq_chat
 from retrieve import ChunkHit, RetrieveConfig, retrieve, retrieve_config_from_settings
+from rewrite import rewrite_query
 from settings import Settings, load_settings, require_groq_key
 from trace import (
     ChunkRef,
@@ -263,7 +264,8 @@ def generate(
     stage_sink: list[dict[str, Any]] = []
     terminal_span: list[dict[str, Any]] = []
 
-    do_retrieve = _wrap_retrieve(retrieve_fn, resolved, cfg, stage_sink)
+    retrieval_query = _pre_retrieve_query(query_text, resolved, chat_fn)
+    do_retrieve = _wrap_retrieve(retrieve_fn, resolved, cfg, stage_sink, retrieval_query)
     do_chat = chat_fn or _default_chat(resolved)
     graph = _compile_graph(do_retrieve, do_chat, resolved, terminal_span)
 
@@ -291,7 +293,15 @@ def generate(
     finished_at = utcnow()
 
     hits = list(final.get("hits") or [])
-    embed_tokens = estimate_embed_tokens(query_text, resolved)
+    if retrieval_query is not None:
+        # Plan 019: where the query came from lives on the retrieve span only.
+        for event in stage_sink:
+            if event.get("kind") == "retrieve":
+                attributes = event.setdefault("attributes", {})
+                attributes["original_query"] = query_text
+                attributes["rewritten_query"] = retrieval_query
+                break
+    embed_tokens = estimate_embed_tokens(retrieval_query or query_text, resolved)
     prompt_tokens = int(final.get("prompt_tokens") or 0)
     completion_tokens = int(final.get("completion_tokens") or 0)
     billed_model = str(final.get("chat_model") or resolved.chat_model)
@@ -542,18 +552,30 @@ def _user_prompt(query: str, hits: Sequence[ChunkHit]) -> str:
     return "\n".join(lines).strip()
 
 
+def _pre_retrieve_query(query: str, resolved: Settings, chat_fn: ChatFn | None) -> str | None:
+    """Optional plan-019 retrieval query; None means "use the query as-is"."""
+    if not resolved.query_rewrite or not (query or "").strip():
+        return None
+    if chat_fn is None:
+        return rewrite_query(query, resolved)
+    return rewrite_query(query, resolved, chat_fn=lambda messages, _settings: chat_fn(messages))
+
+
 def _wrap_retrieve(
     retrieve_fn: RetrieveFn | None,
     settings: Settings,
     config: RetrieveConfig,
     stage_sink: list[dict[str, Any]],
+    retrieval_query: str | None = None,
 ) -> RetrieveFn:
     inner = retrieve_fn or _default_retrieve(settings, config, stage_sink)
 
     def _fn(query: str) -> list[ChunkHit]:
         started = utcnow()
         try:
-            hits = list(inner(query))
+            # Optional plan-019 rewrite: retrieve with the rewritten query while
+            # state["query"] (the prompt + trace) keeps the user's own words.
+            hits = list(inner(retrieval_query or query))
         except Exception as exc:
             if not any(event.get("kind") == "retrieve" for event in stage_sink):
                 _synthesize_retrieve_stages(stage_sink, started, [], error=str(exc))

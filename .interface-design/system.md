@@ -40,6 +40,11 @@ Fixed left sidebar navigation (`Index | Ask | Evals | Traces | Corpus`, plus
 `max-w-6xl` content, cards/tables over free-form chat. On mobile the sidebar
 collapses to a top bar with a horizontal nav; traces stay readable in mono.
 
+The Index fold is a **split board**: identity + Ask CTA on the left (~7/12),
+live freeze/gate/faithfulness instruments on the right (~5/12). Circuit steps
+are a numbered index list (mono numerals, hairline rows), not a marketing
+feature grid.
+
 ## Typography
 
 - **Inter Variable** for UI and headings (system sans fallback).

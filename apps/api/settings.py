@@ -68,6 +68,7 @@ class Settings:
     generate_max_per_minute: int = 30
     user_source_max_bytes: int = 64 * 1024 * 1024
     snapshot_only: bool = False
+    query_rewrite: bool = False
 
 
 def _embed_backend(raw: dict) -> str:
@@ -173,6 +174,7 @@ def load_settings() -> Settings:
         generate_max_per_minute=_generate_rpm(),
         user_source_max_bytes=_user_source_max_bytes(),
         snapshot_only=_env_flag("CITEBENCH_SNAPSHOT_ONLY"),
+        query_rewrite=_env_flag("CITEBENCH_QUERY_REWRITE"),
     )
 
 

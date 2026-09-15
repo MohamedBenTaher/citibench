@@ -40,3 +40,6 @@ abstain_min_score: 0.12
 chat_prompt_usd_per_1m: 0.075
 chat_completion_usd_per_1m: 0.30
 embed_usd_per_1m: 0.01
+# Optional single query rewrite before retrieve (CITEBENCH_QUERY_REWRITE=1).
+# Default off; kept only if the plan 019 ablation shows a measured win.
+# query_rewrite: false
