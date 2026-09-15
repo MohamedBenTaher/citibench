@@ -237,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as exc:  # noqa: BLE001 - keep going, record the error
             errors[row.id] = str(exc)
             retrieved[row.id] = []
-            gate_decisions[row.id] = {"answered": False, "abstained": False, "abstain_reason": "error"}
+            gate_decisions[row.id] = {"answered": False, "abstained": False, "abstain_reason": "error", "top_score": None, "rerank_skipped": False}
             continue
         docs: list[str] = []
         for hit in hits:
@@ -250,6 +250,8 @@ def main(argv: list[str] | None = None) -> int:
         gate_decisions[row.id] = {
             "answered": confident,
             "abstained": not confident,
+            "top_score": top.score if top is not None else None,
+            "rerank_skipped": bool(skipped),
             "abstain_reason": None if confident else ("empty_retrieve" if top is None else "low_confidence"),
         }
 

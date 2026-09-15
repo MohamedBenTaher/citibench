@@ -28,7 +28,7 @@
 flowchart TD
     q["question (+ optional filters)"] --> emb["embed_query<br/>nomic-embed-text-v1.5, search_query:<br/>(local ONNX via fastembed)"]
     emb --> dense["dense scan<br/>pgvector cosine, k=50"]
-    q --> fts["lexical scan<br/>tsv @@ plainto_tsquery, k=50"]
+    q --> fts["lexical scan<br/>tsv @@ websearch_to_tsquery, k=50"]
     dense --> fuse["RRF fusion k=60"]
     fts --> fuse
     fuse --> pool["top-50 pool<br/>(pool size = rerank_pool)"]
@@ -53,10 +53,12 @@ package so the eval import surface stays small.
 | Knob | Default | Defined in | Notes |
 |---|---|---|---|
 | `dense_k` / `lexical_k` | 50 / 50 | `config.yaml` | both pools feed RRF (aliases `vector_k`/`fts_k`) |
-| `rrf_k` | 60 | `config.yaml` | Cormack RRF constant; do not change without re-running the qrels |
+| `rrf_k` | 60 | `config.yaml` | Cormack RRF constant; sweep 10/60/100 measured insensitive on this split — keep 60 |
 | `rerank_pool` | 50 | `config.yaml` | measured ablations: 30/20/10 all lose recall — keep 50 |
 | `rerank_model` | `ms-marco-TinyBERT-L-2-v2` | `config.yaml` | measured better AND ~7x faster than MiniLM-L-12-Q |
 | `rerank_max_length` | 512 | `RetrieveConfig` | FlashRank n_ctx; 256/128 measured worse |
+| `ts_config` | `english` | `RetrieveConfig` | text-search config; `simple` measured worse (MRR −0.025, overlap collapse) |
+| `ts_prefix_last` | `false` | `RetrieveConfig` | `:*` on the last lexeme for truncated terms; measured neutral, kept as knob |
 | `retrieval_mode` | `hybrid` | `RetrieveConfig` | `dense` / `lexical` exist for eval comparison only |
 | `rerank_enabled` | `true` | `RetrieveConfig` | `false` is the "RRF only" comparison variant |
 | `top_k` | 8 | `config.yaml` | hits returned; citation budget of the generator |
@@ -238,6 +240,22 @@ produced it. **No artifact without its tag; no hand-typed number in docs.**
    model) and check p95 against the 400 ms budget.
 5. Update the artifact row/method tag + `DECISIONS.md` + this doc. If a claim
    retires (e.g. "over budget"), remove the claim together with the reason.
+
+## Reviewer audit (2026-09-15) — response record
+
+An external review flagged seven retrieval items. Verdicts, all measured (see
+`DECISIONS.md` "Retrieval reviewer audit"):
+
+| # | Review point | Outcome |
+|---|---|---|
+| 1 | `plainto_tsquery` weakest link; use `websearch_to_tsquery` (+prefix matching) | **Adopted** websearch (metric-neutral, graceful degradation). `:*` prefix-last = neutral knob. `simple` config rejected (MRR −0.025, overlap collapse). |
+| 2 | Sweep RRF k∈{10,60,100} | Insensitive on this split → keep 60; sweep recorded in DECISIONS, not a perma-variant. |
+| 3 | Log dense/lexical pool overlap as health metric | **Adopted**: retrieve span carries `dense_count`/`lexical_count`/`pool_overlap`/`pool_overlap_ratio`. Measured mean ≈ 9.4% → RRF is a union-diversifier here; watch for drift. |
+| 4 | Prefer MiniLM-L-12 over TinyBERT | Already measured on our qrels; TinyBERT won all three metrics at ~7x less latency (plan 023). No change. |
+| 5 | Abstain gate score is uncalibrated drift-risk | **Adopted**: gate decisions record `top_score` + `rerank_skipped` per row; recalibrate the threshold on any rerank-model change. |
+| 6 | Filters should push into scans pre-fusion | Already true (plan 017): `WHERE` predicates on both scans. |
+| 7 | Verify `search_document:` prefix at ingest | Verified in code (`embed.py`/`pipeline.py`): document prefix at ingest, `search_query:` at ask. |
+| 8 | Log RRF rank vs rerank rank | **Adopted**: `rrf_rank` per hit + `rerank_max_rank_shift` on the rerank span. |
 
 Library references: pgvector / Postgres FTS / FlashRank / fastembed / RAGAS
 links live in [`ARCHITECTURE.md`](ARCHITECTURE.md#libraries-and-packages).

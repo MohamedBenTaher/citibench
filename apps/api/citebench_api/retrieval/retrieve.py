@@ -6,6 +6,7 @@ C3 implements Contract C. Candidate pools stay private.
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from functools import partial
@@ -49,6 +50,11 @@ class RetrieveConfig(BaseModel):
     rerank_enabled: bool = True
     # FlashRank n_ctx; 512 preserves the stock behavior.
     rerank_max_length: int = 512
+    # Lexical leg: tsquery dialect + text-search config ("english" stems/drops
+    # stopwords; "simple" is better on exact code IDs), plus `:*` on the last
+    # lexeme for truncated/partial queries.
+    ts_config: str = "english"
+    ts_prefix_last: bool = False
     filters: Filters | None = None
 
 
@@ -63,6 +69,9 @@ class ChunkHit(BaseModel):
     fts_score: float | None = None
     fused_score: float | None = None
     rerank_score: float | None = None
+    # Position in the pre-rerank RRF list (1-based). Large |rank - rrf_rank|
+    # gaps tell whether the reranker is earning its latency.
+    rrf_rank: int | None = None
     # Display metadata (C6). Never used for ranking; pools stay private.
     title: str | None = None
     source: str | None = None
@@ -225,7 +234,10 @@ def retrieve(
                 if cfg.retrieval_mode == "dense":
                     dense, lexical = search_vector(conn, query_vec, cfg.dense_k, cfg.filters), []
                 elif cfg.retrieval_mode == "lexical":
-                    dense, lexical = [], search_fts(conn, query_text, cfg.lexical_k, cfg.filters)
+                    dense, lexical = [], search_fts(
+                        conn, query_text, cfg.lexical_k, cfg.filters,
+                        ts_config=cfg.ts_config, prefix_last=cfg.ts_prefix_last,
+                    )
                 else:
                     dense, lexical = hybrid_search(
                         conn,
@@ -234,6 +246,8 @@ def retrieve(
                         dense_k=cfg.dense_k,
                         lexical_k=cfg.lexical_k,
                         filters=cfg.filters,
+                        ts_config=cfg.ts_config,
+                        ts_prefix_last=cfg.ts_prefix_last,
                     )
         else:
             dense = list(vector_search_fn(query_vec, cfg.dense_k))
@@ -265,6 +279,11 @@ def retrieve(
 
     fused = rrf_fuse(dense, lexical, k=cfg.rrf_k)
     pool = fused[: cfg.rerank_pool]
+    # Health metric for the fusion (review-audit 2026-09-15): a tiny pool
+    # overlap means RRF is acting as a union-diversifier, not rank fusion.
+    dense_ids = {hit.chunk_id for hit in dense}
+    lexical_ids = {hit.chunk_id for hit in lexical}
+    overlap = dense_ids & lexical_ids
     rerank_started = datetime.now(timezone.utc)
     rerank_skipped = False
     rerank_status = "ok"
@@ -284,9 +303,11 @@ def retrieve(
             rerank_error = str(exc)
             log.warning("FlashRank failed; falling back to RRF order: %s", exc)
 
+    rrf_rank_by_id = {hit.chunk_id: rank for rank, hit in enumerate(fused, start=1)}
+
     if rerank_skipped:
         hits = [
-            _to_hit(item, rank=rank, skipped=True, score=item.fused_score, rerank_score=None)
+            _to_hit(item, rank=rank, skipped=True, score=item.fused_score, rerank_score=None, rrf_rank=rrf_rank_by_id.get(item.chunk_id))
             for rank, item in enumerate(pool[: cfg.top_k], start=1)
         ]
     else:
@@ -296,7 +317,7 @@ def retrieve(
             key=lambda item: (-item[1], item[0].chunk_id),
         )
         hits = [
-            _to_hit(item, rank=rank, skipped=False, score=score, rerank_score=score)
+            _to_hit(item, rank=rank, skipped=False, score=score, rerank_score=score, rrf_rank=rrf_rank_by_id.get(item.chunk_id))
             for rank, (item, score) in enumerate(paired[: cfg.top_k], start=1)
         ]
 
@@ -311,6 +332,10 @@ def retrieve(
             "hit_count": len(hits),
             "dense_k": cfg.dense_k,
             "lexical_k": cfg.lexical_k,
+            "dense_count": len(dense_ids),
+            "lexical_count": len(lexical_ids),
+            "pool_overlap": len(overlap),
+            "pool_overlap_ratio": round(len(overlap) / len(dense_ids | lexical_ids), 4) if (dense_ids or lexical_ids) else 0.0,
             "chunks": _chunk_pointers(hits),
         },
     )
@@ -321,6 +346,9 @@ def retrieve(
         "top_k": cfg.top_k,
         "chunks": _chunk_pointers(hits),
     }
+    shifts = [abs((hit.rrf_rank or hit.rank) - hit.rank) for hit in hits]
+    if shifts:
+        rerank_attrs["rerank_max_rank_shift"] = max(shifts)
     if rerank_error:
         rerank_attrs["error"] = rerank_error
     _append_stage(
@@ -410,6 +438,7 @@ def _to_hit(
     skipped: bool,
     score: float,
     rerank_score: float | None,
+    rrf_rank: int | None = None,
 ) -> ChunkHit:
     return ChunkHit(
         chunk_id=item.chunk_id,
@@ -422,6 +451,7 @@ def _to_hit(
         fts_score=item.fts_score,
         fused_score=item.fused_score,
         rerank_score=rerank_score,
+        rrf_rank=rrf_rank,
         title=item.title,
         source=item.source,
         product=item.product,
@@ -455,9 +485,11 @@ def hybrid_search(
     dense_k: int,
     lexical_k: int,
     filters: Filters | None = None,
+    ts_config: str = "english",
+    ts_prefix_last: bool = False,
 ) -> tuple[list[ScoredChunk], list[ScoredChunk]]:
     dense = search_vector(conn, query_vec, dense_k, filters)
-    lexical = search_fts(conn, query_text, lexical_k, filters)
+    lexical = search_fts(conn, query_text, lexical_k, filters, ts_config=ts_config, prefix_last=ts_prefix_last)
     return dense, lexical
 
 
@@ -514,33 +546,61 @@ def search_vector(
     return [_scored_from_row(row, "vector_score") for row in rows]
 
 
+_LEXEME_RE = re.compile(r"^[a-zA-Z0-9_\-']+$")
+
+
+def _tsquery_expr(
+    query: str,
+    *,
+    config: str = "english",
+    prefix_last: bool = False,
+) -> tuple[str, list[Any]]:
+    """SQL tsquery expression + bound params, used for both rank and match.
+
+    websearch_to_tsquery over plainto: quoted phrases, OR, and negation come
+    for free, and it degrades gracefully on odd user input (plainto rigidly
+    ANDs all terms). With `prefix_last`, the final lexeme gains a `:*` prefix
+    flag via to_tsquery (websearch syntax has no prefix operator), so truncated
+    tokens ("Postgre") still match ("PostgreSQL").
+    """
+    lexemes = query.strip().split()
+    if prefix_last and len(lexemes) >= 2 and _LEXEME_RE.match(lexemes[-1]):
+        prefix = f"{lexemes[-1]}:*"
+        rest = " ".join(lexemes[:-1])
+        expr = f"websearch_to_tsquery('{config}', %s) || to_tsquery('{config}', %s)"
+        return expr, [rest, prefix]
+    return f"websearch_to_tsquery('{config}', %s)", [query]
+
+
 def search_fts(
     conn,
     query: str,
     k: int,
     filters: Filters | None = None,
+    *,
+    ts_config: str = "english",
+    prefix_last: bool = False,
 ) -> list[ScoredChunk]:
     if k <= 0 or not query.strip():
         return []
     clause, filter_params = _filter_sql(filters)
+    expr, expr_params = _tsquery_expr(query, config=ts_config, prefix_last=prefix_last)
     rows = conn.execute(
         f"""
         SELECT c.id, c.doc_id, c.text, c.page, c.section, c.url,
                d.title, d.source, d.product, d.doc_type, d.license,
                COALESCE(d.version, d.version_or_snapshot) AS version,
-               ts_rank_cd(c.tsv, plainto_tsquery('english', %s)) AS fts_score
+               ts_rank_cd(c.tsv, {expr}) AS fts_score
         FROM chunks c
         JOIN documents d ON d.id = c.doc_id
         WHERE c.tsv IS NOT NULL
-          AND c.tsv @@ plainto_tsquery('english', %s){clause}
+          AND c.tsv @@ ({expr}){clause}
         ORDER BY fts_score DESC, c.id
         LIMIT %s
         """,
-        (query, query, *filter_params, k),
+        (*expr_params, *expr_params, *filter_params, k),
     ).fetchall()
     return [_scored_from_row(row, "fts_score") for row in rows]
-
-
 def _scored_from_row(row: dict[str, Any], score_key: str) -> ScoredChunk:
     raw_score = row.get(score_key)
     return ScoredChunk(

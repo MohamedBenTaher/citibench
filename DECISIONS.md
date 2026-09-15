@@ -74,6 +74,50 @@ one swap landed, all measured.
    under the same reasoning as above: shrinking the scan cannot materially
    move p95 now.
 
+## Retrieval reviewer audit (2026-09-15)
+
+An external architecture review raised seven retrieval points. Each was either
+already satisfied or measured here before changing the default; the qrels
+artifact is the evidence (`evals/results/retrieval.json`, same run shape as
+before, TinyBERT reranker).
+
+1. **`plainto_tsquery` → `websearch_to_tsquery`** (adopted). Metric-neutral on
+   the qrels (identical 0.9231/0.7205/0.7687), but quoted phrases, OR, and
+   negation now degrade gracefully instead of rigidly ANDing all terms.
+   A "stems vs identifiers" ablation with the `simple` config **lost** MRR
+   (−0.025) and collapsed pool overlap, so `english` stays; the config is a
+   knob (`ts_config`) for future claims.
+2. **RRF k sweep 10/60/100**: insensitive on this split (identical metrics).
+   Keep the paper's k=60; the sweep is in the audit record, not a permanent
+   variant row.
+3. **Prefix matching `:*` on the last lexeme** (`ts_prefix_last`): neutral on
+   the qrels. Kept as an available knob, default off — no measured win, no
+   false-choice default.
+4. **TinyBERT vs MiniLM-L-12**: already decided by plan 023's measured
+   ablation (TinyBERT better on every qrels metric at ~7x cheaper). Split-size
+   caveat recorded there remains.
+5. **Abstain gate calibration**: `top_score` + `rerank_skipped` are now recorded
+   per gate decision in the retrieval artifact, so the gate threshold can be
+   re-derived from held-out data instead of a bare number. Cross-encoder scores
+   are uncalibrated logits: changing `rerank_model` invalidates any absolute
+   threshold (this already moved false-answer 0.250 → 0.000 in the swap);
+   recalibration-on-model-change is now a recorded obligation, tracked with an
+   artifact row.
+6. **Fusion overlap** is now recorded as a health metric on every retrieve span
+   (`dense_count` / `lexical_count` / `pool_overlap` / `pool_overlap_ratio`).
+   Measured mean overlap ≈ **9.4%**: dense and lexical surface largely disjoint
+   sets here, so RRF currently earns its keep as a *union-diversifier*, which
+   is exactly why reranking the fused pool and keeping `rerank_pool=50` still
+   matters. Watch the ratio if the corpus or queries drift.
+7. **RRF rank vs rerank rank** is now recorded per hit (`rrf_rank`) and the
+   rerank span carries `rerank_max_rank_shift` — the reorder signal the audit
+   asked for.
+
+Not changed (verified already-true): document-side embeddings use the
+`search_document:` prefix at ingest and `search_query:` at ask time (checked
+`citebench_api/retrieval/embed.py` / `ingest/pipeline.py`); plan-017 filters
+already push `WHERE` predicates into both scans pre-fusion.
+
 ## Why not fine-tune
 
 The frozen corpus is ~1,500 public pages. Fine-tuning an embedder or reranker on

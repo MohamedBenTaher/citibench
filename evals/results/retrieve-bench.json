@@ -1,20 +1,20 @@
 {
-  "measured_at": "2026-09-14T19:53:06.560115+00:00",
-  "measured_under": "retrieve-bench-2026-09-14",
+  "measured_at": "2026-09-15T15:51:22.614883+00:00",
+  "measured_under": "retrieve-bench-2026-09-15",
   "n": 50,
   "doc_count": 1487,
   "page_count": 1600,
   "chunk_count": 31288,
-  "mean_ms": 295.613,
-  "p50_ms": 296.675,
-  "p95_ms": 316.441,
-  "min_ms": 262.626,
-  "max_ms": 323.419,
+  "mean_ms": 309.323,
+  "p50_ms": 302.699,
+  "p95_ms": 352.902,
+  "min_ms": 277.924,
+  "max_ms": 528.768,
   "stage_mean_ms": {
-    "embed_ms": 17.255,
-    "vector_ms": 124.98,
-    "fts_ms": 3.639,
-    "rerank_ms": 97.681
+    "embed_ms": 18.588,
+    "vector_ms": 135.788,
+    "fts_ms": 5.411,
+    "rerank_ms": 100.667
   },
   "config": {
     "top_k": 8,
