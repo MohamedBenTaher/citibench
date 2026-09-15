@@ -33,7 +33,7 @@ help:
 	@echo "After setup, put GROQ_API_KEY in .env (https://console.groq.com/keys)."
 
 setup: .env $(PY)
-	$(UV) pip install --python $(PY) -r apps/api/requirements-dev.txt
+	$(UV) sync --frozen
 	@echo
 	@echo "Setup done. Next:"
 	@echo "  1. Set GROQ_API_KEY in .env (Playground generate)"
@@ -101,7 +101,6 @@ smoke: $(PY)
 	$(PY) scripts/smoke.py
 
 test: $(PY)
-	$(UV) pip install --python $(PY) -r apps/api/requirements-dev.txt
 	cd apps/api && $(CURDIR)/$(PY) -m pytest
 
 mcp-smoke: $(PY)

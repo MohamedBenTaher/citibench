@@ -1,0 +1,40 @@
+[project]
+name = "citibench"
+version = "0.9.0"
+description = "Citation-grounded retrieval bench: objective retrieval metrics, answerability calibration, one grounded answer."
+requires-python = ">=3.12"
+
+# Single source of truth for the runtime API (apps/api + citebench/eval CLI pins).
+# The eval venv (ragas judge) keeps its own pinned constraint set:
+# apps/api/requirements-eval.txt — ragas conflicts with the runtime's pin of
+# langgraph, so it must stay a separate environment.
+dependencies = [
+    "fastapi==0.115.6",
+    "python-multipart==0.0.20",
+    "uvicorn[standard]==0.34.0",
+    "psycopg[binary]==3.2.10",
+    "httpx==0.28.1",
+    "beautifulsoup4==4.13.5",
+    "lxml==6.0.1",
+    "pypdf==6.1.1",
+    "tiktoken==0.11.0",
+    "pyyaml==6.0.2",
+    "pydantic==2.11.7",
+    "flashrank==0.2.10",
+    "fastembed==0.7.4",
+    "langgraph==0.6.11",
+    "langfuse==2.60.8",
+]
+
+[dependency-groups]
+dev = ["pytest==9.0.2"]
+
+[tool.uv]
+# Dependency-only project: the bench runs from the workspace (pytest / uvicorn
+# targets), it is not pip-installed; no build backend or package discovery.
+package = false
+link-mode = "copy"
+
+[tool.pytest.ini_options]
+# Real config lives in apps/api/pytest.ini (pythonpath . ../..; testpaths tests).
+testpaths = ["apps/api/tests"]
