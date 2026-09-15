@@ -108,7 +108,7 @@ Planned at commit `028fa3e`, 2026-09-10.
 | 016 | E5: CI faithfulness gate (live if secrets) | P1 | M | 015 | DONE (mock always; live-eval job gated on GROQ_API_KEY; make evals-live; 149 tests) |
 | 017 | R1: Optional metadata filters + Playground controls | P2 | M | 012, 013 | DONE (`Filters` on retrieve/generate; Playground product + doc-type selects; 164 tests) |
 | 018 | R2: Rerank integrity + retrieve latency at scale | P2 | M | 013 | DONE — tests pass; measured p95 2548 ms at 31,288 chunks, rerank is ~86% of it → STOP, ANN deferred (see 023) |
-| 019 | R3: Optional single query-rewrite with ablation | P3 | M | 015, 017 | TODO |
+| 019 | R3: Optional single query-rewrite with ablation | P3 | M | 015, 017 | BLOCKED — code + tests landed default-off (d397ae2); off-arm live RAGAS done; on-arm scoring hits Groq TPD 200k/200k, finish after the quota window resets, then keep-or-delete per rule |
 | 020 | R4: User uploads stay in a separate namespace | P3 | S | 008 | TODO |
 | 021 | S1: Public repo/demo hygiene, topics, no secrets | P2 | S | 016 | TODO |
 | 022 | S2/S3/S4: Screenshot, resume bullets, pin + site blurb | P2 | S | 015, 021 | TODO |
