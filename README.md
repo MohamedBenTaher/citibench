@@ -4,6 +4,14 @@ Citebench is a **citation-grounded retrieval bench** that measures two things ob
 
 It answers questions about a **frozen public corpus** (~1,500 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. Retrieval is measured directly — Recall@k, MRR, and nDCG against hand-labeled questions — alongside an answer/abstain calibration matrix. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
 
+## Contents (docs)
+
+| Doc | What it covers |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System context, package layering, ask/ingest paths, eval gates, decisions, library links (Mermaid diagrams) |
+| [DECISIONS.md](DECISIONS.md) | Binding arena choices, one dated section per decision |
+| [docs/contracts/SYNTHESIS.md](docs/contracts/SYNTHESIS.md) | A–F contract references |
+
 The homepage is an index. The interesting surfaces are **Corpus**, **Playground**, **Traces**, and **Evals**. First screenshot for a reviewer: `/evals` or a failing `/traces` row, not a chat bubble.
 
 ## How it fits together
