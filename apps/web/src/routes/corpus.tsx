@@ -164,10 +164,13 @@ function CorpusPage() {
 
       <StatCards
         items={[
-          { label: "Documents", value: String(stats.doc_count) },
-          { label: "Pages", value: String(stats.page_count) },
-          { label: "Chunks", value: String(stats.chunk_count) },
-          { label: "User docs", value: String(stats.user_doc_count ?? 0) },
+          { label: "Documents", value: loadError ? "unmeasured" : String(stats.doc_count) },
+          { label: "Pages", value: loadError ? "unmeasured" : String(stats.page_count) },
+          { label: "Chunks", value: loadError ? "unmeasured" : String(stats.chunk_count) },
+          {
+            label: "User docs",
+            value: loadError ? "unmeasured" : String(stats.user_doc_count ?? 0),
+          },
           {
             label: "Last index",
             value: formatLastIndex(stats.last_index_time),

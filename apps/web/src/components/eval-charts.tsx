@@ -7,24 +7,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { metricLabel } from "@/lib/format";
 import type { AttackType, EvalLatest, MetricName, RedteamCase } from "@/lib/types";
 
 const METRIC_KEYS: MetricName[] = ["faithfulness", "context_precision", "answer_relevancy"];
-
-function metricLabel(key: MetricName): string {
-  switch (key) {
-    case "faithfulness":
-      return "Faithfulness";
-    case "context_precision":
-      return "Context precision";
-    case "answer_relevancy":
-      return "Answer relevancy";
-    default: {
-      const _exhaustive: never = key;
-      return _exhaustive;
-    }
-  }
-}
 
 function attackKey(value: AttackType | string | null): string {
   switch (value) {

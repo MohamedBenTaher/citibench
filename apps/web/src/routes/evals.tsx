@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { clientApiJson } from "@/lib/client-api";
+import { formatNumber, metricLabel } from "@/lib/format";
 import { getEvalLatest, getRedteamLatest, getRetrievalLatest } from "@/lib/server";
 import type { MetricName, RedteamCase, RetrievalReport } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -28,21 +29,6 @@ const METRICS: { key: MetricName; label: string }[] = [
   { key: "context_precision", label: "Context precision" },
   { key: "answer_relevancy", label: "Answer relevancy" },
 ];
-
-function metricLabel(key: MetricName): string {
-  switch (key) {
-    case "faithfulness":
-      return "Faithfulness";
-    case "context_precision":
-      return "Context precision";
-    case "answer_relevancy":
-      return "Answer relevancy";
-    default: {
-      const _exhaustive: never = key;
-      return _exhaustive;
-    }
-  }
-}
 
 function attackLabel(value: string | null): string {
   switch (value) {
@@ -57,13 +43,6 @@ function attackLabel(value: string | null): string {
     default:
       return value;
   }
-}
-
-function formatScore(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "—";
-  }
-  return value.toFixed(3);
 }
 
 function formatDiff(value: number | null | undefined): string {
@@ -192,7 +171,7 @@ function EvalsPage() {
                 Faithfulness
               </p>
               <p className="font-mono text-4xl font-semibold tabular-nums">
-                {hasRun ? formatScore(metrics?.faithfulness) : "unmeasured"}
+                {hasRun ? formatNumber(metrics?.faithfulness) : "unmeasured"}
               </p>
               {hasRun && latest?.mode ? <Badge variant="outline">{latest.mode}</Badge> : null}
             </div>
@@ -235,10 +214,10 @@ function EvalsPage() {
               <StatCards
                 items={METRICS.map((metric) => ({
                   label: metricLabel(metric.key),
-                  value: formatScore(metrics?.[metric.key]),
+                  value: formatNumber(metrics?.[metric.key]),
                   hint: `vs previous: ${formatDiff(latest?.diff?.[metric.key])}${
                     latest?.previous
-                      ? ` (${formatScore(latest.previous[metric.key])})`
+                      ? ` (${formatNumber(latest.previous[metric.key])})`
                       : " (no previous run)"
                   }`,
                 }))}

@@ -5,15 +5,9 @@ import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatNumber } from "@/lib/format";
 import { getMetrics } from "@/lib/server";
 import type { MetricsSnapshot } from "@/lib/types";
-
-function measured(value: number | null | undefined, digits = 3): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "unmeasured";
-  }
-  return value.toFixed(digits);
-}
 
 function formatAsOf(iso: string | undefined): string {
   if (!iso) {
@@ -108,12 +102,18 @@ function MetricsPage() {
             items={[
               {
                 label: "p50 latency",
-                value: latency?.p50 == null ? "unmeasured" : `${measured(latency.p50, 1)} ms`,
+                value:
+                  latency?.p50 == null
+                    ? "unmeasured"
+                    : `${formatNumber(latency.p50, 1, "unmeasured")} ms`,
                 hint: latency ? `n=${latency.n}` : undefined,
               },
               {
                 label: "p95 latency",
-                value: latency?.p95 == null ? "unmeasured" : `${measured(latency.p95, 1)} ms`,
+                value:
+                  latency?.p95 == null
+                    ? "unmeasured"
+                    : `${formatNumber(latency.p95, 1, "unmeasured")} ms`,
                 hint: latency ? `n=${latency.n}` : undefined,
               },
               {
@@ -145,14 +145,14 @@ function MetricsPage() {
             items={[
               {
                 label: "Faithfulness",
-                value: measured(faith?.value ?? null),
+                value: formatNumber(faith?.value ?? null, 3, "unmeasured"),
                 hint: faith?.present
                   ? [faith.mode, faith.run_id].filter(Boolean).join(" · ")
                   : "not measured",
               },
               {
                 label: "Context precision",
-                value: measured(faith?.context_precision ?? null),
+                value: formatNumber(faith?.context_precision ?? null, 3, "unmeasured"),
                 hint: "logged only",
               },
               {

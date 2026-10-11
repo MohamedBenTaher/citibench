@@ -10,6 +10,7 @@ import { StatusPill } from "@/components/status-pill";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientApiJson } from "@/lib/client-api";
+import { formatNumber } from "@/lib/format";
 import { getCitedChunks, getCorpusFacets, getCorpusSuggestions } from "@/lib/server";
 import type {
   Citation,
@@ -27,13 +28,6 @@ export const Route = createFileRoute("/playground")({
   }),
   component: PlaygroundPage,
 });
-
-function score(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "—";
-  }
-  return value.toFixed(3);
-}
 
 function SearchBar({
   value,
@@ -469,16 +463,16 @@ function PlaygroundPage() {
                                   ) : null}
                                 </td>
                                 <td className="hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell">
-                                  {score(hit.vector_score)}
+                                  {formatNumber(hit.vector_score)}
                                 </td>
                                 <td className="hidden px-3 py-2 text-right font-mono tabular-nums sm:table-cell">
-                                  {score(hit.fts_score)}
+                                  {formatNumber(hit.fts_score)}
                                 </td>
                                 <td className="hidden px-3 py-2 text-right font-mono tabular-nums md:table-cell">
-                                  {score(hit.fused_score)}
+                                  {formatNumber(hit.fused_score)}
                                 </td>
                                 <td className="px-3 py-2 text-right font-mono tabular-nums text-foreground">
-                                  {score(hit.rerank_score ?? hit.score)}
+                                  {formatNumber(hit.rerank_score ?? hit.score)}
                                 </td>
                               </tr>
                             );
@@ -506,7 +500,7 @@ function PlaygroundPage() {
                   {result.citations.length} cited
                 </span>
               </div>
-              <ol className="space-y-3">
+              <ol id="sources" className="space-y-3">
                 {result.citations.map((citation, index) => (
                   <SourceCard
                     key={citation.chunk_id}

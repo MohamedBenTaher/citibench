@@ -16,12 +16,6 @@ import { Route as EvalsRouteImport } from './routes/evals'
 import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as TracesRouteImport } from './routes/traces'
-import { Route as ApiMetricsRouteImport } from './routes/api/metrics'
-import { Route as ApiTracesRouteImport } from './routes/api/traces'
-import { Route as ApiCorpusStatsRouteImport } from './routes/api/corpus/stats'
-import { Route as ApiEvalsLatestRouteImport } from './routes/api/evals/latest'
-import { Route as ApiEvalsRedteamRouteImport } from './routes/api/evals/redteam'
-import { Route as ApiTracesRunIdRouteImport } from './routes/api/traces/$runId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,36 +52,6 @@ const TracesRoute = TracesRouteImport.update({
   path: '/traces',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMetricsRoute = ApiMetricsRouteImport.update({
-  id: '/api/metrics',
-  path: '/api/metrics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiTracesRoute = ApiTracesRouteImport.update({
-  id: '/api/traces',
-  path: '/api/traces',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCorpusStatsRoute = ApiCorpusStatsRouteImport.update({
-  id: '/api/corpus/stats',
-  path: '/api/corpus/stats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiEvalsLatestRoute = ApiEvalsLatestRouteImport.update({
-  id: '/api/evals/latest',
-  path: '/api/evals/latest',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiEvalsRedteamRoute = ApiEvalsRedteamRouteImport.update({
-  id: '/api/evals/redteam',
-  path: '/api/evals/redteam',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiTracesRunIdRoute = ApiTracesRunIdRouteImport.update({
-  id: '/$runId',
-  path: '/$runId',
-  getParentRoute: () => ApiTracesRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,12 +61,6 @@ export interface FileRoutesByFullPath {
   '/metrics': typeof MetricsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
-  '/api/metrics': typeof ApiMetricsRoute
-  '/api/traces': typeof ApiTracesRouteWithChildren
-  '/api/corpus/stats': typeof ApiCorpusStatsRoute
-  '/api/evals/latest': typeof ApiEvalsLatestRoute
-  '/api/evals/redteam': typeof ApiEvalsRedteamRoute
-  '/api/traces/$runId': typeof ApiTracesRunIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,12 +70,6 @@ export interface FileRoutesByTo {
   '/metrics': typeof MetricsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
-  '/api/metrics': typeof ApiMetricsRoute
-  '/api/traces': typeof ApiTracesRouteWithChildren
-  '/api/corpus/stats': typeof ApiCorpusStatsRoute
-  '/api/evals/latest': typeof ApiEvalsLatestRoute
-  '/api/evals/redteam': typeof ApiEvalsRedteamRoute
-  '/api/traces/$runId': typeof ApiTracesRunIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,12 +80,6 @@ export interface FileRoutesById {
   '/metrics': typeof MetricsRoute
   '/playground': typeof PlaygroundRoute
   '/traces': typeof TracesRoute
-  '/api/metrics': typeof ApiMetricsRoute
-  '/api/traces': typeof ApiTracesRouteWithChildren
-  '/api/corpus/stats': typeof ApiCorpusStatsRoute
-  '/api/evals/latest': typeof ApiEvalsLatestRoute
-  '/api/evals/redteam': typeof ApiEvalsRedteamRoute
-  '/api/traces/$runId': typeof ApiTracesRunIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,12 +91,6 @@ export interface FileRouteTypes {
     | '/metrics'
     | '/playground'
     | '/traces'
-    | '/api/metrics'
-    | '/api/traces'
-    | '/api/corpus/stats'
-    | '/api/evals/latest'
-    | '/api/evals/redteam'
-    | '/api/traces/$runId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -160,12 +100,6 @@ export interface FileRouteTypes {
     | '/metrics'
     | '/playground'
     | '/traces'
-    | '/api/metrics'
-    | '/api/traces'
-    | '/api/corpus/stats'
-    | '/api/evals/latest'
-    | '/api/evals/redteam'
-    | '/api/traces/$runId'
   id:
     | '__root__'
     | '/'
@@ -175,12 +109,6 @@ export interface FileRouteTypes {
     | '/metrics'
     | '/playground'
     | '/traces'
-    | '/api/metrics'
-    | '/api/traces'
-    | '/api/corpus/stats'
-    | '/api/evals/latest'
-    | '/api/evals/redteam'
-    | '/api/traces/$runId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -191,11 +119,6 @@ export interface RootRouteChildren {
   MetricsRoute: typeof MetricsRoute
   PlaygroundRoute: typeof PlaygroundRoute
   TracesRoute: typeof TracesRoute
-  ApiMetricsRoute: typeof ApiMetricsRoute
-  ApiTracesRoute: typeof ApiTracesRouteWithChildren
-  ApiCorpusStatsRoute: typeof ApiCorpusStatsRoute
-  ApiEvalsLatestRoute: typeof ApiEvalsLatestRoute
-  ApiEvalsRedteamRoute: typeof ApiEvalsRedteamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -249,62 +172,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TracesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/metrics': {
-      id: '/api/metrics'
-      path: '/api/metrics'
-      fullPath: '/api/metrics'
-      preLoaderRoute: typeof ApiMetricsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/traces': {
-      id: '/api/traces'
-      path: '/api/traces'
-      fullPath: '/api/traces'
-      preLoaderRoute: typeof ApiTracesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/corpus/stats': {
-      id: '/api/corpus/stats'
-      path: '/api/corpus/stats'
-      fullPath: '/api/corpus/stats'
-      preLoaderRoute: typeof ApiCorpusStatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/evals/latest': {
-      id: '/api/evals/latest'
-      path: '/api/evals/latest'
-      fullPath: '/api/evals/latest'
-      preLoaderRoute: typeof ApiEvalsLatestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/evals/redteam': {
-      id: '/api/evals/redteam'
-      path: '/api/evals/redteam'
-      fullPath: '/api/evals/redteam'
-      preLoaderRoute: typeof ApiEvalsRedteamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/traces/$runId': {
-      id: '/api/traces/$runId'
-      path: '/$runId'
-      fullPath: '/api/traces/$runId'
-      preLoaderRoute: typeof ApiTracesRunIdRouteImport
-      parentRoute: typeof ApiTracesRoute
-    }
   }
 }
-
-interface ApiTracesRouteChildren {
-  ApiTracesRunIdRoute: typeof ApiTracesRunIdRoute
-}
-
-const ApiTracesRouteChildren: ApiTracesRouteChildren = {
-  ApiTracesRunIdRoute: ApiTracesRunIdRoute,
-}
-
-const ApiTracesRouteWithChildren = ApiTracesRoute._addFileChildren(
-  ApiTracesRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -314,11 +183,6 @@ const rootRouteChildren: RootRouteChildren = {
   MetricsRoute: MetricsRoute,
   PlaygroundRoute: PlaygroundRoute,
   TracesRoute: TracesRoute,
-  ApiMetricsRoute: ApiMetricsRoute,
-  ApiTracesRoute: ApiTracesRouteWithChildren,
-  ApiCorpusStatsRoute: ApiCorpusStatsRoute,
-  ApiEvalsLatestRoute: ApiEvalsLatestRoute,
-  ApiEvalsRedteamRoute: ApiEvalsRedteamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

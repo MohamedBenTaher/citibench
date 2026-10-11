@@ -8,14 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatNumber } from "@/lib/format";
 import type { RetrievalReport, RetrievalRow } from "@/lib/types";
-
-function rate(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return "—";
-  }
-  return value.toFixed(3);
-}
 
 function MatrixCell({
   label,
@@ -158,8 +152,8 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            false-answer {rate(calibration.false_answer_rate)} · false-abstain{" "}
-            {rate(calibration.false_abstain_rate)}
+            false-answer {formatNumber(calibration.false_answer_rate)} · false-abstain{" "}
+            {formatNumber(calibration.false_abstain_rate)}
           </p>
         </div>
       ) : null}
@@ -230,7 +224,7 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
                     ) : null}
                   </TableCell>
                   <TableCell className="font-mono text-xs tabular-nums">
-                    {row.answerable ? rate(row.recall) : "—"}
+                    {row.answerable ? formatNumber(row.recall) : "—"}
                   </TableCell>
                   <TableCell className="font-mono text-xs tabular-nums">
                     {row.answerable ? (row.first_relevant_rank ?? "miss") : "—"}
