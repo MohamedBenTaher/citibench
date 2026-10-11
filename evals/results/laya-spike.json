@@ -1,0 +1,84 @@
+{
+  "artifact": "citebench.spike.laya-rerank.v1",
+  "recorded_at": "2026-09-26",
+  "hardware": "Apple M1 Max (MPS), torch 2.14.0, laya 0.3.20",
+  "corpus_pairs": {
+    "source": "corpus/raw snapshots chunked with chunk_text_dynamic (512/64)",
+    "pairs": 306,
+    "positives_gold_doc_chunks": 102,
+    "negatives_distractor_chunks": 204,
+    "queries": 34,
+    "answerable_queries_scored": 26
+  },
+  "rerankers": {
+    "flashrank_ms-marco-TinyBERT-L-2-v2": {
+      "query_level_best_gold_gt_best_distractor": "26 win / 0 loss",
+      "gold_mean": 0.595,
+      "gold_median": 0.93,
+      "distractor_mean": 0.013,
+      "distractor_median": 0.0,
+      "unanswerable_q_distractor_mean": 0.0,
+      "ms_per_pair": 1.47,
+      "pool50_ms": 106
+    },
+    "laya_english_noul_generic": {
+      "query_level": "23 win / 0 tie / 3 loss",
+      "gold_mean": 0.482,
+      "distractor_mean": 0.129,
+      "unanswerable_q_distractor_mean": 0.053,
+      "ms_per_pair": 63,
+      "pool50_ms": 3150
+    },
+    "laya_english_noul_sharp": {
+      "query_level": "24 win / 2 loss",
+      "gold_mean": 0.469,
+      "distractor_mean": 0.145
+    },
+    "laya_english_score_3level": {
+      "query_level": "25 win / 1 loss",
+      "gold_mean": 0.551,
+      "distractor_mean": 0.195
+    },
+    "laya_multilingual_max_len_8192": {
+      "query_level": "13 win / 13 loss",
+      "gold_mean": 0.668,
+      "distractor_mean": 0.508,
+      "note": "no separation on English technical text; long-context arm not usable here"
+    }
+  },
+  "latency_probes_mps": {
+    "english_single_ms": 52,
+    "batch50_plain_ms": 3235,
+    "batch50_sort_by_length_ms": 3188,
+    "batch50_batch_size_16_plus_sort_ms": 2068,
+    "batch8_gate_shaped_ms": 519,
+    "note": "MPS gives ~no batch throughput win (~63ms/pair flat). Published CUDA numbers (T4 33ms/q; ~1ms/decision batched) imply pool50 ~0.3-0.5s on a GPU box."
+  },
+  "qrels_bench_2026-09-26": {
+    "split": "evals/splits/retrieval.jsonl (34 rows, k=8)",
+    "artifacts": ["evals/results/retrieval.json", "evals/results/retrieval-laya-gate.json"],
+    "ordering": {
+      "hybrid + rerank (flashrank)": {"recall@8": 0.9231, "mrr": 0.7205, "ndcg@8": 0.7687},
+      "hybrid + laya rerank": {"recall@8": 0.8269, "mrr": 0.5833, "ndcg@8": 0.6269},
+      "hybrid, no rerank": {"recall@8": 0.8462, "mrr": 0.5279, "ndcg@8": 0.5885},
+      "verdict": "FlashRank wins all three metrics and stays the default. Laya beats RRF order on MRR/nDCG (0.583/0.627 vs 0.528/0.589) but loses to the trained cross-encoder. laya-noul ships as a measured variant only."
+    },
+    "gate": {
+      "flashrank_gate": {"false_answer": 0.0, "false_abstain": 0.0, "threshold": 0.12, "scale": "logit"},
+      "laya_gate_threshold_sweep": {
+        "unanswerable_top_scores_max": 0.604,
+        "answerable_top_scores_min": 0.636,
+        "chosen_threshold": 0.65,
+        "false_answer": 0.0,
+        "false_abstain": 0.038
+      },
+      "verdict": "laya noul is a clean calibrated separator on this split but the gate is not better than the incumbent (0.0/0.038 vs 0.0/0.0). Its value is threshold portability across reranker swaps; abstain_min_score_noul=0.65 is the recorded derivation."
+    }
+  },
+  "verdict": {
+    "quality": "usable relevance signal (gold 0.48 vs distractor 0.13; unanswerable distractors 0.05) but NOT better than the incumbent TinyBERT cross-encoder on this set (25/26 vs 26/26 query wins, weaker margins). Zero-shot decision model vs MS-MARCO-trained reranker on English tech docs. Final ordering call: evals/splits/retrieval.jsonl qrels bench.",
+    "latency": "pool-50 rerank NOT acceptable on this hardware (30-40x FlashRank). Acceptable on CUDA deploys. Top-8 gate verify 519ms.",
+    "calibrated_gate": "noul is a probability (0-1 scale) vs FlashRank's uncalibrated bimodal scores; threshold portability across model swaps is the remaining real win. Adopt only if the qrels calibration harness shows equal-or-better false_answer/false_abstain.",
+    "decision": "default rerank stays FlashRank (qrels confirmed). laya-noul ships as a measured variant + scale-matched gate (abstain_min_score_noul=0.65); no default swap."
+  }
+}

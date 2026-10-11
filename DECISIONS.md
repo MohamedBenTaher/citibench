@@ -74,6 +74,17 @@ one swap landed, all measured.
    under the same reasoning as above: shrinking the scan cannot materially
    move p95 now.
 
+**Update (2026-09-26 — reranker candidate measured and rejected):** a local
+Laya sidecar (`laya-noul`, calibrated probabilities in [0,1]) was benchmarked
+against TinyBERT on the committed qrels. It loses on every metric — recall@8
+**0.827** vs 0.923, MRR **0.583** vs 0.721, nDCG@8 **0.627** vs 0.769 — and is
+~42× slower per pair (63 ms vs 1.47 ms on Apple MPS). Rejected as the default.
+Evidence: `evals/results/laya-spike.json` (pair-level) and
+`evals/results/retrieval-laya-gate.json` (gate run). Lesson retained: reranker
+score scales are not portable — FlashRank emits uncalibrated logits while Laya
+emits probabilities — so any future reranker swap must recalibrate the abstain
+threshold for the new scale rather than reuse the 0.12 logit threshold.
+
 ## Retrieval reviewer audit (2026-09-15)
 
 An external architecture review raised seven retrieval points. Each was either

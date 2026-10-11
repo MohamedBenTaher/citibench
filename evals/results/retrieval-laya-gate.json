@@ -1,0 +1,1084 @@
+{
+  "run_id": "retr-20260925T234652Z-b78e44",
+  "started_at": "2026-09-25T23:44:53.371138+00:00",
+  "finished_at": "2026-09-25T23:46:52.537881+00:00",
+  "measured_at": "2026-09-25T23:46:52.537881+00:00",
+  "mode": "retrieve+gate",
+  "k": 8,
+  "n": 34,
+  "retrieval": {
+    "recall_at_k": 0.8269,
+    "mrr": 0.5833,
+    "ndcg_at_k": 0.6269,
+    "n_scored": 26,
+    "answerable": 26,
+    "unanswerable": 8
+  },
+  "calibration": {
+    "answerable": 26,
+    "unanswerable": 8,
+    "answered_answerable": 25,
+    "abstained_answerable": 1,
+    "answered_unanswerable": 0,
+    "abstained_unanswerable": 8,
+    "false_answer_rate": 0.0,
+    "false_abstain_rate": 0.0385,
+    "rows": [
+      {
+        "id": "r-001",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8634,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-002",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8797,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-003",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8199,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-004",
+        "answerable": true,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.6358,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-005",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8146,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-006",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8077,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-007",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8369,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-008",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8364,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-009",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8982,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-010",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8009,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-011",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8411,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-012",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.7617,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-013",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8099,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-014",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8177,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-015",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.6895,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-016",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8046,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-017",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8205,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-018",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.7961,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-019",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8067,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-020",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8564,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-021",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.809,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-022",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.6943,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-023",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.7627,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-024",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.7989,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-025",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.8496,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "r-026",
+        "answerable": true,
+        "answered": true,
+        "abstained": false,
+        "abstain_reason": null,
+        "top_score": 0.777,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-001",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.2228,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-002",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.3709,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-003",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.6038,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-004",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.3503,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-005",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.3749,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-006",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.5943,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-007",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.4701,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      },
+      {
+        "id": "u-008",
+        "answerable": false,
+        "answered": false,
+        "abstained": true,
+        "abstain_reason": "low_confidence",
+        "top_score": 0.3779,
+        "score_scale": "noul",
+        "rerank_skipped": false
+      }
+    ],
+    "kind": "retrieval_gate"
+  },
+  "variants": null,
+  "errors": {},
+  "rows": [
+    {
+      "id": "r-001",
+      "question": "What is a Kubernetes Pod?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-workloads-pods"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-tutorials-kubernetes-basics-explore-explore-intro",
+        "k8s-docs-concepts-services-networking",
+        "k8s-docs-concepts-workloads-pods",
+        "k8s-docs-tutorials-kubernetes-basics-expose-expose-intro",
+        "k8s-docs-home",
+        "k8s-docs",
+        "k8s-docs-concepts-windows-intro"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 3,
+      "mrr": 0.3333,
+      "ndcg": 0.5,
+      "gate_answered": true
+    },
+    {
+      "id": "r-002",
+      "question": "How does a Kubernetes Service expose a set of Pods?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-services-networking-service"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-services-networking-service",
+        "k8s-docs-concepts-services-networking",
+        "k8s-docs-reference-glossary",
+        "k8s-docs-tutorials-kubernetes-basics-explore-explore-intro",
+        "k8s-docs-tutorials-services-connect-applications-service"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-003",
+      "question": "What is a Kubernetes Ingress?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-services-networking-ingress"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-services-networking-ingress",
+        "azure-en-us-azure-aks-istio-deploy-ingress",
+        "azure-en-us-azure-aks-app-routing",
+        "k8s-docs-concepts-services-networking-ingress-controllers",
+        "k8s-docs-home",
+        "k8s-docs",
+        "azure-en-us-azure-aks-automated-deployments",
+        "k8s-docs-concepts-overview"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-004",
+      "question": "What is a Kubernetes ConfigMap used for?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-configuration-configmap"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-reference-using-api-api-concepts",
+        "k8s-docs-tasks-configure-pod-container-configure-pod-configmap",
+        "azure-en-us-azure-aks-concepts-storage",
+        "k8s-docs-tasks-access-application-cluster-web-ui-dashboard",
+        "k8s-docs-concepts-overview",
+        "k8s-docs-concepts-configuration-configmap"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 6,
+      "mrr": 0.1667,
+      "ndcg": 0.3562,
+      "gate_answered": false
+    },
+    {
+      "id": "r-005",
+      "question": "How are Kubernetes Secrets stored and used?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-configuration-secret"
+      ],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-aks-concepts-security",
+        "k8s-docs-tasks-administer-cluster-securing-a-cluster",
+        "k8s-docs-concepts-configuration-secret",
+        "k8s-docs-concepts-security-secrets-good-practices",
+        "k8s-docs-concepts-security-security-checklist",
+        "k8s-docs-reference-glossary"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 3,
+      "mrr": 0.3333,
+      "ndcg": 0.5,
+      "gate_answered": true
+    },
+    {
+      "id": "r-006",
+      "question": "What are Kubernetes Persistent Volumes?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-storage-persistent-volumes"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-storage-persistent-volumes",
+        "azure-en-us-azure-aks-what-is-aks",
+        "azure-en-us-azure-aks-concepts-storage",
+        "k8s-docs-concepts-security-multi-tenancy",
+        "azure-en-us-azure-aks-azure-files-dynamic-pv",
+        "k8s-docs-concepts-storage-volumes",
+        "k8s-docs-reference-glossary"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-007",
+      "question": "How does the kube-scheduler assign Pods to nodes?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-scheduling-eviction-kube-scheduler"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-scheduling-eviction-kube-scheduler",
+        "k8s-docs-concepts-containers-runtime-class",
+        "k8s-docs-concepts-scheduling-eviction-podgroup-scheduling",
+        "k8s-docs-concepts-extend-kubernetes",
+        "k8s-docs-concepts-scheduling-eviction-assign-pod-node",
+        "k8s-docs-concepts-storage-ephemeral-storage",
+        "k8s-docs-reference-command-line-tools-reference-feature-gates",
+        "k8s-docs-reference-command-line-tools-reference-kube-scheduler"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-008",
+      "question": "What are Kubernetes labels and selectors?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-overview-working-with-objects-labels"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-tutorials-kubernetes-basics-expose-expose-intro",
+        "k8s-docs-concepts-overview-working-with-objects-labels-1",
+        "k8s-docs-concepts-overview-working-with-objects-labels",
+        "k8s-docs-reference-generated-kubectl-kubectl-commands-1",
+        "k8s-docs-reference-generated-kubectl-kubectl-commands",
+        "k8s-docs-reference-generated-kubectl-kubectl",
+        "k8s-docs-reference-kubectl-kubectl-cmds",
+        "k8s-docs-tasks-network-validate-dual-stack"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 3,
+      "mrr": 0.3333,
+      "ndcg": 0.5,
+      "gate_answered": true
+    },
+    {
+      "id": "r-009",
+      "question": "How does a Kubernetes Deployment manage Pods?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-workloads-controllers-deployment"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-services-networking",
+        "k8s-docs-concepts-windows-intro",
+        "k8s-docs-concepts-workloads-pods",
+        "k8s-docs-reference-glossary",
+        "k8s-docs-setup-best-practices-multiple-zones",
+        "k8s-docs-setup-multiple-zones",
+        "k8s-docs-concepts-workloads-controllers"
+      ],
+      "recall": 0.0,
+      "first_relevant_rank": null,
+      "mrr": 0.0,
+      "ndcg": 0.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-010",
+      "question": "What is Azure Kubernetes Service (AKS)?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "azure-en-us-azure-aks-what-is-aks"
+      ],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-aks-learn-quick-kubernetes-deploy-cli",
+        "azure-en-us-azure-aks-what-is-aks",
+        "azure-en-us-azure-aks",
+        "azure-en-us-azure-aks-concepts-clusters-workloads",
+        "azure-en-us-azure-aks-core-aks-concepts",
+        "azure-en-us-azure-aks-node-auto-repair"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 2,
+      "mrr": 0.5,
+      "ndcg": 0.6309,
+      "gate_answered": true
+    },
+    {
+      "id": "r-011",
+      "question": "What is a managed identity in Azure?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "azure-en-us-entra-identity-managed-identities-azure-resources-overview"
+      ],
+      "retrieved_doc_ids": [
+        "azure-en-us-entra-identity-managed-identities-azure-resources-overview",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-how-to-use-vm-sign",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-how-to-configure-m",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-cli-w",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-porta",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-qs-configure-power"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-012",
+      "question": "How does Azure Blob Storage organize data?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "azure-en-us-azure-storage-blobs-storage-blobs-overview"
+      ],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-storage-blobs-storage-blobs-introduction",
+        "azure-en-us-azure-storage-blobs-storage-quickstart-blobs-java",
+        "azure-en-us-azure-storage-blobs-access-tiers-overview",
+        "azure-en-us-azure-storage-blobs-storage-blobs-overview",
+        "azure-en-us-azure-storage-blobs-lifecycle-management-overview",
+        "azure-en-us-azure-storage-blobs-storage-lifecycle-management-concepts"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 4,
+      "mrr": 0.25,
+      "ndcg": 0.4307,
+      "gate_answered": true
+    },
+    {
+      "id": "r-013",
+      "question": "What does AKS networking cover?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "azure-en-us-azure-aks-concepts-network"
+      ],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-aks-concepts-network",
+        "azure-en-us-azure-aks-best-practices-performance-scale-large",
+        "azure-en-us-azure-aks-concepts-clusters-workloads",
+        "azure-en-us-azure-aks-core-aks-concepts",
+        "azure-en-us-azure-aks-what-is-aks",
+        "azure-en-us-azure-aks-advanced-container-networking-services-overview",
+        "azure-en-us-azure-aks-concepts-security",
+        "azure-en-us-azure-aks-egress-outboundtype"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-014",
+      "question": "What are the core concepts for AKS clusters and workloads?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "azure-en-us-azure-aks-concepts-clusters-workloads"
+      ],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-aks-concepts-clusters-workloads",
+        "azure-en-us-azure-aks-core-aks-concepts",
+        "azure-en-us-azure-aks-concepts-security",
+        "azure-en-us-azure-aks-what-is-aks",
+        "azure-en-us-azure-aks-best-practices-performance-scale-large"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-015",
+      "question": "What is write-ahead logging (WAL) in PostgreSQL?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "postgres-docs-current-wal.html"
+      ],
+      "retrieved_doc_ids": [
+        "postgres-docs-current-reference.html",
+        "postgres-docs-current-bookindex.html",
+        "postgres-docs-current-glossary.html",
+        "postgres-docs-current-functions-admin.html",
+        "postgres-docs-current-reference-server.html"
+      ],
+      "recall": 0.0,
+      "first_relevant_rank": null,
+      "mrr": 0.0,
+      "ndcg": 0.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-016",
+      "question": "What is routine database maintenance in PostgreSQL?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "postgres-docs-current-maintenance.html"
+      ],
+      "retrieved_doc_ids": [
+        "postgres-docs-current-reference.html",
+        "postgres-docs-current-bgworker.html",
+        "postgres-docs-current-glossary.html",
+        "postgres-docs-current-reference-server.html",
+        "postgres-docs-current-index.html",
+        "postgres-docs-current"
+      ],
+      "recall": 0.0,
+      "first_relevant_rank": null,
+      "mrr": 0.0,
+      "ndcg": 0.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-017",
+      "question": "How do indexes work in PostgreSQL?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "postgres-docs-current-indexes-intro.html"
+      ],
+      "retrieved_doc_ids": [
+        "postgres-docs-current-indexes-intro.html",
+        "postgres-docs-current-indexes-partial.html",
+        "postgres-docs-current-indexes-ordering.html",
+        "postgres-docs-current-indexes-index-only-scans.html",
+        "postgres-docs-current-indexes-types.html",
+        "postgres-docs-current-indexes-multicolumn.html",
+        "postgres-docs-current-locking-indexes.html"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-018",
+      "question": "What are application-level data consistency checks in PostgreSQL?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "postgres-docs-current-applevel-consistency.html"
+      ],
+      "retrieved_doc_ids": [
+        "postgres-docs-current-reference.html",
+        "postgres-docs-current-glossary.html",
+        "postgres-docs-current-appendixes.html",
+        "postgres-docs-current-features.html",
+        "postgres-docs-current-reference-client.html",
+        "postgres-docs-current-applevel-consistency.html",
+        "postgres-docs-current-index.html"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 6,
+      "mrr": 0.1667,
+      "ndcg": 0.3562,
+      "gate_answered": true
+    },
+    {
+      "id": "r-019",
+      "question": "How do you declare a path parameter in FastAPI?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "fastapi-tutorial-path-params"
+      ],
+      "retrieved_doc_ids": [
+        "fastapi-tutorial-path-params",
+        "fastapi-tutorial-body",
+        "fastapi-advanced-response-cookies",
+        "fastapi-tutorial-body-multiple-params",
+        "fastapi-tutorial-schema-extra-example",
+        "fastapi-advanced-behind-a-proxy"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-020",
+      "question": "How are query parameters declared in FastAPI?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "fastapi-tutorial-query-params"
+      ],
+      "retrieved_doc_ids": [
+        "fastapi-tutorial-schema-extra-example",
+        "fastapi-tutorial-query-params-str-validations",
+        "fastapi-tutorial-query-params",
+        "fastapi-tutorial-body-multiple-params",
+        "fastapi-tutorial-body",
+        "fastapi-tutorial-dependencies"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 3,
+      "mrr": 0.3333,
+      "ndcg": 0.5,
+      "gate_answered": true
+    },
+    {
+      "id": "r-021",
+      "question": "How does dependency injection work in FastAPI?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "fastapi-tutorial-dependencies"
+      ],
+      "retrieved_doc_ids": [
+        "fastapi-features",
+        "fastapi-reference-security",
+        "fastapi-reference-dependencies",
+        "fastapi-tutorial-dependencies"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 4,
+      "mrr": 0.25,
+      "ndcg": 0.4307,
+      "gate_answered": true
+    },
+    {
+      "id": "r-022",
+      "question": "What does the xv6 book cover?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "xv6-6.828-2024-xv6-book-riscv-rev4.pdf"
+      ],
+      "retrieved_doc_ids": [
+        "xv6-6.828-2024-xv6-book-riscv-rev4.pdf"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "gate_answered": true
+    },
+    {
+      "id": "r-023",
+      "question": "How do Kubernetes ConfigMaps and Secrets differ?",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-configuration-configmap",
+        "k8s-docs-concepts-configuration-secret"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-configuration-secret",
+        "k8s-docs-concepts-configuration",
+        "azure-en-us-azure-aks-monitor-aks",
+        "k8s-docs-concepts-security-security-checklist",
+        "azure-en-us-azure-aks-concepts-security"
+      ],
+      "recall": 0.5,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 0.6131,
+      "gate_answered": true
+    },
+    {
+      "id": "r-024",
+      "question": "Compare Kubernetes Service and Ingress.",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-services-networking-service",
+        "k8s-docs-concepts-services-networking-ingress"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-services-networking-ingress",
+        "k8s-docs-concepts-services-networking-ingress-controllers",
+        "azure-en-us-azure-aks-automated-deployments",
+        "azure-en-us-azure-aks-app-routing",
+        "azure-en-us-azure-aks-istio-deploy-ingress",
+        "k8s-docs-concepts-services-networking-service"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg": 0.8316,
+      "gate_answered": true
+    },
+    {
+      "id": "r-025",
+      "question": "Compare FastAPI path parameters and query parameters.",
+      "answerable": true,
+      "gold_doc_ids": [
+        "fastapi-tutorial-path-params",
+        "fastapi-tutorial-query-params"
+      ],
+      "retrieved_doc_ids": [
+        "fastapi-tutorial-body",
+        "fastapi-tutorial-query-params",
+        "fastapi-tutorial-query-params-str-validations",
+        "fastapi-tutorial-path-params",
+        "fastapi-reference-parameters"
+      ],
+      "recall": 1.0,
+      "first_relevant_rank": 2,
+      "mrr": 0.5,
+      "ndcg": 0.6509,
+      "gate_answered": true
+    },
+    {
+      "id": "r-026",
+      "question": "Compare Kubernetes Pods and Deployments.",
+      "answerable": true,
+      "gold_doc_ids": [
+        "k8s-docs-concepts-workloads-pods",
+        "k8s-docs-concepts-workloads-controllers-deployment"
+      ],
+      "retrieved_doc_ids": [
+        "k8s-docs-concepts-services-networking",
+        "k8s-docs-tutorials-kubernetes-basics-create-cluster-cluster-intro",
+        "k8s-docs-concepts-windows-intro",
+        "k8s-docs-concepts-workloads-autoscaling-horizontal-pod-autoscale",
+        "k8s-docs-tasks-run-application-horizontal-pod-autoscale",
+        "k8s-docs-reference-glossary",
+        "k8s-docs-concepts-workloads-controllers",
+        "k8s-docs-tutorials-kubernetes-basics-expose-expose-intro"
+      ],
+      "recall": 0.0,
+      "first_relevant_rank": null,
+      "mrr": 0.0,
+      "ndcg": 0.0,
+      "gate_answered": true
+    },
+    {
+      "id": "u-001",
+      "question": "What is the recommended adult dosage of ibuprofen?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-aks-quotas-skus-regions",
+        "fastapi-release-notes",
+        "k8s-docs-reference-access-authn-authz-authentication",
+        "k8s-docs-concepts-workloads-autoscaling-horizontal-pod-autoscale",
+        "k8s-docs-tasks-run-application-horizontal-pod-autoscale",
+        "k8s-docs-concepts-scheduling-eviction-scheduler-perf-tuning"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-002",
+      "question": "What was the closing price of AAPL stock yesterday?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "fastapi-uk",
+        "azure-en-us-azure-aks-spot-node-pool",
+        "postgres-docs-current-explicit-locking.html",
+        "postgres-docs-current-bookindex.html",
+        "fastapi-release-notes",
+        "k8s-docs-contribute-participate-pr-wranglers"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-003",
+      "question": "How do I configure a Cisco IOS BGP neighbor?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "k8s-docs-reference-setup-tools-kubeadm-kubeadm-init-phase",
+        "k8s-docs-concepts-cluster-administration-addons",
+        "azure-en-us-azure-aks-automatic-quick-automatic-private-custom-network",
+        "azure-en-us-azure-aks-nat-gateway",
+        "k8s-docs-tutorials-services-connect-applications-service",
+        "k8s-docs-tasks-network-validate-dual-stack",
+        "azure-en-us-azure-aks-azure-cni-overlay"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-004",
+      "question": "What is the origin of the word algorithm?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "k8s-docs-reference-networking-virtual-ips",
+        "k8s-docs-concepts-overview",
+        "k8s-docs-concepts-scheduling-eviction-podgroup-scheduling",
+        "k8s-docs-concepts-scheduling-eviction-workload-aware-preemption",
+        "xv6-6.828-2024-xv6-book-riscv-rev4.pdf",
+        "postgres-docs-current-glossary.html",
+        "postgres-docs-current-textsearch-dictionaries.html"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-005",
+      "question": "How do I reset a Windows 11 BitLocker recovery key?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "k8s-docs-tasks-administer-cluster-encrypt-data",
+        "k8s-docs-reference-setup-tools-kubeadm-kubeadm-join-phase",
+        "k8s-docs-setup-production-environment-tools-kubeadm-setup-ha-etcd-with-kubeadm",
+        "azure-en-us-azure-storage-blobs-data-lake-storage-acl-java",
+        "azure-en-us-azure-storage-blobs-security-recommendations",
+        "azure-en-us-azure-storage-blobs-data-lake-storage-acl-python"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-006",
+      "question": "What is the default MTU for an Azure ExpressRoute circuit?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "azure-en-us-azure-aks-configure-kubenet",
+        "azure-en-us-azure-aks-use-byo-cni",
+        "azure-en-us-azure-aks-intro-aks-automatic",
+        "azure-en-us-azure-aks-azure-files-dynamic-pv",
+        "azure-en-us-entra-identity-managed-identities-azure-resources-overview",
+        "azure-en-us-azure-aks-gpu-cluster",
+        "azure-en-us-azure-aks-egress-outboundtype",
+        "azure-en-us-azure-aks-concepts-storage"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-007",
+      "question": "Who won the 2022 FIFA World Cup?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "fastapi-ko",
+        "fastapi-release-notes",
+        "fastapi-uk",
+        "fastapi-zh-hant",
+        "fastapi-ru"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    },
+    {
+      "id": "u-008",
+      "question": "What is the melting point of tungsten?",
+      "answerable": false,
+      "gold_doc_ids": [],
+      "retrieved_doc_ids": [
+        "k8s-docs-reference-using-api-api-concepts",
+        "k8s-docs-reference-command-line-tools-reference-kube-controller-manager",
+        "azure-en-us-azure-azure-monitor-metrics-analyze-metrics",
+        "fastapi-release-notes",
+        "postgres-docs-current-functions-math.html",
+        "azure-en-us-azure-storage-blobs-access-tiers-overview",
+        "postgres-docs-current-bookindex.html",
+        "k8s-docs-concepts-storage-volumes"
+      ],
+      "recall": null,
+      "first_relevant_rank": null,
+      "mrr": null,
+      "ndcg": null,
+      "gate_answered": false
+    }
+  ]
+}
