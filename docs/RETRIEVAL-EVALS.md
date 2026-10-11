@@ -265,3 +265,20 @@ An external review flagged seven retrieval items. Verdicts, all measured (see
 
 Library references: pgvector / Postgres FTS / FlashRank / fastembed / RAGAS
 links live in [`ARCHITECTURE.md`](ARCHITECTURE.md#libraries-and-packages).
+
+## Limitations
+
+Read these before quoting a number out of context:
+
+- The qrels split is **34 questions total** — 26 answerable (30 gold doc ids) and
+  8 unanswerable. 22 of the 26 answerable rows carry a single gold doc, so
+  Recall@8 is effectively hit-rate@8; a one-row flip moves recall by ~0.038.
+- The abstain threshold was calibrated **in-sample** on those same 8
+  unanswerable rows; there is no held-out calibration split. Treat the
+  false-answer/false-abstain rates as fit-on-the-split, not as an independent
+  generalization estimate.
+- The CI "faithfulness" is a **mock fixture judge** whose contexts are the
+  answer itself (`citebench/eval/pipeline.py` `_fixture`), so it is a pipeline
+  sanity check — not a measurement — and cannot fail below the 0.7 gate. The
+  real judge is the live RAGAS path (`make evals-live`), which runs only when
+  `GROQ_API_KEY` is present.

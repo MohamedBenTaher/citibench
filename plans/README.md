@@ -132,3 +132,52 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   ANN is deferred and the cross-encoder cost is attacked instead; quality is
   gated on the committed qrels.
 
+---
+
+## Market polish (plans 024–028)
+
+Planned at commit `93c3bb9`, 2026-10-10, after a full read-only audit (183
+tests pass, web typecheck clean, mock evals green). These address the gap
+between the repo's stated "no invented scores" bar and its current
+presentation: the best work is stranded off `main`, three published numbers
+are stale/mislabeled, the always-on faithfulness gate cannot fail, the
+frontend has visible dead code, and the process trail is gitignored. They do
+**not** duplicate 021 (public hygiene/license/visibility) or 022
+(screenshots/resume/site blurb), which remain TODO and are the natural
+follow-ons once 024 lands.
+
+| Plan | Title | Priority | Effort | Depends on | Status |
+|------|-------|----------|--------|------------|--------|
+| 024 | Fast-forward `main` to full history + tag v1.0.0 | P1 | S | — | TODO |
+| 025 | Repair honest-numbers integrity (labels, fail-able gate, live-path bug) | P1 | M | 024 | TODO |
+| 026 | Add frontend lint/format + enforce `fetchApiJson` in CI | P2 | S | — | TODO |
+| 027 | Frontend cleanup (dead routes, citation anchors, dedupe) | P2 | M | 026 | TODO |
+| 028 | Working-tree & process hygiene (laya spike, expose `plans/`) | P2 | S | — | TODO |
+
+### Dependency notes
+
+- 024 before 025: cut 025's branch from the fast-forwarded `main` so the fixes
+  land on the branch a reviewer will actually see.
+- 026 before 027: run cleanup after lint so the final diff is lint-clean.
+- 028 is independent of 024–027 but touches `.gitignore` and the working tree;
+  run it on a clean checkout or before starting other branches to avoid
+  entangling the laya-spike revert with plan work.
+- 021 (repo visibility) and 022 (screenshots/resume) should follow 024 — they
+  are the "make it public and show it" half of the same market goal.
+
+### Findings considered and rejected (this pass)
+
+- **Laya (multilingual) reranker**: measured slower (~42×/pair) and lower
+  recall (0.827 vs 0.923) than shipped TinyBERT — rejected as the default, but
+  the negative result is preserved (plan 028) and the per-`score_scale` abstain
+  threshold lesson is kept in `DECISIONS.md`.
+- **Make the mock CI faithfulness fail-able via corpus-grounded fixture
+  contexts**: deferred — it requires authoring ground-truth context text for
+  the 14 answerable rows and is higher-risk than the honest-labeling fix in
+  plan 025 step 3.
+- **Tighten `tsconfig.json` (`noUncheckedIndexedAccess`, etc.)**: rejected for
+  this pass — large diff, separate decision; leave to a future DX plan.
+- **Rewrite the loaders-vs-`useEffect` fetch split into a single data layer**:
+  deferred — a real refactor, not polish; plan 027 only fixes the visible
+  zero-vs-unmeasured drift.
+

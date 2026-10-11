@@ -4,10 +4,13 @@ __pycache__/
 *.pyc
 .venv/
 .venv-eval/
+.venv-laya/
 venv/
 dist/
 .DS_Store
 *.log
+# Transient runtime session artifact that appears during local test runs.
+:memory:.ses
 .env
 .env.local
 evals/results/.local-evals-ok
@@ -17,7 +20,5 @@ apps/web/.nitro/
 apps/web/node_modules/
 apps/web/tsconfig.tsbuildinfo
 pgdata/
-plans/
 corpus/raw/*
 !corpus/raw/.gitkeep
-
