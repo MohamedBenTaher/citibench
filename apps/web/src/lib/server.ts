@@ -14,10 +14,7 @@ import type {
   TraceList,
 } from "./types";
 
-function withQuery(
-  base: string,
-  params: Record<string, string | number | undefined>,
-): string {
+function withQuery(base: string, params: Record<string, string | number | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === "") continue;
@@ -40,14 +37,10 @@ export function getCorpusFacets() {
 }
 
 export function getCorpusSuggestions(limit = 6) {
-  return fetchApiJson<CorpusSuggestions>(
-    withQuery("/corpus/suggestions", { limit }),
-  );
+  return fetchApiJson<CorpusSuggestions>(withQuery("/corpus/suggestions", { limit }));
 }
 
-export function getCorpusDocuments(
-  params: Record<string, string | number | undefined> = {},
-) {
+export function getCorpusDocuments(params: Record<string, string | number | undefined> = {}) {
   return fetchApiJson<DocumentList>(withQuery("/corpus/documents", params));
 }
 

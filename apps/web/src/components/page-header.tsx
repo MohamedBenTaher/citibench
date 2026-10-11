@@ -25,9 +25,7 @@ export function PageHeader({
             />
           </div>
         ) : null}
-        <h1 className="font-heading text-balance text-2xl font-medium tracking-tighter">
-          {title}
-        </h1>
+        <h1 className="font-heading text-balance text-2xl font-medium tracking-tighter">{title}</h1>
       </div>
       {description ? (
         <p className="max-w-3xl text-pretty text-sm leading-relaxed text-muted-foreground">

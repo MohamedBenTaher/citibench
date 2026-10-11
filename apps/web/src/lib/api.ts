@@ -5,8 +5,7 @@ import { ApiError, formatApiDetail } from "./errors";
 export { ApiError };
 
 export function apiBase(): string {
-  const fromEnv =
-    process.env.API_URL || process.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const fromEnv = process.env.API_URL || process.env.VITE_API_URL || "http://127.0.0.1:8000";
   return fromEnv.replace(/\/$/, "");
 }
 
@@ -94,10 +93,7 @@ export async function apiJson<T>(
     throw new ApiError(result.body || `HTTP ${result.status}`, result.status);
   }
   if (result.status < 200 || result.status >= 300) {
-    throw new ApiError(
-      formatApiDetail(data.detail) ?? `HTTP ${result.status}`,
-      result.status,
-    );
+    throw new ApiError(formatApiDetail(data.detail) ?? `HTTP ${result.status}`, result.status);
   }
   return data;
 }

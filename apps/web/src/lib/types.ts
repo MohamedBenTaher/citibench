@@ -342,17 +342,19 @@ export type RetrievalReport = {
     answerable: number;
     unanswerable: number;
   };
-  variants?: {
-    name: string;
-    retrieval: {
-      recall_at_k: number;
-      mrr: number;
-      ndcg_at_k: number;
-      n_scored: number;
-      answerable: number;
-      unanswerable: number;
-    };
-  }[] | null;
+  variants?:
+    | {
+        name: string;
+        retrieval: {
+          recall_at_k: number;
+          mrr: number;
+          ndcg_at_k: number;
+          n_scored: number;
+          answerable: number;
+          unanswerable: number;
+        };
+      }[]
+    | null;
   calibration?: {
     kind?: string;
     answerable: number;
@@ -363,7 +365,13 @@ export type RetrievalReport = {
     abstained_unanswerable: number;
     false_answer_rate: number | null;
     false_abstain_rate: number | null;
-    rows?: { id: string; answerable: boolean; answered?: boolean | null; abstained?: boolean | null; abstain_reason?: string | null }[];
+    rows?: {
+      id: string;
+      answerable: boolean;
+      answered?: boolean | null;
+      abstained?: boolean | null;
+      abstain_reason?: string | null;
+    }[];
   } | null;
   rows: RetrievalRow[];
   detail?: string;

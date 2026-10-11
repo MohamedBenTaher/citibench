@@ -1,6 +1,3 @@
-import type { CSSProperties } from "react";
-import { Toaster as Sonner, type ToasterProps } from "sonner";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Alert02Icon,
   CancelCircleIcon,
@@ -8,6 +5,9 @@ import {
   InformationCircleIcon,
   Loading03Icon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { CSSProperties } from "react";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 export function Toaster(props: ToasterProps) {
   return (

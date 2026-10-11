@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/status-pill";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -27,19 +27,13 @@ function MatrixCell({
   tone: "good" | "bad" | "neutral";
 }) {
   const toneClass =
-    tone === "good"
-      ? "text-success"
-      : tone === "bad"
-        ? "text-destructive"
-        : "text-foreground";
+    tone === "good" ? "text-success" : tone === "bad" ? "text-destructive" : "text-foreground";
   return (
     <div className="bg-background px-4 py-3">
       <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
         {label}
       </p>
-      <p className={`mt-1 font-mono text-2xl font-semibold tabular-nums ${toneClass}`}>
-        {value}
-      </p>
+      <p className={`mt-1 font-mono text-2xl font-semibold tabular-nums ${toneClass}`}>{value}</p>
     </div>
   );
 }
@@ -48,8 +42,8 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
   if (!report?.present || !report.retrieval) {
     return (
       <p className="text-sm text-muted-foreground">
-        No retrieval run yet. Run the retrieval evaluation to measure whether the gold
-        source document is actually found.
+        No retrieval run yet. Run the retrieval evaluation to measure whether the gold source
+        document is actually found.
       </p>
     );
   }
@@ -57,9 +51,7 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
   const metrics = report.retrieval;
   const k = report.k ?? 8;
   const calibration = report.calibration;
-  const failing = report.rows.filter(
-    (row) => row.answerable && (row.recall ?? 0) < 1,
-  );
+  const failing = report.rows.filter((row) => row.answerable && (row.recall ?? 0) < 1);
 
   return (
     <div className="space-y-5">
@@ -96,10 +88,7 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
                   const delta =
                     baseline != null ? variant.retrieval.ndcg_at_k - baseline.ndcg_at_k : 0;
                   return (
-                    <TableRow
-                      key={variant.name}
-                      data-state={index === 0 ? "selected" : undefined}
-                    >
+                    <TableRow key={variant.name} data-state={index === 0 ? "selected" : undefined}>
                       <TableCell className="text-sm font-medium">
                         {variant.name}
                         {index === 0 ? (
@@ -132,8 +121,8 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
             </Table>
           </div>
           <p className="text-xs text-muted-foreground">
-            Same {metrics.n_scored} labeled questions for every variant. Chunk size is fixed
-            at index time, so it is not a query-time toggle.
+            Same {metrics.n_scored} labeled questions for every variant. Chunk size is fixed at
+            index time, so it is not a query-time toggle.
           </p>
         </div>
       ) : null}
@@ -141,9 +130,7 @@ export function RetrievalPanel({ report }: { report: RetrievalReport | null }) {
       {calibration ? (
         <div className="space-y-2">
           <div className="flex items-baseline justify-between gap-2">
-            <h3 className="font-heading text-sm font-medium tracking-tight">
-              Answerability
-            </h3>
+            <h3 className="font-heading text-sm font-medium tracking-tight">Answerability</h3>
             <span className="text-xs text-muted-foreground">
               {calibration.kind === "live" ? "end-to-end generate" : "retrieval gate"}
             </span>

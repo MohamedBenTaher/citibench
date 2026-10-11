@@ -1,11 +1,11 @@
 import { Bar, BarChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from "recharts";
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@/components/ui/chart";
 import type { AttackType, EvalLatest, MetricName, RedteamCase } from "@/lib/types";
 
@@ -83,8 +83,8 @@ export function EvalMetricChart({ latest }: { latest: EvalLatest | null }) {
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">
-        The faithfulness gate is {gate.toFixed(3)}. Context precision and answer relevancy
-        are logged alongside and do not gate.
+        The faithfulness gate is {gate.toFixed(3)}. Context precision and answer relevancy are
+        logged alongside and do not gate.
       </p>
       <ChartContainer config={METRIC_CONFIG} className="aspect-video w-full">
         <BarChart data={data} margin={{ left: 8, right: 8, top: 8 }}>
@@ -100,7 +100,12 @@ export function EvalMetricChart({ latest }: { latest: EvalLatest | null }) {
             label={{ value: `gate ${gate.toFixed(2)}`, position: "right", fontSize: 10 }}
           />
           <Bar dataKey="current" fill="var(--color-current)" radius={4} isAnimationActive={false} />
-          <Bar dataKey="previous" fill="var(--color-previous)" radius={4} isAnimationActive={false} />
+          <Bar
+            dataKey="previous"
+            fill="var(--color-previous)"
+            radius={4}
+            isAnimationActive={false}
+          />
         </BarChart>
       </ChartContainer>
     </div>
@@ -145,10 +150,34 @@ export function RedteamChart({ cases }: { cases: RedteamCase[] }) {
           <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={28} />
           <ChartTooltip content={<ChartTooltipContent />} />
           <ChartLegend content={<ChartLegendContent />} />
-          <Bar dataKey="blocked" stackId="a" fill="var(--color-blocked)" radius={0} isAnimationActive={false} />
-          <Bar dataKey="allowed" stackId="a" fill="var(--color-allowed)" radius={0} isAnimationActive={false} />
-          <Bar dataKey="leaked" stackId="a" fill="var(--color-leaked)" radius={0} isAnimationActive={false} />
-          <Bar dataKey="not_run" stackId="a" fill="var(--color-not_run)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+          <Bar
+            dataKey="blocked"
+            stackId="a"
+            fill="var(--color-blocked)"
+            radius={0}
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="allowed"
+            stackId="a"
+            fill="var(--color-allowed)"
+            radius={0}
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="leaked"
+            stackId="a"
+            fill="var(--color-leaked)"
+            radius={0}
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="not_run"
+            stackId="a"
+            fill="var(--color-not_run)"
+            radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
+          />
         </BarChart>
       </ChartContainer>
     </div>

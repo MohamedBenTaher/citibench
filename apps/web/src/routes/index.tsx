@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { CornerBrackets } from "@/components/corner-brackets";
 import { ErrorAlert } from "@/components/error-alert";
@@ -94,8 +94,7 @@ export const Route = createFileRoute("/")({
         stats: EMPTY_STATS,
         latest: null as EvalLatest | null,
         traces: EMPTY_TRACES,
-        loadError:
-          error instanceof Error ? error.message : "failed to load bench status",
+        loadError: error instanceof Error ? error.message : "failed to load bench status",
       };
     }
   },
@@ -108,13 +107,9 @@ function IndexPage() {
   const { stats, latest, traces, loadError } = Route.useLoaderData();
   const hasEval = Boolean(latest?.present && latest.metrics);
   const threshold = latest?.threshold_faithfulness ?? 0.7;
-  const faithfulness = hasEval ? latest?.metrics?.faithfulness ?? null : null;
+  const faithfulness = hasEval ? (latest?.metrics?.faithfulness ?? null) : null;
   const gateLabel = hasEval ? (latest?.gate_passed ? "passed" : "failed") : "unmeasured";
-  const gateTone: StatusTone = hasEval
-    ? latest?.gate_passed
-      ? "success"
-      : "danger"
-    : "neutral";
+  const gateTone: StatusTone = hasEval ? (latest?.gate_passed ? "success" : "danger") : "neutral";
   const faithTone: StatusTone =
     faithfulness == null ? "neutral" : faithfulness >= threshold ? "success" : "danger";
   const recent = [...traces.traces]
@@ -135,13 +130,11 @@ function IndexPage() {
             </div>
             <div className="max-w-xl space-y-3">
               <h1 className="font-heading text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                A bench for{" "}
-                <span className="text-success">grounded</span> retrieve.
+                A bench for <span className="text-success">grounded</span> retrieve.
               </h1>
               <p className="max-w-prose text-pretty text-[15px] leading-relaxed text-muted-foreground">
-                Frozen corpus, hybrid retrieve, then generate or abstain by policy.
-                The score that matters is whether the answer stayed on retrieved
-                chunks.
+                Frozen corpus, hybrid retrieve, then generate or abstain by policy. The score that
+                matters is whether the answer stayed on retrieved chunks.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -231,9 +224,7 @@ function IndexPage() {
       <section className="space-y-3" aria-labelledby="runs-heading">
         <div className="flex items-baseline justify-between gap-3">
           <SectionHeading id="runs-heading">Recent runs</SectionHeading>
-          <span className="text-xs text-muted-foreground">
-            failures and abstains surface first
-          </span>
+          <span className="text-xs text-muted-foreground">failures and abstains surface first</span>
         </div>
         {recent.length === 0 ? (
           <div className="border border-border bg-card px-4 py-6 text-sm text-muted-foreground">
@@ -338,9 +329,7 @@ function StatusCell({
             {value}
           </span>
         )}
-        {unit ? (
-          <span className="text-xs text-muted-foreground">{unit}</span>
-        ) : null}
+        {unit ? <span className="text-xs text-muted-foreground">{unit}</span> : null}
         {children}
       </dd>
       {hint ? (

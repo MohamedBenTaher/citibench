@@ -16,10 +16,7 @@ export function StatCards({ items }: { items: StatItem[] }) {
         <Card key={item.label} size="sm">
           <CardHeader className="gap-1">
             <div className="flex items-center gap-1.5">
-              <span
-                className="h-2.5 w-0.5 bg-foreground/60"
-                aria-hidden="true"
-              />
+              <span className="h-2.5 w-0.5 bg-foreground/60" aria-hidden="true" />
               <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 {item.label}
               </p>
@@ -28,9 +25,7 @@ export function StatCards({ items }: { items: StatItem[] }) {
               title={item.title}
               className={cn(
                 "font-mono font-semibold tabular-nums text-foreground",
-                item.dense
-                  ? "text-sm leading-snug tracking-tight sm:text-base"
-                  : "text-2xl",
+                item.dense ? "text-sm leading-snug tracking-tight sm:text-base" : "text-2xl",
               )}
             >
               {item.value}

@@ -11,10 +11,7 @@ import { clientApiJson } from "./client-api";
  * rejects cross-origin / missing-CSRF GETs with 401/500, which is
  * what broke Corpus stats and the Traces tab.
  */
-export async function fetchApiJson<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
+export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise<T> {
   if (typeof window === "undefined") {
     return apiJson<T>(path, {
       method: init?.method,
@@ -25,9 +22,7 @@ export async function fetchApiJson<T>(
   return clientApiJson<T>(path, init);
 }
 
-function headersToRecord(
-  headers?: HeadersInit,
-): Record<string, string> | undefined {
+function headersToRecord(headers?: HeadersInit): Record<string, string> | undefined {
   if (!headers) {
     return undefined;
   }

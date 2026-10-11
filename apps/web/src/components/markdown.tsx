@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { type ReactNode, useState } from "react";
 import type { Citation } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 function safeHref(href: string): string | null {
   const trimmed = href.trim();
@@ -18,16 +18,13 @@ function safeHref(href: string): string | null {
 const INLINE_RE =
   /(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(\*[^*\n]+\*)|(\[[^\]\n]+\]\((?:https?:\/\/|\/|#)[^)\s]+\))|(\[\d+\])/g;
 
-function renderInline(
-  text: string,
-  keyPrefix: string,
-  citations?: Citation[],
-): ReactNode[] {
+function renderInline(text: string, keyPrefix: string, citations?: Citation[]): ReactNode[] {
   const nodes: ReactNode[] = [];
   let last = 0;
   let index = 0;
   let match: RegExpExecArray | null;
   INLINE_RE.lastIndex = 0;
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard RegExp exec loop
   while ((match = INLINE_RE.exec(text)) !== null) {
     if (match.index > last) {
       nodes.push(text.slice(last, match.index));
@@ -36,10 +33,7 @@ function renderInline(
     const key = `${keyPrefix}-${index++}`;
     if (token.startsWith("`")) {
       nodes.push(
-        <code
-          key={key}
-          className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]"
-        >
+        <code key={key} className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]">
           {token.slice(1, -1)}
         </code>,
       );
@@ -73,9 +67,7 @@ function renderInline(
       } else {
         const marker = Number(token.slice(1, -1));
         const cited =
-          citations && marker >= 1 && marker <= citations.length
-            ? citations[marker - 1]
-            : null;
+          citations && marker >= 1 && marker <= citations.length ? citations[marker - 1] : null;
         nodes.push(
           <a
             key={key}
@@ -135,13 +127,7 @@ function CodeBlock({ code, lang }: { code: string; lang?: string }) {
   );
 }
 
-export function Markdown({
-  text,
-  citations,
-}: {
-  text: string;
-  citations?: Citation[];
-}) {
+export function Markdown({ text, citations }: { text: string; citations?: Citation[] }) {
   const lines = (text ?? "").replace(/\r\n/g, "\n").split("\n");
   const blocks: ReactNode[] = [];
   let i = 0;
@@ -177,9 +163,7 @@ export function Markdown({
           key={`b${key++}`}
           className={cn(
             "font-heading text-foreground",
-            level <= 2
-              ? "mt-5 text-base font-medium tracking-tight"
-              : "mt-4 text-sm font-medium",
+            level <= 2 ? "mt-5 text-base font-medium tracking-tight" : "mt-4 text-sm font-medium",
           )}
         >
           {renderInline(heading[2], `h${key}`, citations)}

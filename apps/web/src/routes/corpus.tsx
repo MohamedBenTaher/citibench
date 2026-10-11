@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
 import { CorpusBrowser } from "@/components/corpus-browser";
 import { ErrorAlert } from "@/components/error-alert";
@@ -7,14 +7,8 @@ import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -44,17 +38,15 @@ function formatLastIndex(iso: string | null): string {
   if (Number.isNaN(date.getTime())) {
     return iso.slice(0, 16);
   }
-  return (
-    new Intl.DateTimeFormat("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "UTC",
-    }).format(date) + " UTC"
-  );
+  return `${new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  }).format(date)} UTC`;
 }
 
 export const Route = createFileRoute("/corpus")({
@@ -70,8 +62,7 @@ export const Route = createFileRoute("/corpus")({
     } catch (error) {
       return {
         stats: EMPTY,
-        loadError:
-          error instanceof Error ? error.message : "failed to load stats",
+        loadError: error instanceof Error ? error.message : "failed to load stats",
       };
     }
   },
@@ -88,10 +79,7 @@ function CorpusPage() {
   const [sourceUrl, setSourceUrl] = useState("");
   const isEmpty = stats.doc_count === 0 && stats.chunk_count === 0;
 
-  async function runIngest(
-    body: IngestBody,
-    options?: { skipConfirm?: boolean },
-  ) {
+  async function runIngest(body: IngestBody, options?: { skipConfirm?: boolean }) {
     if (
       !options?.skipConfirm &&
       !window.confirm(
@@ -190,17 +178,11 @@ function CorpusPage() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          disabled={busy}
-          onClick={() => void runIngest({})}
-        >
+        <Button type="button" disabled={busy} onClick={() => void runIngest({})}>
           {busy ? "Indexing…" : "Ingest / Re-index"}
         </Button>
         {isEmpty ? (
-          <p className="text-sm text-muted-foreground">
-            Index is empty — ingest the freeze.
-          </p>
+          <p className="text-sm text-muted-foreground">Index is empty — ingest the freeze.</p>
         ) : null}
       </div>
 
@@ -210,8 +192,8 @@ function CorpusPage() {
         <CardHeader>
           <CardTitle>Your sources</CardTitle>
           <CardDescription>
-            HTTPS URL or upload. Default cap is 64 MiB. Private/loopback hosts
-            are rejected. This does not replace the eval freeze.
+            HTTPS URL or upload. Default cap is 64 MiB. Private/loopback hosts are rejected. This
+            does not replace the eval freeze.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -252,27 +234,21 @@ function CorpusPage() {
       </Card>
 
       <details className="text-sm text-muted-foreground">
-        <summary className="cursor-pointer font-medium text-foreground">
-          About re-indexing
-        </summary>
+        <summary className="cursor-pointer font-medium text-foreground">About re-indexing</summary>
         <p className="mt-2">
-          Re-indexing is idempotent: documents are replaced, not duplicated. A full
-          wipe is available only when the operator has enabled it. Embeddings run
-          locally; the first ingest downloads the model once.
+          Re-indexing is idempotent: documents are replaced, not duplicated. A full wipe is
+          available only when the operator has enabled it. Embeddings run locally; the first ingest
+          downloads the model once.
         </p>
       </details>
 
-      {loadError ? (
-        <ErrorAlert title="Corpus stats" message={loadError} />
-      ) : null}
+      {loadError ? <ErrorAlert title="Corpus stats" message={loadError} /> : null}
       {actionError ? <ErrorAlert title="Ingest" message={actionError} /> : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Failures</CardTitle>
-          <CardDescription>
-            Snapshot rows that did not land in the index.
-          </CardDescription>
+          <CardDescription>Snapshot rows that did not land in the index.</CardDescription>
         </CardHeader>
         <CardContent>
           {stats.failures.length === 0 ? (
@@ -293,9 +269,7 @@ function CorpusPage() {
                     </TableCell>
                     <TableCell className="whitespace-normal">
                       {row.error}
-                      <div className="text-xs text-muted-foreground">
-                        {row.source_url}
-                      </div>
+                      <div className="text-xs text-muted-foreground">{row.source_url}</div>
                     </TableCell>
                   </TableRow>
                 ))}

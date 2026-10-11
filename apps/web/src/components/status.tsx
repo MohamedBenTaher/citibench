@@ -1,8 +1,8 @@
-import { ErrorComponent, useRouter } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
+import { ErrorComponent, useRouter } from "@tanstack/react-router";
+import { ErrorAlert } from "@/components/error-alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ErrorAlert } from "@/components/error-alert";
 
 export function RoutePending({ label }: { label: string }) {
   return (

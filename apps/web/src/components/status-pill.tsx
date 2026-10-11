@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   AlertCircleIcon,
   CancelCircleIcon,
   CheckmarkCircle02Icon,
   CircleQuestionMarkIcon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type StatusTone = "success" | "warning" | "danger" | "info" | "neutral";

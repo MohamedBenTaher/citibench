@@ -1,5 +1,5 @@
-import * as React from "react";
 import { cn } from "cn";
+import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -75,8 +75,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ?? itemConfig.color;
+    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ?? itemConfig.color;
     return color ? `  --color-${key}: ${color};` : null;
   })
   .join("\n")}
@@ -316,11 +315,7 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
   let configLabelKey = key;
   if (key in payload && typeof payload[key as keyof typeof payload] === "string") {
     configLabelKey = payload[key as keyof typeof payload] as string;
-  } else if (
-    nested &&
-    key in nested &&
-    typeof nested[key as keyof typeof nested] === "string"
-  ) {
+  } else if (nested && key in nested && typeof nested[key as keyof typeof nested] === "string") {
     configLabelKey = nested[key as keyof typeof nested] as string;
   }
   return configLabelKey in config ? config[configLabelKey] : config[key];
@@ -328,9 +323,9 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
 
 export {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+  ChartTooltip,
+  ChartTooltipContent,
 };

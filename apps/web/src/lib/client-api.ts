@@ -5,10 +5,7 @@ export function publicApiBase(): string {
   return fromEnv.replace(/\/$/, "");
 }
 
-export async function clientApiJson<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
+export async function clientApiJson<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${publicApiBase()}${path}`, {
@@ -27,10 +24,7 @@ export async function clientApiJson<T>(
     throw new ApiError(`HTTP ${response.status}`, response.status);
   }
   if (!response.ok) {
-    throw new ApiError(
-      formatApiDetail(data.detail) ?? `HTTP ${response.status}`,
-      response.status,
-    );
+    throw new ApiError(formatApiDetail(data.detail) ?? `HTTP ${response.status}`, response.status);
   }
   return data;
 }

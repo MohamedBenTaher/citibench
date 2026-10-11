@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -35,7 +35,11 @@ function AboutPage() {
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
             The circuit is{" "}
-            <Link to="/corpus" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
+            <Link
+              to="/corpus"
+              preload="intent"
+              className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
+            >
               Corpus
             </Link>
             ,{" "}
@@ -47,19 +51,27 @@ function AboutPage() {
               Ask
             </Link>
             ,{" "}
-            <Link to="/traces" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
+            <Link
+              to="/traces"
+              preload="intent"
+              className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
+            >
               Traces
             </Link>
             , and{" "}
-            <Link to="/evals" preload="intent" className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}>
+            <Link
+              to="/evals"
+              preload="intent"
+              className={cn(buttonVariants({ variant: "link" }), "h-auto px-0")}
+            >
               Evals
             </Link>
-            . Every step is inspectable: retrieved chunks, scores, citations, and the
-            final decision.
+            . Every step is inspectable: retrieved chunks, scores, citations, and the final
+            decision.
           </p>
           <p>
-            If the corpus cannot support the question, Citebench abstains. It never
-            invents a password, a payroll row, or a citation.
+            If the corpus cannot support the question, Citebench abstains. It never invents a
+            password, a payroll row, or a citation.
           </p>
         </CardContent>
       </Card>
@@ -73,13 +85,13 @@ function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            The corpus is a pinned snapshot: documents are fetched once, hashed, and
-            indexed with their license recorded. Re-indexing replaces the pinned
-            documents; a full wipe is opt-in.
+            The corpus is a pinned snapshot: documents are fetched once, hashed, and indexed with
+            their license recorded. Re-indexing replaces the pinned documents; a full wipe is
+            opt-in.
           </p>
           <p>
-            You can add your own HTTPS page or file from the Corpus tab. A source that
-            cannot be fetched is reported, and the last good copy stays indexed.
+            You can add your own HTTPS page or file from the Corpus tab. A source that cannot be
+            fetched is reported, and the last good copy stays indexed.
           </p>
         </CardContent>
       </Card>
@@ -91,17 +103,17 @@ function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            Answers are generated with Groq <code>openai/gpt-oss-20b</code>. A live key is
-            required to generate; ingest and retrieve run without it.
+            Answers are generated with Groq <code>openai/gpt-oss-20b</code>. A live key is required
+            to generate; ingest and retrieve run without it.
           </p>
           <p>
-            Embeddings are local <code>nomic-embed-text-v1.5</code> (768-d). The first
-            ingest downloads the weights once into a local cache.
+            Embeddings are local <code>nomic-embed-text-v1.5</code> (768-d). The first ingest
+            downloads the weights once into a local cache.
           </p>
           <p>
-            Retrieval is hybrid: dense vectors plus full-text search, fused with
-            Reciprocal Rank Fusion, then re-ranked by a cross-encoder down to the top
-            results. Citations are always a subset of the retrieved chunks.
+            Retrieval is hybrid: dense vectors plus full-text search, fused with Reciprocal Rank
+            Fusion, then re-ranked by a cross-encoder down to the top results. Citations are always
+            a subset of the retrieved chunks.
           </p>
         </CardContent>
       </Card>
@@ -113,17 +125,16 @@ function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            Faithfulness is checked against a 0.7 gate. Context precision and answer
-            relevancy are logged alongside it. Unmeasured values are shown as such —
-            never estimated.
+            Faithfulness is checked against a 0.7 gate. Context precision and answer relevancy are
+            logged alongside it. Unmeasured values are shown as such — never estimated.
           </p>
           <p>
-            Redteam runs ten attack cases covering prompt injection, PII leaks, and
-            jailbreaks; a pass is a refusal.
+            Redteam runs ten attack cases covering prompt injection, PII leaks, and jailbreaks; a
+            pass is a refusal.
           </p>
           <p>
-            Every ask writes a trace. Traces are stored locally and an external tracing
-            backend can be connected.
+            Every ask writes a trace. Traces are stored locally and an external tracing backend can
+            be connected.
           </p>
         </CardContent>
       </Card>

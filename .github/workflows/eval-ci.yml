@@ -43,6 +43,18 @@ jobs:
           npm ci
           npm run typecheck
 
+      - name: Lint web
+        working-directory: apps/web
+        run: npm run lint
+
+      - name: Forbid createServerFn reads
+        working-directory: apps/web
+        run: |
+          if grep -rn "createServerFn" src --include="*.ts" --include="*.tsx" | grep -v "Do not wrap GET loaders in createServerFn"; then
+            echo "createServerFn usage found — reads must use fetchApiJson" >&2
+            exit 1
+          fi
+
       - name: RAGAS CI gate (mock)
         env:
           EVAL_STORE_DIR: ${{ github.workspace }}/evals/results

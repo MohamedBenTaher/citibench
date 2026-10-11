@@ -1,13 +1,3 @@
-import type { ReactNode } from "react";
-import {
-  HeadContent,
-  Link,
-  Outlet,
-  Scripts,
-  createRootRoute,
-  useRouterState,
-} from "@tanstack/react-router";
-import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Activity01Icon,
   Database01Icon,
@@ -17,6 +7,16 @@ import {
   ListTreeIcon,
   SparklesIcon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  createRootRoute,
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  useRouterState,
+} from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { RouteError } from "@/components/status";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -136,11 +136,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
 
           <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
             <aside className="sticky top-0 hidden h-dvh flex-col border-r border-sidebar-border bg-sidebar lg:flex">
-              <Link
-                to="/"
-                preload="intent"
-                className="flex items-center gap-2.5 px-4 py-4"
-              >
+              <Link to="/" preload="intent" className="flex items-center gap-2.5 px-4 py-4">
                 <CitebenchMark className="size-6" />
                 <span className="font-heading text-sm font-semibold tracking-tight text-sidebar-foreground">
                   Citebench
@@ -176,12 +172,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
                   aria-label="Primary"
                 >
                   {PRIMARY_NAV.map((item) => (
-                    <NavLinkItem
-                      key={item.to}
-                      item={item}
-                      pathname={pathname}
-                      compact
-                    />
+                    <NavLinkItem key={item.to} item={item} pathname={pathname} compact />
                   ))}
                 </nav>
                 <ThemeToggle />

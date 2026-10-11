@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, ExternalLinkIcon, File01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useCallback, useEffect, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,8 +91,7 @@ export function CorpusBrowser() {
             Browse the freeze
           </h2>
           <p className="text-sm text-muted-foreground">
-            Every indexed document, its sections, and chunk previews. Read the floor
-            before you ask.
+            Every indexed document, its sections, and chunk previews. Read the floor before you ask.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

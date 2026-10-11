@@ -1,14 +1,7 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-  type KeyboardEvent,
-} from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { ExternalLinkIcon, Loading03Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CitebenchMark } from "@/components/citebench-mark";
 import { ErrorAlert } from "@/components/error-alert";
@@ -18,15 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientApiJson } from "@/lib/client-api";
 import { getCitedChunks, getCorpusFacets, getCorpusSuggestions } from "@/lib/server";
-import { cn } from "@/lib/utils";
 import type {
-  CitedChunk,
   Citation,
+  CitedChunk,
   CorpusFacets,
   CorpusSuggestion,
   GenerateResult,
   RetrievalHit,
 } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/playground")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
@@ -59,6 +52,7 @@ function SearchBar({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: value triggers re-measure on text change
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) {
@@ -307,11 +301,17 @@ function PlaygroundPage() {
             Ask the bench
           </h1>
           <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-            Grounded answers with citations, or an honest abstain. One question over the
-            frozen corpus.
+            Grounded answers with citations, or an honest abstain. One question over the frozen
+            corpus.
           </p>
         </div>
-        <SearchBar value={query} onChange={setQuery} onSubmit={() => void ask()} busy={busy} autoFocus />
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          onSubmit={() => void ask()}
+          busy={busy}
+          autoFocus
+        />
         <FilterRow
           facets={facets}
           product={product}
@@ -329,7 +329,13 @@ function PlaygroundPage() {
   return (
     <>
       <div className="space-y-2 lg:sticky lg:top-0 lg:z-10 lg:-mx-6 lg:border-b lg:border-border lg:bg-background/85 lg:px-6 lg:py-3 lg:backdrop-blur">
-        <SearchBar value={query} onChange={setQuery} onSubmit={() => void ask()} busy={busy} compact />
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          onSubmit={() => void ask()}
+          busy={busy}
+          compact
+        />
         <FilterRow
           facets={facets}
           product={product}
@@ -375,12 +381,10 @@ function PlaygroundPage() {
 
               {result.terminal === "abstain" ? (
                 <div className="border-l-2 border-warning bg-warning/10 px-4 py-4">
-                  <p className="font-heading text-lg font-medium tracking-tight">
-                    {result.answer}
-                  </p>
+                  <p className="font-heading text-lg font-medium tracking-tight">{result.answer}</p>
                   <p className="mt-2 max-w-2xl text-pretty text-sm leading-relaxed text-muted-foreground">
-                    The frozen corpus does not contain sufficient evidence, so the bench
-                    refuses rather than inventing an answer or a citation.
+                    The frozen corpus does not contain sufficient evidence, so the bench refuses
+                    rather than inventing an answer or a citation.
                   </p>
                 </div>
               ) : (
@@ -389,7 +393,9 @@ function PlaygroundPage() {
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums">{result.latency_ms.toFixed(1)} ms</span>
-                <span className="font-mono tabular-nums">${result.cost.usd_estimate.toFixed(6)}</span>
+                <span className="font-mono tabular-nums">
+                  ${result.cost.usd_estimate.toFixed(6)}
+                </span>
                 <span>
                   model <code className="font-mono">{result.model}</code>
                 </span>
@@ -437,16 +443,18 @@ function PlaygroundPage() {
                             return (
                               <tr
                                 key={hit.chunk_id}
-                                className={cn("border-t border-border", cited && "bg-success/[0.06]")}
+                                className={cn(
+                                  "border-t border-border",
+                                  cited && "bg-success/[0.06]",
+                                )}
                               >
-                                <td className="px-3 py-2 font-mono tabular-nums">
-                                  {hit.rank}
-                                </td>
+                                <td className="px-3 py-2 font-mono tabular-nums">{hit.rank}</td>
                                 <td className="px-3 py-2">
                                   <span className="flex items-center gap-1.5">
                                     {cited ? (
                                       <span
                                         className="size-1.5 rounded-full bg-success"
+                                        role="img"
                                         aria-label="cited"
                                       />
                                     ) : null}

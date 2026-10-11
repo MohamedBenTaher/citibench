@@ -1,7 +1,8 @@
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ErrorAlert } from "@/components/error-alert";
+import { EvalMetricChart, RedteamChart } from "@/components/eval-charts";
 import { PageHeader } from "@/components/page-header";
 import { RetrievalPanel } from "@/components/retrieval-panel";
 import { StatCards } from "@/components/stat-cards";
@@ -17,11 +18,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { EvalMetricChart, RedteamChart } from "@/components/eval-charts";
-import { cn } from "@/lib/utils";
 import { clientApiJson } from "@/lib/client-api";
 import { getEvalLatest, getRedteamLatest, getRetrievalLatest } from "@/lib/server";
 import type { MetricName, RedteamCase, RetrievalReport } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const METRICS: { key: MetricName; label: string }[] = [
   { key: "faithfulness", label: "Faithfulness" },
@@ -153,9 +153,8 @@ function EvalsPage() {
         <CardHeader>
           <CardTitle>Retrieval quality</CardTitle>
           <CardDescription>
-            Hand-labeled questions with a known source document. Recall@k, MRR, and nDCG
-            measure whether retrieval finds the evidence; the matrix separates answering
-            from abstaining.
+            Hand-labeled questions with a known source document. Recall@k, MRR, and nDCG measure
+            whether retrieval finds the evidence; the matrix separates answering from abstaining.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -182,8 +181,8 @@ function EvalsPage() {
         <CardHeader>
           <CardTitle>Answer quality</CardTitle>
           <CardDescription>
-            Latest faithfulness, context precision, and answer relevancy over the frozen
-            evaluation set. The {threshold.toFixed(1)} gate applies to faithfulness.
+            Latest faithfulness, context precision, and answer relevancy over the frozen evaluation
+            set. The {threshold.toFixed(1)} gate applies to faithfulness.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -195,19 +194,10 @@ function EvalsPage() {
               <p className="font-mono text-4xl font-semibold tabular-nums">
                 {hasRun ? formatScore(metrics?.faithfulness) : "unmeasured"}
               </p>
-              {hasRun && latest?.mode ? (
-                <Badge variant="outline">{latest.mode}</Badge>
-              ) : null}
+              {hasRun && latest?.mode ? <Badge variant="outline">{latest.mode}</Badge> : null}
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p>
-                Gate:{" "}
-                {hasRun
-                  ? latest?.gate_passed
-                    ? "passed"
-                    : "failed"
-                  : "unmeasured"}
-              </p>
+              <p>Gate: {hasRun ? (latest?.gate_passed ? "passed" : "failed") : "unmeasured"}</p>
               {hasRun && latest?.gate_reason ? <p>{latest.gate_reason}</p> : null}
               <p>The {threshold.toFixed(1)} gate applies to faithfulness.</p>
             </div>
@@ -227,8 +217,8 @@ function EvalsPage() {
 
           {!hasRun ? (
             <p className="text-sm text-muted-foreground">
-              No eval run yet. Scores appear here once an evaluation has completed; nothing
-              is estimated.
+              No eval run yet. Scores appear here once an evaluation has completed; nothing is
+              estimated.
             </p>
           ) : (
             <>
@@ -270,8 +260,8 @@ function EvalsPage() {
         <CardHeader>
           <CardTitle>Redteam</CardTitle>
           <CardDescription>
-            Ten attack cases across prompt injection, PII leaks, and jailbreaks. A pass is a
-            refusal — no answer, no citation, no leak.
+            Ten attack cases across prompt injection, PII leaks, and jailbreaks. A pass is a refusal
+            — no answer, no citation, no leak.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -305,10 +295,7 @@ function EvalsPage() {
               </TableHeader>
               <TableBody>
                 {redteamCases.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.passed === false ? "selected" : undefined}
-                  >
+                  <TableRow key={row.id} data-state={row.passed === false ? "selected" : undefined}>
                     <TableCell>
                       <code>{row.id}</code>
                     </TableCell>

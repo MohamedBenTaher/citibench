@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { ErrorAlert } from "@/components/error-alert";
-import { StatusPill } from "@/components/status-pill";
 import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
+import { StatusPill } from "@/components/status-pill";
+import { TraceCharts } from "@/components/trace-charts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TraceCharts } from "@/components/trace-charts";
 import { getTrace, getTraces } from "@/lib/server";
 import type { Citation, JsonValue, SpanKind, SpanStatus, TraceList } from "@/lib/types";
 
@@ -35,8 +35,7 @@ type TracesSearch = {
 
 function tracesSearch(search: Record<string, unknown>): TracesSearch {
   return {
-    run_id:
-      typeof search.run_id === "string" && search.run_id ? search.run_id : undefined,
+    run_id: typeof search.run_id === "string" && search.run_id ? search.run_id : undefined,
   };
 }
 
@@ -215,9 +214,7 @@ function TracesPage() {
           RunTrace exists — they do not invent latency or cost.
         </p>
       ) : (
-        <>
-          <TraceCharts traces={list.traces} />
-        </>
+        <TraceCharts traces={list.traces} />
       )}
 
       {list && list.traces.length > 0 ? (
@@ -238,53 +235,52 @@ function TracesPage() {
                 {[...list.traces]
                   .sort(
                     (a, b) =>
-                      (a.failed ? 0 : a.abstained ? 1 : 2) -
-                        (b.failed ? 0 : b.abstained ? 1 : 2) ||
+                      (a.failed ? 0 : a.abstained ? 1 : 2) - (b.failed ? 0 : b.abstained ? 1 : 2) ||
                       b.started_at.localeCompare(a.started_at),
                   )
                   .map((row) => (
-                  <TableRow
-                    key={row.run_id}
-                    data-state={selectedId === row.run_id ? "selected" : undefined}
-                  >
-                    <TableCell className="whitespace-normal">
-                      <Button
-                        type="button"
-                        variant="link"
-                        className="h-auto px-0"
-                        onClick={() => selectRun(row.run_id)}
-                      >
-                        {row.query.trim() || "(empty query)"}
-                      </Button>
-                      <div className="text-xs text-muted-foreground">
-                        <code>{row.run_id.slice(0, 8)}</code>
-                        {row.langfuse_trace_id
-                          ? ` · lf ${row.langfuse_trace_id.slice(0, 8)}`
-                          : ""}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusPill
-                        tone={row.failed ? "danger" : row.abstained ? "warning" : "success"}
-                      >
-                        {row.failed ? "failed" : row.abstained ? "abstain" : "generate"}
-                      </StatusPill>
-                      {row.rerank_skipped ? (
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          · rerank skipped
-                        </span>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      <code>{row.model || "—"}</code>
-                    </TableCell>
-                    <TableCell>
-                      {row.tokens_in} / {row.tokens_out}
-                    </TableCell>
-                    <TableCell>{row.latency_ms.toFixed(1)} ms</TableCell>
-                    <TableCell>${row.cost.usd_estimate.toFixed(6)}</TableCell>
-                  </TableRow>
-                ))}
+                    <TableRow
+                      key={row.run_id}
+                      data-state={selectedId === row.run_id ? "selected" : undefined}
+                    >
+                      <TableCell className="whitespace-normal">
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto px-0"
+                          onClick={() => selectRun(row.run_id)}
+                        >
+                          {row.query.trim() || "(empty query)"}
+                        </Button>
+                        <div className="text-xs text-muted-foreground">
+                          <code>{row.run_id.slice(0, 8)}</code>
+                          {row.langfuse_trace_id
+                            ? ` · lf ${row.langfuse_trace_id.slice(0, 8)}`
+                            : ""}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusPill
+                          tone={row.failed ? "danger" : row.abstained ? "warning" : "success"}
+                        >
+                          {row.failed ? "failed" : row.abstained ? "abstain" : "generate"}
+                        </StatusPill>
+                        {row.rerank_skipped ? (
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            · rerank skipped
+                          </span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <code>{row.model || "—"}</code>
+                      </TableCell>
+                      <TableCell>
+                        {row.tokens_in} / {row.tokens_out}
+                      </TableCell>
+                      <TableCell>{row.latency_ms.toFixed(1)} ms</TableCell>
+                      <TableCell>${row.cost.usd_estimate.toFixed(6)}</TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </CardContent>
@@ -329,10 +325,7 @@ function TracesPage() {
                       </Badge>
                     </CardTitle>
                     <CardDescription>
-                      {span.parent_id
-                        ? `child of ${span.parent_id.slice(0, 12)}`
-                        : "root"}{" "}
-                      ·{" "}
+                      {span.parent_id ? `child of ${span.parent_id.slice(0, 12)}` : "root"} ·{" "}
                       <span title={span.started_at}>{formatSpanTime(span.started_at)}</span>
                       {" → "}
                       <span title={span.finished_at}>{formatSpanTime(span.finished_at)}</span>
@@ -374,22 +367,14 @@ function BackendNote({ list }: { list: TraceList | null }) {
     <p className="text-sm text-muted-foreground">
       Storage:{" "}
       <code>
-        {list
-          ? backendLabel(list.traces.some((row) => row.langfuse_trace_id) ? "set" : null)
-          : "—"}
+        {list ? backendLabel(list.traces.some((row) => row.langfuse_trace_id) ? "set" : null) : "—"}
       </code>
       . Every span is kept; chunks are referenced by pointer, not copied into the trace.
     </p>
   );
 }
 
-function ChunkTable({
-  refs,
-  empty = "None.",
-}: {
-  refs: Citation[];
-  empty?: string;
-}) {
+function ChunkTable({ refs, empty = "None." }: { refs: Citation[]; empty?: string }) {
   if (refs.length === 0) {
     return <p className="text-sm text-muted-foreground">{empty}</p>;
   }

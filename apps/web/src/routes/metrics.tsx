@@ -1,16 +1,10 @@
-import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ErrorAlert } from "@/components/error-alert";
 import { PageHeader } from "@/components/page-header";
 import { StatCards } from "@/components/stat-cards";
 import { RouteError, RoutePending } from "@/components/status";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMetrics } from "@/lib/server";
 import type { MetricsSnapshot } from "@/lib/types";
 
@@ -83,11 +77,7 @@ function MetricsPage() {
         <Link to="/traces" preload="intent" className={buttonVariants({ variant: "outline" })}>
           Log
         </Link>
-        <Link
-          to="/playground"
-          preload="intent"
-          className={buttonVariants({ variant: "outline" })}
-        >
+        <Link to="/playground" preload="intent" className={buttonVariants({ variant: "outline" })}>
           Run a set
         </Link>
       </div>
@@ -103,33 +93,27 @@ function MetricsPage() {
         <CardHeader>
           <CardTitle>Ask cost</CardTitle>
           <CardDescription>
-            p50/p95 over RunTrace.latency_ms where latency_ms &gt; 0. Cost is mean
-            usd_estimate × 1000. Empty store is unmeasured, not $0.
+            p50/p95 over RunTrace.latency_ms where latency_ms &gt; 0. Cost is mean usd_estimate ×
+            1000. Empty store is unmeasured, not $0.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {noAsks ? (
             <p className="text-sm text-muted-foreground">
-              No billed asks yet. Run a set in Playground, then refresh. Do not treat
-              missing p95 as zero.
+              No billed asks yet. Run a set in Playground, then refresh. Do not treat missing p95 as
+              zero.
             </p>
           ) : null}
           <StatCards
             items={[
               {
                 label: "p50 latency",
-                value:
-                  latency?.p50 == null
-                    ? "unmeasured"
-                    : `${measured(latency.p50, 1)} ms`,
+                value: latency?.p50 == null ? "unmeasured" : `${measured(latency.p50, 1)} ms`,
                 hint: latency ? `n=${latency.n}` : undefined,
               },
               {
                 label: "p95 latency",
-                value:
-                  latency?.p95 == null
-                    ? "unmeasured"
-                    : `${measured(latency.p95, 1)} ms`,
+                value: latency?.p95 == null ? "unmeasured" : `${measured(latency.p95, 1)} ms`,
                 hint: latency ? `n=${latency.n}` : undefined,
               },
               {
@@ -146,15 +130,15 @@ function MetricsPage() {
         <CardHeader>
           <CardTitle>Last weigh-in</CardTitle>
           <CardDescription>
-            Faithfulness from the latest evaluation, with context precision and answer
-            relevancy alongside. The 0.7 gate applies to faithfulness.
+            Faithfulness from the latest evaluation, with context precision and answer relevancy
+            alongside. The 0.7 gate applies to faithfulness.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {noEval ? (
             <p className="text-sm text-muted-foreground">
-              No eval run yet. Scores appear here after an evaluation completes — nothing
-              is estimated.
+              No eval run yet. Scores appear here after an evaluation completes — nothing is
+              estimated.
             </p>
           ) : null}
           <StatCards
@@ -173,8 +157,7 @@ function MetricsPage() {
               },
               {
                 label: "Rows scored",
-                value:
-                  faith?.n_scored == null ? "unmeasured" : String(faith.n_scored),
+                value: faith?.n_scored == null ? "unmeasured" : String(faith.n_scored),
               },
             ]}
           />
@@ -215,7 +198,9 @@ function MetricsPage() {
           <li>Cost: {cost?.method ?? "—"}</li>
           <li>Faithfulness: {faith?.method ?? "—"}</li>
         </ul>
-        <p className="mt-2">Values are read from the live metrics endpoint; nothing is estimated.</p>
+        <p className="mt-2">
+          Values are read from the live metrics endpoint; nothing is estimated.
+        </p>
       </details>
     </>
   );

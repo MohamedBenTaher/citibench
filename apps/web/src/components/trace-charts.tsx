@@ -1,12 +1,12 @@
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@/components/ui/chart";
 import type { TraceRow } from "@/lib/types";
 
@@ -36,9 +36,7 @@ const OUTCOME_CONFIG = {
 const MAX_SERIES = 20;
 
 function chronological(rows: TraceRow[]): TraceRow[] {
-  return [...rows]
-    .sort((a, b) => a.started_at.localeCompare(b.started_at))
-    .slice(-MAX_SERIES);
+  return [...rows].sort((a, b) => a.started_at.localeCompare(b.started_at)).slice(-MAX_SERIES);
 }
 
 export function TraceCharts({ traces }: { traces: TraceRow[] }) {
@@ -77,8 +75,8 @@ export function TraceCharts({ traces }: { traces: TraceRow[] }) {
         <CardHeader>
           <CardTitle>Latency and cost</CardTitle>
           <CardDescription>
-            Last {series.length} run{series.length === 1 ? "" : "s"} in start order. Scores are
-            from stored RunTraces, not estimates.
+            Last {series.length} run{series.length === 1 ? "" : "s"} in start order. Scores are from
+            stored RunTraces, not estimates.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -113,9 +111,7 @@ export function TraceCharts({ traces }: { traces: TraceRow[] }) {
                     formatter={(value, name) => {
                       const key = String(name);
                       if (key === "cost" && typeof value === "number") {
-                        return (
-                          <span className="font-mono tabular-nums">${value.toFixed(6)}</span>
-                        );
+                        return <span className="font-mono tabular-nums">${value.toFixed(6)}</span>;
                       }
                       if (key === "latency" && typeof value === "number") {
                         return (
