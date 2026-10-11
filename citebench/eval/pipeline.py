@@ -219,7 +219,7 @@ def _soft_settings() -> Settings:
 
 
 def _contexts_from_result(result: Any) -> list[str]:
-    texts: list[str] = []
-    for item in getattr(result, "retrieved_chunk_ids", None) or []:
-        texts.append(str(item))
-    return texts
+    hits = getattr(result, "retrieved_hits", None)
+    if hits:
+        return [str(hit.text) for hit in hits if hit.text]
+    return [str(item) for item in (getattr(result, "retrieved_chunk_ids", None) or [])]

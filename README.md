@@ -183,7 +183,7 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 | --- | --- | --- |
 | Corpus docs | 1487 | Pinned URLs in `corpus/MANIFEST.md` (freeze 2026-09-10). |
 | Corpus pages | 1600 | HTML snapshot = 1 page; xv6 PDF = 114. `measured-under-local-snapshots`. |
-| Corpus chunks | 31288 | `measured-under-live-ingest-2026-09-12`. tiktoken cl100k_base 512/64; `GET /corpus/stats`. |
+| Corpus chunks | 31288 | `measured-under-local-snapshots`. tiktoken cl100k_base 512/64; `GET /corpus/stats`. |
 | Retrieval Recall@8 | 0.923 | Hand-labeled qrels, 26 answerable questions (`evals/results/retrieval.json`). Local, no LLM. |
 | Retrieval MRR | 0.721 | Same run. |
 | Retrieval nDCG@8 | 0.769 | Same run. `python -m citebench.eval.retrieval --compare` for config deltas. |
@@ -191,8 +191,8 @@ Counted from this repo, or tagged with the measurement. An em dash means we did 
 | False-abstain rate | 0.000 | Retrieval confidence gate on 26 answerable questions. |
 | Faithfulness | 1.000 | `measured-under-mock-ragas-judge` on 20 CI rows. Fixture judge, not a live Groq/RAGAS run. Gate is 0.7. |
 | Context precision | 1.000 | Same mock artifact (`evals/results/latest.json`). |
-| Retrieve latency p50 | 297 ms | Retrieve-only, 31,288 chunks, n=50 (`scripts/bench-retrieve.py` → `evals/results/retrieve-bench.json`). `measured-under-retrieve-bench-2026-09-14`. Under the 400 ms budget after the TinyBERT rerank swap (plan 023). |
-| Retrieve latency p95 | 316 ms | Same run. Rerank ≈100 ms, dense scan ≈130 ms of it. |
+| Retrieve latency p50 | 303 ms | Retrieve-only, 31,288 chunks, n=50 (`scripts/bench-retrieve.py` → `evals/results/retrieve-bench.json`). `measured-under-retrieve-bench-2026-09-15`. Under the 400 ms budget after the TinyBERT rerank swap (plan 023). |
+| Retrieve latency p95 | 353 ms | Same run. Rerank ≈101 ms, dense scan ≈136 ms of it. |
 | Ask latency p95 | — | Unmeasured; full `/generate` trace latency once enough runs exist. |
 | Cost / 1k queries | — | Unmeasured. When traces exist: mean `citebench.cost.v1` USD × 1000. |
 

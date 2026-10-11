@@ -328,7 +328,49 @@ def test_evals_api_returns_last_run_and_diff(eval_store: Path) -> None:
 def test_committed_live_artifact_is_not_mock() -> None:
     live = REPO_ROOT / "evals" / "results" / "live.json"
     if not live.exists():
-        return
+        pytest.skip("no committed live.json — run make evals-live before tagging")
     payload = json.loads(live.read_text(encoding="utf-8"))
     assert payload.get("mode") == "live"
     assert payload.get("judge_model")
+
+
+def test_score_row_live_raises_without_groq_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    from citebench.eval.ragas_metrics import score_row
+
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="requires GROQ_API_KEY"):
+        score_row(question="q", answer="a", contexts=["c"], live=True)
+
+
+def test_score_row_live_raises_when_judge_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    from citebench.eval import ragas_metrics
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
+    monkeypatch.setattr(ragas_metrics, "_try_live_ragas", lambda *_a, **_k: None)
+    with pytest.raises(RuntimeError, match="judge unavailable"):
+        ragas_metrics.score_row(question="q", answer="a", contexts=["c"], live=True)
+
+
+def test_contexts_from_result_prefers_chunk_text() -> None:
+    from types import SimpleNamespace
+
+    from citebench.eval.pipeline import _contexts_from_result
+
+    result = SimpleNamespace(
+        retrieved_chunk_ids=["id-1", "id-2", "id-3"],
+        retrieved_hits=[
+            SimpleNamespace(text="chunk one"),
+            SimpleNamespace(text=None),
+            SimpleNamespace(text="chunk three"),
+        ],
+    )
+    assert _contexts_from_result(result) == ["chunk one", "chunk three"]
+
+
+def test_contexts_from_result_falls_back_to_ids() -> None:
+    from types import SimpleNamespace
+
+    from citebench.eval.pipeline import _contexts_from_result
+
+    result = SimpleNamespace(retrieved_chunk_ids=["id-1", "id-2"])
+    assert _contexts_from_result(result) == ["id-1", "id-2"]

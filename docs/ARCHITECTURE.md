@@ -284,8 +284,8 @@ flowchart LR
 - **Faithfulness gate** `≥ 0.7` — mock judge in CI, live RAGAS via
   `scripts/live-evals.sh` (decoupled runtime/eval venvs; ragas conflicts with
   runtime pins, see `apps/api/requirements-eval.txt`).
-- Retrieve Latency budget p95 < 400 ms — measured 316 ms (rerank ~100 ms +
-  dense scan ~130 ms); ANN stays deferred (`DECISIONS.md`).
+- Retrieve Latency budget p95 < 400 ms — measured 353 ms (rerank ~101 ms +
+  dense scan ~136 ms); ANN stays deferred (`DECISIONS.md`).
 - The retrieval confidence gate is what drives the answerability gate;
   `--compare` (Recall@k of config variants) and `scripts/bench-retrieve.py
   --variant` are the honest ablation tools.

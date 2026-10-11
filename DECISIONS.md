@@ -68,8 +68,12 @@ one swap landed, all measured.
    Scoping the claim honestly: a 26-row qrels split can't prove TinyBERT is
    the stronger model in general — it is measured stronger on this labeled
    split, and the artifact is the evidence.
-4. New retrieve-only bench: **p50 297 ms / p95 316 ms** at 31,288 chunks —
-   inside the 400 ms budget (`measured-under-retrieve-bench-2026-09-14`);
+   The MiniLM-L-12-Q baseline (0.904/0.616/0.692, false-answer 0.250) was
+   measured in a 2026-09-13 local run whose MiniLM arm is not committed, so
+   that baseline is not independently reproducible from the repo; the TinyBERT
+   numbers are, in `evals/results/retrieval.json`.
+4. New retrieve-only bench: **p50 303 ms / p95 353 ms** at 31,288 chunks —
+   inside the 400 ms budget (`measured-under-retrieve-bench-2026-09-15`);
    remaining cost is ~130 ms dense scan + ~100 ms rerank. ANN stays deferred
    under the same reasoning as above: shrinking the scan cannot materially
    move p95 now.
@@ -335,7 +339,7 @@ Corpus: 1487 MANIFEST URLs (freeze 2026-09-10) across Kubernetes, Microsoft
 Learn Azure, the PostgreSQL manual, FastAPI, and the MIT xv6 book. Pages =
 HTML snapshot 1, PDF = page count (xv6 = 114): 1600 total. Chunks = tiktoken
 `cl100k_base` 512 / 64, ingested into pgvector on 2026-09-12: 31288, tagged
-`measured-under-live-ingest-2026-09-12`. `evals/results/corpus.json` is the
+`measured-under-local-snapshots`. `evals/results/corpus.json` is the
 offline measure (`measured-under-local-snapshots`) and matches `/corpus/stats`
 exactly; `/metrics` prefers `/corpus/stats` when the DB is reachable.
 

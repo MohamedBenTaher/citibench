@@ -70,13 +70,25 @@ def score_row(
     abstained: bool = False,
     live: bool = False,
 ) -> RagasScores | None:
-    """Score one non-abstain row. Abstain rows return None (excluded from the mean)."""
+    """Score one non-abstain row. Abstain rows return None (excluded from the mean).
+
+    In live mode the judge must run or the call fails loudly — fixture scores
+    are never silently substituted for a live measurement (a live run that
+    cannot judge is a failed run, not a mock run in disguise).
+    """
     if abstained:
         return None
-    if live and os.environ.get("GROQ_API_KEY", "").strip():
+    if live:
+        if not os.environ.get("GROQ_API_KEY", "").strip():
+            raise RuntimeError(
+                "live RAGAS requires GROQ_API_KEY; refusing to fall back to fixture scores"
+            )
         live_scores = _try_live_ragas(question, answer, contexts, expected)
-        if live_scores is not None:
-            return live_scores
+        if live_scores is None:
+            raise RuntimeError(
+                "live RAGAS judge unavailable; refusing to fall back to fixture scores"
+            )
+        return live_scores
     return fixture_ragas_scores(question, answer, contexts, expected)
 
 

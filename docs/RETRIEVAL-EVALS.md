@@ -121,17 +121,17 @@ of these (product, doc_type) via native selects sourced from
 `scripts/bench-retrieve.py` (local, needs Postgres + model caches; **not** a CI
 command) measures retrieve-only latency under a named `RetrieveConfig`
 override (`--variant '{"rerank_pool": 20}'`). Current artifact
-`evals/results/retrieve-bench.json` (`measured-under-retrieve-bench-2026-09-14`,
+`evals/results/retrieve-bench.json` (`measured-under-retrieve-bench-2026-09-15`,
 n=50, 31,288 chunks):
 
 | Quantity | Value |
 |---|---|
-| p50 | 296.7 ms |
-| **p95** | **316.4 ms** (budget 400 ms) |
-| rerank stage | ~97.7 ms |
-| dense scan | ~125.0 ms (brute-force pgvector, **no ANN index**) |
-| lexical (FTS) | ~3.6 ms |
-| query embedding | ~17.3 ms |
+| p50 | 302.7 ms |
+| **p95** | **352.9 ms** (budget 400 ms) |
+| rerank stage | ~100.7 ms |
+| dense scan | ~135.8 ms (brute-force pgvector, **no ANN index**) |
+| lexical (FTS) | ~5.4 ms |
+| query embedding | ~18.6 ms |
 
 Decisions behind the number:
 
@@ -228,6 +228,12 @@ produced it. **No artifact without its tag; no hand-typed number in docs.**
 | 8 | Metadata filters are bound parameters over the documents/chunks join | correctness + safety | plan 017 |
 | 9 | Retrieval metrics are document-level on hand-labeled qrels; artifact is the evidence | claims can't exceed the split's size (26 answers): a 1-row flip ≈ ±0.038 recall | `evals/results/retrieval.json` |
 | 10 | Query rewrite (plan 019) is flag-gated default-off and must win its live ablation or be **deleted** | a rewrite can pull out-of-corpus questions into the corpus | `plans/019-query-rewrite-ablation.md` |
+
+> Provenance note (decision #3): the MiniLM-L-12-Q baseline (0.904 / 0.616 /
+> 0.692, false-answer 0.250) was measured in a 2026-09-13 local run whose
+> MiniLM arm is not committed, so that baseline is not independently
+> reproducible from the repo. The TinyBERT numbers are, in
+> `evals/results/retrieval.json`.
 
 ## Change protocol
 
