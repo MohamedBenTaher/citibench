@@ -1,0 +1,94 @@
+# Citebench on Dokploy — self-contained Compose (api + web + pgvector db).
+#
+# Dokploy setup
+#   1. Create Service → Compose
+#   2. Compose Path: infra/deploy/docker-compose.dokploy.yml
+#   3. Environment tab, set:
+#        POSTGRES_PASSWORD=<pick one>
+#        GROQ_API_KEY=<your key>
+#        VITE_API_URL=https://<api-domain>     # BAKED INTO THE WEB BUNDLE AT BUILD TIME
+#        CORS_ORIGINS=https://<web-domain>
+#   4. Domains tab, add two domains:
+#        <web-domain> -> service "web", port 3000   (the reviewer entry point)
+#        <api-domain> -> service "api", port 8000   (browser calls this directly)
+#   5. Deploy, then seed the corpus from the API container (see DOKPLOY.md).
+#
+# Note: VITE_API_URL is a build arg, so changing the API domain requires a rebuild.
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: citebench
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-citebench}
+      POSTGRES_DB: citebench
+    volumes:
+      - citebench_pgdata:/var/lib/postgresql/data
+      - ../postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U citebench -d citebench"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://citebench:${POSTGRES_PASSWORD:-citebench}@db:5432/citebench
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      CONFIG_PATH: /app/config.yaml
+      CORPUS_DIR: /app/corpus
+      PYTHONPATH: /repo
+      TRACE_STORE_DIR: /tmp/citebench-traces
+      EVAL_STORE_DIR: /app/evals/results
+      REDTEAM_JSONL: /app/evals/redteam.jsonl
+      NOMIC_CACHE_DIR: /tmp/nomic-embed
+      FLASHRANK_CACHE_DIR: /tmp/flashrank
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://localhost}
+      # Fast offline demo corpus (14 URLs). To ingest the full 1,487-doc freeze
+      # instead, set CITEBENCH_MANIFEST=corpus/MANIFEST.md and CITEBENCH_SNAPSHOT_ONLY=0.
+      CITEBENCH_MANIFEST: ${CITEBENCH_MANIFEST:-corpus/v0/MANIFEST.md}
+      CITEBENCH_SNAPSHOT_ONLY: ${CITEBENCH_SNAPSHOT_ONLY:-1}
+    volumes:
+      - ../../config.yaml:/app/config.yaml:ro
+      - ../../corpus:/app/corpus
+      - ../../evals:/app/evals
+      - ../../:/repo:ro
+      - citebench_traces:/tmp/citebench-traces
+      - citebench_nomic:/tmp/nomic-embed
+      - citebench_flashrank:/tmp/flashrank
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../../apps/web
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      NITRO_HOST: 0.0.0.0
+      NITRO_PORT: 3000
+      # Server-only origin for Nitro SSR reads (in-network Compose DNS).
+      API_URL: http://api:8000
+      # Public origin baked into the browser bundle at build time.
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    depends_on:
+      - api
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+volumes:
+  citebench_pgdata:
+  citebench_traces:
+  citebench_nomic:
+  citebench_flashrank:

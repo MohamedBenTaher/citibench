@@ -1,5 +1,8 @@
 # Citebench demo deploy
 
+**Dokploy?** See [`DOKPLOY.md`](DOKPLOY.md) — it has the exact field values for
+the Compose service or three separate applications.
+
 **Run C8 evals on your laptop before provisioning a public host.**
 
 ```bash

@@ -15,8 +15,18 @@ RUN uv sync --frozen --no-dev
 
 COPY apps/api ./apps/api
 
+# Self-contained runtime assets. Compose bind mounts still override these, but
+# the image alone is enough to run (Dokploy application mode, plain `docker run`).
+# corpus/raw is excluded via the repo-root .dockerignore; corpus/v0 snapshots are
+# tracked, so the offline smoke manifest works without network access.
+COPY config.yaml /app/config.yaml
+COPY corpus /app/corpus
+COPY evals /app/evals
+COPY citebench /repo/citebench
+
 WORKDIR /app/apps/api
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/repo
 
 EXPOSE 8000
 

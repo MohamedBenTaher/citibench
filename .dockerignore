@@ -1,0 +1,23 @@
+# The API image builds from the repo root, so keep the context small.
+.git
+.github
+.agents
+.interface-design
+.venv
+.venv-eval
+.venv-laya
+venv
+**/__pycache__
+*.pyc
+node_modules
+apps/web/node_modules
+apps/web/.output
+apps/web/.next
+apps/web/.nitro
+apps/web/tsconfig.tsbuildinfo
+# Raw corpus snapshots come from the runtime bind mount, never the build context.
+corpus/raw
+pgdata
+plans
+*.log
+:memory:.ses

@@ -7,6 +7,9 @@ __pycache__/
 .venv-laya/
 venv/
 dist/
+# Local agent / design tooling — not part of the shipped app.
+.agents/
+.interface-design/
 .DS_Store
 *.log
 # Transient runtime session artifact that appears during local test runs.
