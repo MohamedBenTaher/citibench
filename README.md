@@ -1,5 +1,7 @@
 # Citebench
 
+[![eval-ci](https://github.com/MohamedBenTaher/citibench/actions/workflows/eval-ci.yml/badge.svg)](https://github.com/MohamedBenTaher/citibench/actions/workflows/eval-ci.yml)
+
 Citebench is a **citation-grounded retrieval bench** that measures two things objectively: whether retrieval actually finds the evidence, and whether the system refuses when it cannot.
 
 It answers questions about a **frozen public corpus** (~1,500 Kubernetes, Azure, PostgreSQL, FastAPI, and xv6 docs) and scores whether those answers stay grounded. Retrieval is measured directly — Recall@k, MRR, and nDCG against hand-labeled questions — alongside an answer/abstain calibration matrix. If the corpus cannot support the question, the system must **abstain** — not invent a password, a payroll row, or a citation.
@@ -254,3 +256,11 @@ docker compose --profile langfuse up --build
 - `docs/contracts/` — eval JSONL, traces, hybrid retrieve
 - `docs/mcp.md` — MCP host config
 - `infra/deploy/README.md` — VM / Fly / Railway / Azure
+
+## License
+
+The code is [MIT](./LICENSE). The corpus is a frozen snapshot of third-party
+public documentation (Kubernetes, Microsoft Learn Azure, the PostgreSQL manual,
+FastAPI, and the MIT xv6 book); each document keeps its own source license, and
+the snapshot's `license` column in `corpus/MANIFEST.md` records it. Citebench
+redistributes no corpus content beyond those pinned, attributable snapshots.
