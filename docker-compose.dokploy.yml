@@ -74,6 +74,11 @@ services:
         condition: service_healthy
     expose:
       - "8000"
+    # TEMPORARY no-Traefik fallback: publishes the API on the host so it is
+    # reachable at http://<server-ip>:8081 without a reverse proxy. Remove these
+    # two lines once Dokploy's Traefik is running and the domains work.
+    ports:
+      - "8081:8000"
     restart: unless-stopped
     networks:
       - default
@@ -97,6 +102,10 @@ services:
       - api
     expose:
       - "3000"
+    # TEMPORARY no-Traefik fallback: the reviewer entry point becomes
+    # http://<server-ip>:8080. Remove alongside the api ports block.
+    ports:
+      - "8080:3000"
     restart: unless-stopped
     networks:
       - default
