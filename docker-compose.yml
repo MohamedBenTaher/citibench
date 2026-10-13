@@ -4,9 +4,9 @@ services:
     hostname: db
     container_name: citebench-db
     environment:
-      POSTGRES_USER: citebench
-      POSTGRES_PASSWORD: citebench
-      POSTGRES_DB: citebench
+      POSTGRES_USER: ${POSTGRES_USER:-citebench}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-citebench}
+      POSTGRES_DB: ${POSTGRES_DB:-citebench}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
@@ -14,7 +14,7 @@ services:
       - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U citebench -d citebench"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-citebench} -d ${POSTGRES_DB:-citebench}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -31,7 +31,7 @@ services:
       # falls back to host.docker.internal → published :5432.
       - "host.docker.internal:host-gateway"
     environment:
-      DATABASE_URL: postgresql://citebench:citebench@db:5432/citebench
+      DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/${POSTGRES_DB:-citebench}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_API_BASE: ${GROQ_API_BASE:-https://api.groq.com/openai/v1}
       FLASHRANK_CACHE_DIR: ${FLASHRANK_CACHE_DIR:-/tmp/flashrank}
@@ -88,7 +88,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      DATABASE_URL: postgresql://citebench:citebench@db:5432/langfuse
+      DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/langfuse
       NEXTAUTH_URL: http://localhost:3001
       NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-citebench-nextauth-secret}
       SALT: ${LANGFUSE_SALT:-citebench-langfuse-salt}

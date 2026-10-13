@@ -19,14 +19,14 @@ services:
   db:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: citebench
+      POSTGRES_USER: ${POSTGRES_USER:-citebench}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-citebench}
-      POSTGRES_DB: citebench
+      POSTGRES_DB: ${POSTGRES_DB:-citebench}
     volumes:
       - citebench_pgdata:/var/lib/postgresql/data
       - ../postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U citebench -d citebench"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-citebench} -d ${POSTGRES_DB:-citebench}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -37,7 +37,7 @@ services:
       context: ../..
       dockerfile: apps/api/Dockerfile
     environment:
-      DATABASE_URL: postgresql://citebench:${POSTGRES_PASSWORD:-citebench}@db:5432/citebench
+      DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/${POSTGRES_DB:-citebench}
       GROQ_API_KEY: ${GROQ_API_KEY}
       CONFIG_PATH: /app/config.yaml
       CORPUS_DIR: /app/corpus

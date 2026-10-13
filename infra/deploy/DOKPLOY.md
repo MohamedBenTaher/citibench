@@ -28,10 +28,18 @@ Then, on the same service:
 
 ```env
 POSTGRES_PASSWORD=<pick-a-strong-one>
+POSTGRES_USER=citebench
+POSTGRES_DB=citebench
 GROQ_API_KEY=<https://console.groq.com/keys>
 VITE_API_URL=https://<api-domain>
 CORS_ORIGINS=https://<web-domain>
 ```
+
+> The `db` service reads `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB`,
+> and the `api` service builds its `DATABASE_URL` from the same three. Postgres
+> applies `POSTGRES_*` only when it first initializes an empty data dir — change
+> them after the first deploy only together with wiping the `citebench_pgdata`
+> volume (or an `ALTER ROLE`).
 
 > `VITE_API_URL` is a **build argument** — it is compiled into the browser
 > bundle. Changing it requires a rebuild, not just a restart.
