@@ -45,9 +45,20 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    # API secrets live OUTSIDE the git clone. A Dokploy redeploy recreates this
+    # container from code/, so a key file kept in there gets wiped — and an
+    # empty ${GROQ_API_KEY} substitution would blank it anyway. Create it on the
+    # host (once):
+    #   sudo install -d -m 700 /etc/citebench
+    #   printf 'GROQ_API_KEY=%s\n' '<key>' | sudo tee /etc/citebench/api.env >/dev/null
+    #   sudo chmod 600 /etc/citebench/api.env
+    # `required: false` means a missing file does not fail the deploy.
+    env_file:
+      - path: /etc/citebench/api.env
+        required: false
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/${POSTGRES_DB:-citebench}
-      GROQ_API_KEY: ${GROQ_API_KEY}
+      # GROQ_API_KEY is intentionally NOT set here — see env_file above.
       CONFIG_PATH: /app/config.yaml
       CORPUS_DIR: /app/corpus
       PYTHONPATH: /repo

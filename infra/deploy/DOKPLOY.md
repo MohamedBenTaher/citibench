@@ -236,6 +236,26 @@ curl -sS https://<web-domain>/evals           # HTML, no login wall
 - **The page says "Gotenberg has no UI".** You hit another app on port 3000 —
   Dokploy domains avoid this, so it means the domain is not pointing at `web`.
 
+## Secrets — where the Groq key lives
+
+On Dokploy v0.30.8 the Compose Environment tab is not reliably passed through to
+this compose (no `.env` is written beside it), **and** a redeploy recreates the
+api container from `code/`, so a key file kept inside the clone is wiped. The
+api service therefore reads an `env_file` from **outside** the clone:
+
+```bash
+sudo install -d -m 700 /etc/citebench
+printf 'GROQ_API_KEY=%s\n' '<your-key>' | sudo tee /etc/citebench/api.env >/dev/null
+sudo chmod 600 /etc/citebench/api.env
+```
+
+Then redeploy. `required: false` means a missing file will not fail the deploy —
+the API simply returns 503 on `/generate` with a message saying the key is unset.
+
+Note that `GROQ_API_KEY` is deliberately **not** listed under the api service's
+`environment:` block: an empty `${GROQ_API_KEY}` substitution there would
+override the `env_file` value with an empty string.
+
 ## Files
 
 - `docker-compose.dokploy.yml` (repo root) — the Compose file Path A uses. It
