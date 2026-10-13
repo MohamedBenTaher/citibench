@@ -25,3 +25,5 @@ apps/web/tsconfig.tsbuildinfo
 pgdata/
 corpus/raw/*
 !corpus/raw/.gitkeep
+# Database dumps (e.g. a pg_dump of the ingested corpus, ~125 MB).
+*.dump
