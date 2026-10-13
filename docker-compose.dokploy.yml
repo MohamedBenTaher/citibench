@@ -69,7 +69,7 @@ services:
       REDTEAM_JSONL: /app/evals/redteam.jsonl
       NOMIC_CACHE_DIR: /tmp/nomic-embed
       FLASHRANK_CACHE_DIR: /tmp/flashrank
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://79.143.177.77:8080}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://citibench.apps.mohamedbentaher.com}
       # Absolute path: the API's working dir is /app/apps/api, so a relative
       # manifest path would not resolve. Default is the 14-URL offline smoke
       # corpus, which is baked into the image and needs no network.
@@ -101,10 +101,10 @@ services:
     build:
       context: ./apps/web
       args:
-        # Baked into the browser bundle. Default targets this demo host so the
-        # deploy works without relying on Dokploy's Environment tab; override
-        # with VITE_API_URL when hosting it somewhere else.
-        VITE_API_URL: ${VITE_API_URL:-http://79.143.177.77:8081}
+        # Baked into the browser bundle at build time, so it must be the PUBLIC
+        # HTTPS origin: the app is served over HTTPS, and a plain http:// API URL
+        # is refused by the browser as mixed content ("Failed to fetch").
+        VITE_API_URL: ${VITE_API_URL:-https://citibench-api.apps.mohamedbentaher.com}
     environment:
       HOST: 0.0.0.0
       PORT: 3000
@@ -113,7 +113,7 @@ services:
       # Server-only origin for Nitro SSR reads (in-network Compose DNS).
       API_URL: http://api:8000
       # Public origin baked into the browser bundle at build time.
-      VITE_API_URL: ${VITE_API_URL:-http://79.143.177.77:8081}
+      VITE_API_URL: ${VITE_API_URL:-https://citibench-api.apps.mohamedbentaher.com}
     depends_on:
       - api
     expose:
