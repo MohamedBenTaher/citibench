@@ -278,15 +278,29 @@ Zero Trust → Access → Applications → Add an application → Self-hosted.
 | Application | Domain |
 | --- | --- |
 | Dokploy admin — **do this one first** | `infra.<your-domain>` |
-| Citebench UI | `citibench.apps.<your-domain>` |
-| Citebench API | `citibench-api.apps.<your-domain>` |
+| Citebench UI | `citibench.<your-domain>` |
+| Citebench API | `citibench-api.<your-domain>` |
+
+Put the UI and API **in the same application** (add both as public hostnames).
+Access issues one session cookie per application, and the browser calls the API
+cross-origin — two applications means authenticating for the page and then being
+bounced on every API call.
+
+Hostnames must sit **exactly one level below the apex**. Cloudflare's free
+Universal SSL covers `*.<your-domain>`, so a two-level host such as
+`citibench-api.apps.<your-domain>` cannot be proxied without a certificate error
+— `*.apps.<your-domain>` needs the paid Advanced Certificate Manager.
 
 The Dokploy panel is otherwise reachable by anyone on the internet behind only
 its own login, which is a bigger exposure than the demo app itself.
 
 ### 2. Policy and login
 
-- Policy: **Allow** → **Emails** → your address (add a reviewer's when sharing).
+- Policy: **Allow** → **Everyone** for a shareable demo link (anyone enters their
+  own email and takes a one-time PIN), or **Emails** → specific addresses to
+  restrict it. Note Cloudflare lists "Include → Everyone" among its common
+  misconfigurations: it is a friction gate for bots and scanners, not access
+  control. Pair it with a spend cap on the LLM provider.
 - Login method: **One-time PIN** — nothing to configure.
 - Session duration: 24h is a reasonable default.
 
