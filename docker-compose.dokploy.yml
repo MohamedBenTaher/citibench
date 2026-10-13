@@ -52,10 +52,12 @@ services:
     #   sudo install -d -m 700 /etc/citebench
     #   printf 'GROQ_API_KEY=%s\n' '<key>' | sudo tee /etc/citebench/api.env >/dev/null
     #   sudo chmod 600 /etc/citebench/api.env
-    # `required: false` means a missing file does not fail the deploy.
+    # Deliberately the SHORT (string) form. The long object form
+    # (`- path: … / required: false`) parses fine under `docker compose config`
+    # but was silently dropped when Dokploy re-rendered this service, so the
+    # value never reached the container. Keep it a plain list.
     env_file:
-      - path: /etc/citebench/api.env
-        required: false
+      - /etc/citebench/api.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/${POSTGRES_DB:-citebench}
       # GROQ_API_KEY is intentionally NOT set here — see env_file above.
