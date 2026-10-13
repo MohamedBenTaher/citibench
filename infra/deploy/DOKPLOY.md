@@ -56,6 +56,37 @@ domain is only needed for the browser. Do **not** expose `db`.
 
 Click **Deploy**.
 
+> **Compose domains need a redeploy.** Unlike standalone Applications, Docker
+> Compose has no hot reload for domains — Dokploy injects the Traefik labels at
+> deploy time, so changing or adding a domain means deploying again.
+
+### No domain yet?
+
+You do not need to own one. Dokploy generates free `traefik.me` hosts that embed
+your server's IP, so they resolve from anywhere:
+
+1. **Domains → Create Domain → click the dice icon** next to `Host`. It fills in
+   something like `citebench-ab12cd-31-220-108-27.traefik.me` (that trailing
+   `31-220-108-27` is your server's IP — that is why it works remotely).
+2. Path `/`, **Container Port `3000`**, HTTPS off, Certificate None. → this is the web domain.
+3. Repeat with **Container Port `8000`** → this is the api domain.
+4. Put those *exact* hosts in the env, **with `http://`** (free domains are
+   HTTP-only):
+   ```env
+   VITE_API_URL=http://<api-host>.traefik.me
+   CORS_ORIGINS=http://<web-host>.traefik.me
+   ```
+5. Deploy, then open `http://<web-host>.traefik.me/evals`.
+
+Browsers flag HTTP as "Not secure". When you later point a real domain at the
+server: add it, turn HTTPS on, switch the two env values to `https://`, and
+redeploy (the API URL is baked in, so the web image rebuilds).
+
+If you would rather skip domains entirely, publish ports instead — add
+`ports: ["3000:3000"]` to `web` and `ports: ["8000:8000"]` to `api`, then use
+`http://<server-ip>:8000` / `http://<server-ip>:3000`. That exposes the API
+directly with no TLS, so it is the least production-like option.
+
 ---
 
 ## Path B — three separate Applications

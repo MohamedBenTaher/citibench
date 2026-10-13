@@ -37,6 +37,9 @@ services:
       timeout: 5s
       retries: 20
     restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
 
   api:
     build:
@@ -72,6 +75,9 @@ services:
     expose:
       - "8000"
     restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
 
   web:
     build:
@@ -92,6 +98,18 @@ services:
     expose:
       - "3000"
     restart: unless-stopped
+    networks:
+      - default
+      - dokploy-network
+
+networks:
+  default:
+  # Dokploy's shared Traefik network, created by the Dokploy install. Every
+  # service joins it explicitly: when Dokploy attaches a domain to a service it
+  # rewrites that service's network list, and the other services would otherwise
+  # fall off a shared network and lose `db` / `api` name resolution.
+  dokploy-network:
+    external: true
 
 volumes:
   citebench_pgdata:
