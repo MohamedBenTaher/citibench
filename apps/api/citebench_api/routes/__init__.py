@@ -84,6 +84,13 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins(),
+        # The browser UI calls the API cross-origin. Any edge auth gate in front
+        # of the API (Cloudflare Access, basic auth) identifies the browser by
+        # cookie, and the browser only sends it when the request opts into
+        # credentials *and* the response allows them. Safe here because
+        # allow_origins is always a concrete list, never "*" — the CORS spec
+        # forbids pairing a wildcard with credentials.
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )

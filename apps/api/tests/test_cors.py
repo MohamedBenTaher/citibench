@@ -29,3 +29,21 @@ def test_health_allows_localhost_origin() -> None:
     response = TestClient(main_mod.app).get("/health", headers={"Origin": "http://localhost:3000"})
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
+def test_cors_allows_credentials_so_edge_auth_cookies_survive() -> None:
+    """The browser drops cookies on a cross-origin call unless the response opts in.
+
+    Production puts an edge auth gate (Cloudflare Access) in front of the API on
+    its own hostname. The UI fetch therefore sets credentials="include", which the
+    browser only honours when the preflight/response carries this header.
+    """
+    from fastapi.testclient import TestClient
+
+    response = TestClient(main_mod.app).get("/health", headers={"Origin": "http://localhost:3000"})
+    assert response.headers.get("access-control-allow-credentials") == "true"
+
+
+def test_cors_never_pairs_wildcard_with_credentials() -> None:
+    """A wildcard origin plus credentials is forbidden by the CORS spec."""
+    assert "*" not in routes._cors_origins()

@@ -256,6 +256,64 @@ Note that `GROQ_API_KEY` is deliberately **not** listed under the api service's
 `environment:` block: an empty `${GROQ_API_KEY}` substitution there would
 override the `env_file` value with an empty string.
 
+## Production hardening: put Cloudflare Access in front
+
+A demo that stays online needs a gate. Cloudflare Access (Zero Trust) is the
+least invasive one here: it is free for a handful of users, needs no app code,
+and the domain is already on Cloudflare.
+
+The UI calls the API on a **different hostname**. That is what makes this more
+than a checkbox: the browser only sends the Access cookie on a cross-origin call
+when the request opts into credentials *and* the response allows them. Both
+halves are wired up already:
+
+- `apps/web/src/lib/client-api.ts` sends `credentials: "include"`
+- the API's CORS sets `allow_credentials=True` (with a concrete origin list —
+  a `*` origin may not be paired with credentials)
+
+### 1. Create the applications
+
+Zero Trust → Access → Applications → Add an application → Self-hosted.
+
+| Application | Domain |
+| --- | --- |
+| Dokploy admin — **do this one first** | `infra.<your-domain>` |
+| Citebench UI | `citibench.apps.<your-domain>` |
+| Citebench API | `citibench-api.apps.<your-domain>` |
+
+The Dokploy panel is otherwise reachable by anyone on the internet behind only
+its own login, which is a bigger exposure than the demo app itself.
+
+### 2. Policy and login
+
+- Policy: **Allow** → **Emails** → your address (add a reviewer's when sharing).
+- Login method: **One-time PIN** — nothing to configure.
+- Session duration: 24h is a reasonable default.
+
+### 3. DNS and TLS
+
+Access only applies to **proxied** hostnames:
+
+- set the relevant records to **Proxied (orange)**
+- set SSL/TLS mode to **Full (strict)**
+
+Full (strict) is correct because Traefik holds valid Let's Encrypt certificates.
+Avoid **Flexible** — it is the usual cause of redirect loops. A side benefit of
+proxying is that the origin IP stops being published.
+
+### 4. Keeping a shareable link
+
+A blanket gate means nobody can open the link cold. Cloudflare Access matches on
+**path** as well, so the better shape is to gate only what costs money:
+
+- public: `/evals`, `/metrics`, `/corpus` — what a reviewer actually wants
+- gated: `/playground` — the surface that spends Groq tokens
+
+### 5. Cap the spend regardless
+
+Set a monthly limit in the Groq console. The API URL is baked into the public JS
+bundle, so assume it is discoverable; the spend cap is what bounds the downside.
+
 ## Files
 
 - `docker-compose.dokploy.yml` (repo root) — the Compose file Path A uses. It

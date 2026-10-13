@@ -11,6 +11,13 @@ export async function clientApiJson<T>(path: string, init?: RequestInit): Promis
     response = await fetch(`${publicApiBase()}${path}`, {
       ...init,
       cache: "no-store",
+      // The API lives on its own hostname, and in production it sits behind an
+      // edge auth gate (e.g. Cloudflare Access) that identifies the browser by
+      // cookie. Without "include" the browser strips cookies from this
+      // cross-origin request, the gate answers with a login redirect, and the
+      // call surfaces as a generic failure. The API's CORS must set
+      // allow_credentials=True for this to be honoured.
+      credentials: init?.credentials ?? "include",
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "api unreachable";
