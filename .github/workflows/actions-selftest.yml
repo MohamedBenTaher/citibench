@@ -1,0 +1,13 @@
+name: actions-selftest
+
+# Temporary diagnostic: does a minimal workflow run on this repo at all?
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "GitHub Actions is working"
