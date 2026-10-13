@@ -45,19 +45,19 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    # API secrets live OUTSIDE the git clone. A Dokploy redeploy recreates this
-    # container from code/, so a key file kept in there gets wiped — and an
-    # empty ${GROQ_API_KEY} substitution would blank it anyway. Create it on the
-    # host (once):
-    #   sudo install -d -m 700 /etc/citebench
-    #   printf 'GROQ_API_KEY=%s\n' '<key>' | sudo tee /etc/citebench/api.env >/dev/null
-    #   sudo chmod 600 /etc/citebench/api.env
-    # Deliberately the SHORT (string) form. The long object form
-    # (`- path: … / required: false`) parses fine under `docker compose config`
-    # but was silently dropped when Dokploy re-rendered this service, so the
-    # value never reached the container. Keep it a plain list.
+    # API secrets live OUTSIDE the git clone but INSIDE the Dokploy tree.
+    # Dokploy runs `docker compose` in its own mount namespace where only
+    # /etc/dokploy/... is visible, so a file under /etc/citebench reports "not
+    # found" even though it exists on the host. Keep it beside the compose:
+    #   sudo printf 'GROQ_API_KEY=%s\n' '<key>' | sudo tee \
+    #     /etc/dokploy/compose/citibench-application-hivzkm/api.env >/dev/null
+    #   sudo chmod 600 /etc/dokploy/compose/citibench-application-hivzkm/api.env
+    #
+    # Deliberately the SHORT (string) form: if this path is ever wrong the deploy
+    # fails loudly, instead of silently dropping the key the way the
+    # `required: false` object form did.
     env_file:
-      - /etc/citebench/api.env
+      - /etc/dokploy/compose/citibench-application-hivzkm/api.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/${POSTGRES_DB:-citebench}
       # GROQ_API_KEY is intentionally NOT set here — see env_file above.
