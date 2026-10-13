@@ -18,9 +18,9 @@ Everything below assumes the repo `MohamedBenTaher/citibench`, branch `main`.
 | Github Account | the account you connected (`Dokploy-…`), not your personal one |
 | Repository | `citibench` |
 | Branch | `main` |
-| **Compose Path** | `infra/deploy/docker-compose.dokploy.yml` |
+| **Compose Path** | `docker-compose.dokploy.yml` |
 | Trigger Type | `On Push` |
-| Watch Paths | `apps/api/*` `apps/web/*` `infra/deploy/docker-compose.dokploy.yml` `config.yaml` `pyproject.toml` `uv.lock` |
+| Watch Paths | `apps/api/*` `apps/web/*` `docker-compose.dokploy.yml` `config.yaml` `pyproject.toml` `uv.lock` |
 
 Then, on the same service:
 
@@ -207,7 +207,8 @@ curl -sS https://<web-domain>/evals           # HTML, no login wall
 
 ## Files
 
-- `infra/deploy/docker-compose.dokploy.yml` — the Compose file Path A uses.
+- `docker-compose.dokploy.yml` (repo root) — the Compose file Path A uses. It
+  mounts no host paths (the api image bakes its assets), only named volumes.
 - `infra/deploy/docker-compose.demo.yml` + `Caddyfile` — the non-Dokploy VM
   path (Caddy instead of Traefik). Not used with Dokploy.
 - `.dockerignore` (repo root) — keeps the API build context small; the API image

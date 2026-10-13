@@ -232,7 +232,7 @@ DECISIONS.md        Why this stack
 
 ## Deploy
 
-No public URL ships with the repo. After `make evals` locally, see `infra/deploy/README.md` (VM/Fly/Railway/Azure) or [`infra/deploy/DOKPLOY.md`](infra/deploy/DOKPLOY.md) for Dokploy — Compose file `infra/deploy/docker-compose.dokploy.yml`. Playground and Evals stay public application routes.
+No public URL ships with the repo. After `make evals` locally, see `infra/deploy/README.md` (VM/Fly/Railway/Azure) or [`infra/deploy/DOKPLOY.md`](infra/deploy/DOKPLOY.md) for Dokploy — Compose file `docker-compose.dokploy.yml` at the repo root. Playground and Evals stay public application routes.
 
 ```bash
 make evals

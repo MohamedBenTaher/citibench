@@ -2,18 +2,25 @@
 #
 # Dokploy setup
 #   1. Create Service → Compose
-#   2. Compose Path: infra/deploy/docker-compose.dokploy.yml
+#   2. Compose Path: docker-compose.dokploy.yml
 #   3. Environment tab, set:
 #        POSTGRES_PASSWORD=<pick one>
+#        POSTGRES_USER=citebench          # optional, these are the defaults
+#        POSTGRES_DB=citebench            # optional
 #        GROQ_API_KEY=<your key>
 #        VITE_API_URL=https://<api-domain>     # BAKED INTO THE WEB BUNDLE AT BUILD TIME
 #        CORS_ORIGINS=https://<web-domain>
 #   4. Domains tab, add two domains:
 #        <web-domain> -> service "web", port 3000   (the reviewer entry point)
 #        <api-domain> -> service "api", port 8000   (browser calls this directly)
-#   5. Deploy, then seed the corpus from the API container (see DOKPLOY.md).
+#   5. Deploy, then seed the corpus from the API container (see infra/deploy/DOKPLOY.md).
 #
-# Note: VITE_API_URL is a build arg, so changing the API domain requires a rebuild.
+# The api image bakes config.yaml, corpus, evals and the citebench package, so
+# this file mounts NO host paths — only named volumes. That keeps it portable
+# and avoids Dokploy's "host paths are cleaned up on deploy" trap, where a
+# host bind mount that fails to resolve becomes an empty dir over the image.
+#
+# Note: VITE_API_URL is a build arg, so changing the API domain needs a rebuild.
 
 services:
   db:
@@ -24,7 +31,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-citebench}
     volumes:
       - citebench_pgdata:/var/lib/postgresql/data
-      - ../postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-citebench} -d ${POSTGRES_DB:-citebench}"]
       interval: 5s
@@ -34,7 +40,7 @@ services:
 
   api:
     build:
-      context: ../..
+      context: .
       dockerfile: apps/api/Dockerfile
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-citebench}:${POSTGRES_PASSWORD:-citebench}@db:5432/${POSTGRES_DB:-citebench}
@@ -48,15 +54,15 @@ services:
       NOMIC_CACHE_DIR: /tmp/nomic-embed
       FLASHRANK_CACHE_DIR: /tmp/flashrank
       CORS_ORIGINS: ${CORS_ORIGINS:-https://localhost}
-      # Fast offline demo corpus (14 URLs). To ingest the full 1,487-doc freeze
-      # instead, set CITEBENCH_MANIFEST=corpus/MANIFEST.md and CITEBENCH_SNAPSHOT_ONLY=0.
-      CITEBENCH_MANIFEST: ${CITEBENCH_MANIFEST:-corpus/v0/MANIFEST.md}
+      # Absolute path: the API's working dir is /app/apps/api, so a relative
+      # manifest path would not resolve. Default is the 14-URL offline smoke
+      # corpus, which is baked into the image and needs no network.
+      # For the full 1,487-doc freeze set:
+      #   CITEBENCH_MANIFEST=/app/corpus/MANIFEST.md
+      #   CITEBENCH_SNAPSHOT_ONLY=0
+      CITEBENCH_MANIFEST: ${CITEBENCH_MANIFEST:-/app/corpus/v0/MANIFEST.md}
       CITEBENCH_SNAPSHOT_ONLY: ${CITEBENCH_SNAPSHOT_ONLY:-1}
     volumes:
-      - ../../config.yaml:/app/config.yaml:ro
-      - ../../corpus:/app/corpus
-      - ../../evals:/app/evals
-      - ../../:/repo:ro
       - citebench_traces:/tmp/citebench-traces
       - citebench_nomic:/tmp/nomic-embed
       - citebench_flashrank:/tmp/flashrank
@@ -69,7 +75,7 @@ services:
 
   web:
     build:
-      context: ../../apps/web
+      context: ./apps/web
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     environment:
