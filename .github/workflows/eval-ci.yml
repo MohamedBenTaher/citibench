@@ -28,7 +28,7 @@ jobs:
       - name: Pytest
         env:
           PYTHONPATH: apps/api
-        run: python -m pytest apps/api
+        run: .venv/bin/python -m pytest apps/api
 
       - name: Web typecheck
         uses: actions/setup-node@v4
@@ -60,7 +60,7 @@ jobs:
           EVAL_STORE_DIR: ${{ github.workspace }}/evals/results
           TRACE_STORE_DIR: ${{ runner.temp }}/citebench-traces
         run: |
-          python -m citebench.eval.ci \
+          .venv/bin/python -m citebench.eval.ci \
             --split evals/splits/ci.jsonl \
             --known-bad evals/splits/known_bad.jsonl \
             --threshold-faithfulness 0.7 \
@@ -72,7 +72,7 @@ jobs:
           EVAL_STORE_DIR: ${{ github.workspace }}/evals/results
           TRACE_STORE_DIR: ${{ runner.temp }}/citebench-traces
         run: |
-          python -m citebench.eval.redteam \
+          .venv/bin/python -m citebench.eval.redteam \
             --split evals/redteam.jsonl \
             --mock \
             --store-dir evals/results
