@@ -1,0 +1,106 @@
+name: selftest-live
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      have_key: ${{ steps.check.outputs.have_key }}
+    steps:
+      - id: check
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -n "$GROQ_API_KEY" ]; then
+            echo "have_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have_key=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Live faithfulness gate. Runs only when the Groq secret exists and only on
+  # main / manual dispatch (never fork PRs; never on every PR, to respect quota).
+  # Uses the committed corpus-v0 smoke corpus so it stays fast and hermetic.
+  live-eval:
+    needs: gate
+    if: >-
+      needs.gate.outputs.have_key == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: citebench
+          POSTGRES_PASSWORD: citebench
+          POSTGRES_DB: citebench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U citebench"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://citebench:citebench@127.0.0.1:5432/citebench
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      CITEBENCH_MANIFEST: corpus/v0/MANIFEST.md
+      CITEBENCH_SNAPSHOT_ONLY: "1"
+      CITEBENCH_SKIP_MODEL_WARMUP: "1"
+      EVAL_STORE_DIR: ${{ github.workspace }}/evals/results
+      TRACE_STORE_DIR: ${{ runner.temp }}/citebench-live-traces
+      NOMIC_CACHE_DIR: ${{ runner.temp }}/nomic-embed
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.11"
+
+      - name: Runtime venv
+        run: uv sync --frozen --no-dev
+
+      - name: Ingest corpus-v0 (offline)
+        run: |
+          .venv/bin/python -c "import sys; sys.path.insert(0,'apps/api'); from settings import load_settings; from pipeline import run_ingest; print(run_ingest(load_settings(), wipe=True)['doc_count'])"
+
+      - name: Collect live answers (runtime)
+        run: |
+          .venv/bin/python -m citebench.eval.answers \
+            --split evals/splits/ci-v0.jsonl \
+            --known-bad evals/splits/known_bad.jsonl \
+            --out "$RUNNER_TEMP/answers.jsonl"
+
+      - name: Eval venv (ragas)
+        run: |
+          uv venv .venv-eval --python 3.12
+          uv pip install --python .venv-eval/bin/python -r apps/api/requirements-eval.txt
+
+      - name: Live RAGAS faithfulness gate
+        run: |
+          .venv-eval/bin/python -m citebench.eval.live_score \
+            --answers "$RUNNER_TEMP/answers.jsonl" \
+            --out evals/results/live.json \
+            --threshold 0.7
+
+      - name: Live redteam (C8)
+        run: |
+          .venv/bin/python -m citebench.eval.redteam \
+            --split evals/redteam.jsonl --live --store-dir evals/results
+
+      - name: Upload live artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-live
+          path: |
+            evals/results/live.json
+            evals/results/redteam.json
+          if-no-files-found: warn
