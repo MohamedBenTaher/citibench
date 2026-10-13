@@ -1,0 +1,14 @@
+name: selftest-envfixed
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    env:
+      TRACE_STORE_DIR: ${{ github.workspace }}/citebench-live-traces
+    steps:
+      - run: echo github.workspace in JOB env
